@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   off the mark before decelerating, instead of jerking into motion at full speed
 - The dot animation is chosen from a drop-down list in the settings, with a description of
   the chosen one underneath, rather than from a long column of radio buttons
+
+### Fixed
+- The cell width measured its labels through a property it was itself changing, so Plasma
+  logged a binding-loop warning and re-laid the cells out on every desktop switch
 - The label under the dot now fades back in only once the dot has actually left it, and
   ducks quickly under the dot as it arrives, so the two no longer overlap mid-move
 - Dot shapes are drawn antialiased, for smoother edges while moving
