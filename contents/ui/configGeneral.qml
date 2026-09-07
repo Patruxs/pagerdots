@@ -14,6 +14,7 @@ KCM.SimpleKCM {
 
     property string cfg_labelStyle
     property bool cfg_dotForCurrent
+    property string cfg_dotColor
     property int cfg_spacing
     property string cfg_dotAnimation
     property int cfg_animationSpeed
@@ -35,6 +36,7 @@ KCM.SimpleKCM {
     // and warns if there is nowhere to put them.
     property var cfg_labelStyleDefault
     property var cfg_dotForCurrentDefault
+    property var cfg_dotColorDefault
     property var cfg_spacingDefault
     property var cfg_dotAnimationDefault
     property var cfg_animationSpeedDefault
@@ -69,6 +71,8 @@ KCM.SimpleKCM {
                     property int current: 0
                     readonly property bool useDot: page.cfg_dotForCurrent || page.cfg_labelStyle === "blank"
                     readonly property bool animated: page.cfg_dotAnimation !== "none"
+                    readonly property color dotColor: page.cfg_dotColor === "accent"
+                                                      ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
                     readonly property int unit:
                         Math.round(Kirigami.Units.longDuration * 100 / Math.max(25, page.cfg_animationSpeed))
                     property int cellsRevision: 0
@@ -145,7 +149,7 @@ KCM.SimpleKCM {
                         target: preview.currentCell
                         animation: page.cfg_dotAnimation
                         size: Math.max(4, Math.round(fm.height * 0.45))
-                        color: Kirigami.Theme.textColor
+                        color: preview.dotColor
                         backgroundColor: preview.color
                         unit: preview.unit
                         visible: preview.useDot
@@ -243,6 +247,32 @@ KCM.SimpleKCM {
                 text: i18n("Show as a dot instead of its label")
                 checked: page.cfg_dotForCurrent
                 onToggled: page.cfg_dotForCurrent = checked
+            }
+
+            QQC2.Label {
+                text: i18n("Dot colour:")
+                Layout.topMargin: Kirigami.Units.largeSpacing
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
+            }
+            QQC2.ButtonGroup { id: colorGroup }
+            // The text colour blends in with the labels; the accent colour picks the
+            // current desktop out in the colour scheme's highlight.
+            RowLayout {
+                enabled: preview.useDot
+                spacing: Kirigami.Units.largeSpacing
+
+                QQC2.RadioButton {
+                    QQC2.ButtonGroup.group: colorGroup
+                    text: i18n("Text colour")
+                    checked: page.cfg_dotColor !== "accent"
+                    onToggled: if (checked) page.cfg_dotColor = "text"
+                }
+                QQC2.RadioButton {
+                    QQC2.ButtonGroup.group: colorGroup
+                    text: i18n("Accent colour")
+                    checked: page.cfg_dotColor === "accent"
+                    onToggled: if (checked) page.cfg_dotColor = "accent"
+                }
             }
 
             QQC2.Label {

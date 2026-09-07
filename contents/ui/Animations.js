@@ -8,6 +8,7 @@ const MODES = [
     { id: "stretch", name: "Stretch", description: "Stretches into a pill towards the new desktop, then snaps back" },
     { id: "fluid",   name: "Fluid",   description: "Flows over like a drop of liquid, stretching with speed and keeping its momentum when you switch quickly" },
     { id: "float",   name: "Float",   description: "Drifts over on a soft spring and eases to a stop, keeping its momentum when you switch quickly" },
+    { id: "silk",    name: "Silk",    description: "Slides over on a spring, drawing out along its path with speed like a thread of silk and gathering back into a dot as it settles, keeping its momentum when you switch quickly" },
     { id: "ribbon",  name: "Ribbon",  description: "Streams across trailing a soft ribbon of light that draws out with speed, keeping its momentum when you switch quickly" },
     { id: "glide",   name: "Glide",   description: "Slides smoothly to the new desktop" },
     { id: "bloom",   name: "Bloom",   description: "Swells into a large, soft disc as it sets off, drifts across, and condenses back into a dot on the new desktop" },

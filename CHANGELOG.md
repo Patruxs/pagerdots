@@ -53,6 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   water, each bounce lower than the last), blink (closes to a thin line like an eye shutting
   and opens again on the new desktop), and wipe (a curtain sweeps along the row, wiping the
   dot off the old desktop and painting it onto the new one)
+- Silk dot animation: spring-driven like float, so it keeps its momentum when you switch
+  quickly, but the dot draws out along its path in proportion to its speed, like a thread
+  of silk, and gathers back into a dot as it settles
+- Option to draw the dot in the colour scheme's accent colour instead of the text colour
 
 ### Changed
 - The gliding animations (stretch, glide, comet, ripple, glow, streak and elastic) now ease
@@ -65,6 +69,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   desktops with the mouse wheel flows as one motion
 
 ### Fixed
+- Scrolling over the widget with a touchpad, or a free-spinning wheel, stepped a desktop for
+  every tiny scroll event, so one swipe skipped through several desktops; the scroll is now
+  added up and steps one desktop per full wheel notch
 - The settings page no longer logs a warning for each option's default value when it opens
 - The cell width measured its labels through a property it was itself changing, so Plasma
   logged a binding-loop warning and re-laid the cells out on every desktop switch

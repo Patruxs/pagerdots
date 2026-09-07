@@ -14,6 +14,10 @@
     <entry name="dotForCurrent" type="Bool">
       <default>true</default>
     </entry>
+    <!-- Colour of the dot: the text colour ("text") or the accent colour ("accent"). -->
+    <entry name="dotColor" type="String">
+      <default>text</default>
+    </entry>
     <!-- Gap between neighbouring desktops, in pixels. -->
     <entry name="spacing" type="Int">
       <default>6</default>

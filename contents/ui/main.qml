@@ -24,6 +24,9 @@ PlasmoidItem {
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
     readonly property int spacing: Plasmoid.configuration.spacing
     readonly property string dotAnimation: Plasmoid.configuration.dotAnimation
+    // The dot is drawn in the text colour, or the accent colour if so configured.
+    readonly property color dotColor: Plasmoid.configuration.dotColor === "accent"
+                                      ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
     readonly property bool animated: dotAnimation !== "none"
     // Base duration of the dot animations: Plasma's own, scaled by the speed setting
     // (a percentage, so 50 plays at half speed and 200 at double).
@@ -58,7 +61,18 @@ PlasmoidItem {
     fullRepresentation: MouseArea {
         id: view
         acceptedButtons: Qt.NoButton
-        onWheel: wheel => root.step(wheel.angleDelta.y < 0 ? 1 : -1)
+        // Wheel notches come in steps of 120; touchpads and free-spinning wheels send
+        // many smaller events instead, so the deltas are added up and one desktop is
+        // stepped per full notch, rather than several per swipe.
+        property int wheelDelta: 0
+        onWheel: wheel => {
+            const delta = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.angleDelta.x;
+            // A change of direction starts afresh, so the first notch back is not swallowed.
+            if (delta * wheelDelta < 0) wheelDelta = 0;
+            wheelDelta += delta;
+            while (wheelDelta >= 120) { wheelDelta -= 120; root.step(-1); }
+            while (wheelDelta <= -120) { wheelDelta += 120; root.step(1); }
+        }
         implicitWidth: grid.implicitWidth
         implicitHeight: grid.implicitHeight
         Layout.minimumWidth: root.vertical ? 0 : grid.implicitWidth
@@ -160,7 +174,7 @@ PlasmoidItem {
             target: view.currentCell
             animation: root.dotAnimation
             size: Math.max(4, Math.round(fm.height * 0.45))
-            color: Kirigami.Theme.textColor
+            color: root.dotColor
             backgroundColor: Kirigami.Theme.backgroundColor
             unit: root.animationUnit
             vertical: root.vertical

@@ -36,13 +36,15 @@ Item {
                                   || animation === "ring" || animation === "blink"
                                   || animation === "wipe"
     readonly property bool slides: !swaps && animation !== "none"
-    // "fluid", "float" and "ribbon" are driven by a spring simulation (see `sim`) rather
-    // than the Behaviors below; "fluid" stretches with a soft trail spring, "float" stays
-    // round, and "ribbon" trails a streak from a softer trail spring still.
+    // "fluid", "float", "silk" and "ribbon" are driven by a spring simulation (see `sim`)
+    // rather than the Behaviors below; "fluid" stretches with a soft trail spring, "float"
+    // stays round, "silk" stretches along its path in proportion to its speed, and
+    // "ribbon" trails a streak from a softer trail spring still.
     readonly property bool fluid: animation === "fluid"
     readonly property bool floats: animation === "float"
+    readonly property bool silk: animation === "silk"
     readonly property bool ribbon: animation === "ribbon"
-    readonly property bool sprung: fluid || floats || ribbon
+    readonly property bool sprung: fluid || floats || ribbon || silk
     // "elastic", "streak", "fluid", "ribbon" and "rail" keep the dot round and draw the
     // gap between the two trackers (see below) as a separate band, streak, neck or rail
     // rather than stretching the dot.
@@ -83,8 +85,8 @@ Item {
     // "fluid" draw the gap as a band, a fading streak or a liquid neck instead.
     property real leadX: sprung ? sim.lx : cx
     property real leadY: sprung ? sim.ly : cy
-    property real trailX: fluid || ribbon ? sim.tx : floats ? sim.lx : cx
-    property real trailY: fluid || ribbon ? sim.ty : floats ? sim.ly : cy
+    property real trailX: fluid || ribbon ? sim.tx : floats || silk ? sim.lx : cx
+    property real trailY: fluid || ribbon ? sim.ty : floats || silk ? sim.ly : cy
     // Where the head of the dot is drawn: the lead tracker, pulled back along the row
     // by `wind` while "slingshot" winds up.
     readonly property real headX: leadX + (vertical ? 0 : wind)
@@ -320,10 +322,13 @@ Item {
         }
         onTriggered: {
             const s = 200 / Math.max(1, dot.unit);
-            // lead: stiff, just under critical damping ("fluid", "ribbon"), or softer
-            // and a little less damped still ("float"); trail: softer, critically damped,
-            // and softer again for "ribbon", so its streak draws out long behind the dot
-            const kl = (dot.floats ? 110 : 170) * s * s, cl = (dot.floats ? 18 : 23.5) * s;
+            // lead: stiff, just under critical damping ("fluid", "ribbon"), softer and a
+            // little less damped still ("float"), or in between ("silk", whose stretch
+            // shows the speed, so it must neither overshoot nor crawl in); trail: softer,
+            // critically damped, and softer again for "ribbon", so its streak draws out
+            // long behind the dot
+            const kl = (dot.floats ? 110 : dot.silk ? 140 : 170) * s * s;
+            const cl = (dot.floats ? 18 : dot.silk ? 22 : 23.5) * s;
             const kt = (dot.ribbon ? 60 : 90) * s * s, ct = (dot.ribbon ? 15.5 : 19) * s;
             // Sub-step so that a stalled frame cannot blow the integration up.
             const dt = Math.min(frameTime, 0.05);
@@ -345,6 +350,16 @@ Item {
         if (ready) sim.start();
         else sim.snap();
     }
+
+    // "silk": the dot stretches along the row in proportion to how fast the spring is
+    // moving it, and thins across the row to keep its volume, so it draws out like a
+    // thread of silk mid-move and gathers back into a dot as it settles. The speed is
+    // taken relative to the speed setting, so the shape is the same at any setting, and
+    // one cell's move stretches it to about half again its length, two cells to double.
+    readonly property real silkSpeed: silk ? Math.abs(vertical ? sim.vly : sim.vlx) * unit / 200 : 0
+    readonly property real silkStretch: Math.min(1, silkSpeed / (size * 40))
+    readonly property real silkAlong: 1 + silkStretch
+    readonly property real silkAcross: 1 / (1 + silkStretch * 0.4)
 
     // Extra flourishes layered on top of the slide, driven by the animations below.
     property real hop: 0        // offset across the row while hopping or dropping in
@@ -1191,8 +1206,10 @@ Item {
         transform: Scale {
             origin.x: pill.width / 2
             origin.y: pill.height / 2
-            xScale: (dot.vertical ? dot.wink / dot.squish : dot.squish * pill.turn) * dot.lift
-            yScale: (dot.vertical ? dot.squish * pill.turn : dot.wink / dot.squish) * dot.lift
+            xScale: (dot.vertical ? dot.wink / dot.squish * dot.silkAcross
+                                  : dot.squish * pill.turn * dot.silkAlong) * dot.lift
+            yScale: (dot.vertical ? dot.squish * pill.turn * dot.silkAlong
+                                  : dot.wink / dot.squish * dot.silkAcross) * dot.lift
         }
 
         // "roll": a spot of the background off the dot's centre, turned in proportion
