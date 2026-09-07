@@ -35,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to the new desktop and the dot slides along it, taking it in), and ring (the dot opens out
   into a ring that fades from the old desktop, while a ring closes in and fills to a dot on
   the new one)
+- Four more dot animations: wave (undulates across the row as it goes, levelling out as it
+  settles), orbit (a smaller dot peels off, circles the dot as it crosses, and merges back
+  into it), wake (a ring ripples out from every desktop it passes, and from the one it lands
+  on), and loop (loops the loop once on its way over)
 
 ### Changed
 - The gliding animations (stretch, glide, comet, ripple, glow, streak and elastic) now ease
@@ -67,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   trail), ripple (a ring spreads out where it lands), hop (arc jump with a landing
   squash), jelly (squash and stretch with a wobble), spring, bounce, pop, fade, or none
 - Live preview in the settings page showing the chosen label style and animation
+- Adjustable space between desktops, so wide labels such as roman numerals do not crowd each other
 
 ## [1.0.0] - 2026-09-07
 

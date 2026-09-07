@@ -117,6 +117,7 @@ Item {
         case "snap":    return unit * 1.75;
         case "lift":    return unit * 2.25;
         case "roll":    return unit * 2.5;
+        case "loop":    return unit * 2.5;
         case "bounce":  return unit * 2.5;
         case "slingshot": return unit * 1.5;
         case "jelly":   return unit * 2.5;
@@ -349,6 +350,19 @@ Item {
     property real lift: 1       // uniform scale while "lift" carries the dot over
     property real flip: 1       // scale along the row while "flip" turns the dot over
 
+    // "loop": the dot loops the loop once on its way over. `curl` is the phase of that
+    // loop in turns, and the offsets are periodic in it, so a move that cuts in on
+    // another carries on turning from wherever the loop had got to rather than
+    // snapping back to the start of it.
+    readonly property bool loops: animation === "loop"
+    property real curl: 0
+    property real curlSign: 1   // which way along the row the loop leans
+    // Half the room a hop has, since the loop rises twice its radius, and drawn out
+    // along the row, where there is more space than across it.
+    readonly property real curlRadius: loops ? hopLift * 0.5 : 0
+    readonly property real curlAlong: curlRadius * 1.6 * curlSign * Math.sin(2 * Math.PI * curl)
+    readonly property real curlAcross: curlRadius * (1 - Math.cos(2 * Math.PI * curl))
+
     // The cell currently marked, remembered so a swap can leave a ghost behind on it.
     property Item shown: null
     onTargetChanged: {
@@ -386,6 +400,22 @@ Item {
         case "swing":
             swingAnim.restart();
             break;
+        case "wave":
+            waveAnim.restart();
+            break;
+        case "orbit":
+            orbitAnim.restart();
+            break;
+        case "loop":
+            // Only when the loop is not already turning, so that a move cutting in on
+            // it does not mirror the offsets and jerk the dot across the row.
+            if (!loopAnim.running) {
+                curlSign = vertical ? (target.y < old.y ? -1 : 1) : (target.x < old.x ? -1 : 1);
+            }
+            loopAnim.from = curl;
+            loopAnim.to = curl + 1;
+            loopAnim.restart();
+            break;
         case "pulse":
             pulseAnim.restart();
             break;
@@ -401,7 +431,8 @@ Item {
             ringAnim.restart();
             break;
         }
-        case "footprints": {
+        case "footprints":
+        case "wake": {
             // One print on the old cell and one on every cell between it and the new
             // one, a cell's width apart, since all the cells are the same size.
             const along = vertical ? target.y - old.y : target.x - old.x;
@@ -409,6 +440,7 @@ Item {
             printFrom = vertical ? old.y + old.height / 2 : old.x + old.width / 2;
             printStep = span * (along < 0 ? -1 : 1);
             printCount = Math.min(prints.count, Math.max(1, Math.round(Math.abs(along) / Math.max(1, span))));
+            if (animation === "wake") ripple.restart();
             break;
         }
         case "ripple":
@@ -471,6 +503,9 @@ Item {
         diveAnim.stop();
         swingAnim.stop();
         pulseAnim.stop();
+        waveAnim.stop();
+        orbitAnim.stop();
+        loopAnim.stop();
         ringAnim.stop();
         sim.snap();
         ghost.visible = false;
@@ -485,13 +520,17 @@ Item {
         lift = 1;
         flip = 1;
         wind = 0;
+        curl = 0;
+        orbitT = 0;
         swarmT = 0;
         printCount = 0;
     }
 
-    // "footprints": a faint print is left on each cell as the dot passes over it, and
-    // fades away behind it. The prints are laid out from the old cell towards the new
-    // one when the move starts, and each shows itself once the dot has gone by.
+    // "footprints" and "wake": a mark is left on each cell as the dot passes over it and
+    // fades away behind it, a faint print for "footprints" and a ring spreading outwards
+    // for "wake". The marks are laid out from the old cell towards the new one when the
+    // move starts, and each shows itself once the dot has gone by.
+    readonly property bool wakes: animation === "wake"
     property real printFrom: 0
     property real printStep: 0
     property int printCount: 0
@@ -501,7 +540,8 @@ Item {
         Rectangle {
             id: mark
             required property int index
-            readonly property real extent: dot.size * 0.85
+            property real grow: 1
+            readonly property real extent: dot.size * (dot.wakes ? 0.9 : 0.85) * grow
             readonly property real at: dot.printFrom + dot.printStep * index
             readonly property real head: dot.vertical ? dot.headY : dot.headX
             // Gone by: the dot has moved on from this cell in the direction of travel.
@@ -513,15 +553,21 @@ Item {
             width: extent
             height: extent
             radius: extent / 2
-            color: dot.color
+            color: dot.wakes ? "transparent" : dot.color
+            border.color: dot.color
+            border.width: dot.wakes ? Math.max(1, dot.size / 5) : 0
             opacity: 0
-            visible: dot.animation === "footprints" && opacity > 0
+            visible: (dot.animation === "footprints" || dot.wakes) && opacity > 0
             antialiasing: true
             onPassedChanged: if (passed) printFade.restart()
             SequentialAnimation {
                 id: printFade
-                PropertyAction { target: mark; property: "opacity"; value: 0.5 }
-                NumberAnimation { target: mark; property: "opacity"; to: 0; duration: dot.unit * 3; easing.type: Easing.InQuad }
+                PropertyAction { target: mark; property: "opacity"; value: dot.wakes ? 0.7 : 0.5 }
+                PropertyAction { target: mark; property: "grow"; value: 1 }
+                ParallelAnimation {
+                    NumberAnimation { target: mark; property: "opacity"; to: 0; duration: dot.unit * (dot.wakes ? 2.5 : 3); easing.type: Easing.InQuad }
+                    NumberAnimation { target: mark; property: "grow"; to: dot.wakes ? 3 : 1; duration: dot.unit * 2.5; easing.type: Easing.OutCubic }
+                }
             }
         }
     }
@@ -827,8 +873,10 @@ Item {
         objectName: "pill"
         readonly property real length: dot.round ? 0 : dot.gap
         readonly property real start: dot.round ? (dot.vertical ? dot.dotY : dot.dotX) : dot.gapStart
-        x: (dot.vertical ? dot.dotX : start) - dot.thickness / 2 + (dot.vertical ? dot.hop * dot.hopSign : 0)
-        y: (dot.vertical ? start : dot.dotY) - dot.thickness / 2 + (dot.vertical ? 0 : dot.hop * dot.hopSign)
+        x: (dot.vertical ? dot.dotX : start) - dot.thickness / 2
+           + (dot.vertical ? (dot.hop + dot.curlAcross) * dot.hopSign : dot.curlAlong)
+        y: (dot.vertical ? start : dot.dotY) - dot.thickness / 2
+           + (dot.vertical ? dot.curlAlong : (dot.hop + dot.curlAcross) * dot.hopSign)
         width: (dot.vertical ? 0 : length) + dot.thickness
         height: (dot.vertical ? length : 0) + dot.thickness
         radius: dot.thickness / 2
@@ -881,6 +929,61 @@ Item {
         id: swingAnim
         NumberAnimation { target: dot; property: "hop"; to: -dot.hopLift; duration: dot.leadDuration / 2; easing.type: Easing.OutSine }
         NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.leadDuration / 2; easing.type: Easing.InSine }
+    }
+
+    // "wave": the dot undulates across the row as it crosses, as if carried on a wave,
+    // and levels out as it settles.
+    SequentialAnimation {
+        id: waveAnim
+        NumberAnimation { target: dot; property: "hop"; to: dot.hopLift * 0.8; duration: dot.leadDuration * 0.3; easing.type: Easing.InOutSine }
+        NumberAnimation { target: dot; property: "hop"; to: -dot.hopLift * 0.55; duration: dot.leadDuration * 0.3; easing.type: Easing.InOutSine }
+        NumberAnimation { target: dot; property: "hop"; to: dot.hopLift * 0.25; duration: dot.leadDuration * 0.25; easing.type: Easing.InOutSine }
+        NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.leadDuration * 0.25; easing.type: Easing.InOutSine }
+    }
+
+    // "loop": the loop is turned by advancing `curl` a whole turn (see the offsets above).
+    // It rests at 0 so that a mode change leaves the dot on its cell.
+    NumberAnimation {
+        id: loopAnim
+        target: dot
+        property: "curl"
+        duration: dot.leadDuration * 0.9
+        easing.type: Easing.InOutSine
+        onFinished: dot.curl = 0
+    }
+
+    // "orbit": a smaller dot peels off as the dot sets off, circles it twice on the way
+    // over, and merges back into it as it lands. `orbitT` runs from 0 to 1 over the move,
+    // and how far out the companion swings swells and falls away over that time, so it
+    // leaves and rejoins the dot rather than appearing beside it.
+    readonly property bool orbits: animation === "orbit"
+    property real orbitT: 0
+    Rectangle {
+        id: moon
+        objectName: "moon"
+        readonly property real extent: dot.size * 0.5
+        readonly property real angle: 2 * Math.PI * (dot.orbitT * 2 - 0.25)
+        readonly property real reach: dot.hopLift * 0.9 * Math.sin(Math.PI * dot.orbitT)
+        // Stretched along the row, where there is room, and kept within the cell across it.
+        readonly property real along: Math.cos(angle) * reach * 1.5
+        readonly property real across: Math.sin(angle) * reach
+        x: dot.dotX + (dot.vertical ? across : along) - extent / 2
+        y: dot.dotY + (dot.vertical ? along : across) - extent / 2
+        width: extent
+        height: extent
+        radius: extent / 2
+        color: dot.color
+        opacity: Math.min(1, dot.orbitT * 6, (1 - dot.orbitT) * 6)
+        visible: dot.orbits && orbitAnim.running
+        antialiasing: true
+    }
+    NumberAnimation {
+        id: orbitAnim
+        target: dot
+        property: "orbitT"
+        from: 0
+        to: 1
+        duration: dot.leadDuration * 1.15
     }
 
     // "pulse": as the dot settles on the new cell it swells briefly, like a heartbeat.

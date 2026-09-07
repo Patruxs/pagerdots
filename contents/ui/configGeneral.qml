@@ -14,6 +14,7 @@ KCM.SimpleKCM {
 
     property string cfg_labelStyle
     property bool cfg_dotForCurrent
+    property int cfg_spacing
     property string cfg_dotAnimation
     property int cfg_animationSpeed
 
@@ -67,6 +68,7 @@ KCM.SimpleKCM {
                     Row {
                         id: previewRow
                         anchors.centerIn: parent
+                        spacing: page.cfg_spacing
 
                         Repeater {
                             id: previewCells
@@ -220,6 +222,21 @@ KCM.SimpleKCM {
                 text: i18n("Show as a dot instead of its label")
                 checked: page.cfg_dotForCurrent
                 onToggled: page.cfg_dotForCurrent = checked
+            }
+
+            QQC2.Label {
+                text: i18n("Space between desktops:")
+                Layout.topMargin: Kirigami.Units.largeSpacing
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
+            }
+            QQC2.SpinBox {
+                from: 0
+                to: 40
+                stepSize: 1
+                value: page.cfg_spacing
+                onValueModified: page.cfg_spacing = value
+                textFromValue: (value, locale) => i18np("%1 pixel", "%1 pixels", value)
+                valueFromText: (text, locale) => parseInt(text) || 0
             }
 
             QQC2.Label {

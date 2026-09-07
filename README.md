@@ -13,7 +13,8 @@ A dot marks the current desktop, dimmed numbers show the rest.
 
 - Every virtual desktop shown as a label, with a dot for the current one
 - Choice of label style: numbers, letters (A B C), roman numerals (I II III), Greek (α β γ), Cyrillic (а б в), Chinese (一 二 三), Heavenly Stems (甲 乙 丙), Hiragana (あ い う), Katakana (ア イ ウ), Hangul (ㄱ ㄴ ㄷ), Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, fill up to current (● ● ○ ○), or blank
-- Smooth dot animation between desktops, with a choice of style: stretch, fluid, float, glide, pulse, swing, rail, bridge, blur, streak, zip, comet, footprints, glow, ripple, lift, dive, roll, elastic, slingshot, hop, jelly, spring, bounce, snap, drop, bubble, flip, ring, sparks, pop, fade, or none, and a speed slider
+- Smooth dot animation between desktops, with a choice of style: stretch, fluid, float, glide, pulse, swing, wave, rail, bridge, blur, streak, zip, comet, footprints, glow, orbit, ripple, wake, lift, dive, roll, loop, elastic, slingshot, hop, jelly, spring, bounce, snap, drop, bubble, flip, ring, sparks, pop, fade, or none, and a speed slider
+- Adjustable spacing between desktops
 - Click a desktop to switch to it
 - Scroll the mouse wheel over the widget to step through desktops (wraps around)
 - Hover to see the desktop name in a tooltip

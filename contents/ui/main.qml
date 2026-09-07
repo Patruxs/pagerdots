@@ -22,6 +22,7 @@ PlasmoidItem {
     readonly property int currentIndex: vdi.desktopIds.indexOf(vdi.currentDesktop)
     readonly property string labelStyle: Plasmoid.configuration.labelStyle
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
+    readonly property int spacing: Plasmoid.configuration.spacing
     readonly property string dotAnimation: Plasmoid.configuration.dotAnimation
     readonly property bool animated: dotAnimation !== "none"
     // Base duration of the dot animations: Plasma's own, scaled by the speed setting
@@ -92,8 +93,8 @@ PlasmoidItem {
             anchors.fill: parent
             rows: root.vertical ? -1 : 1
             columns: root.vertical ? 1 : -1
-            rowSpacing: 0
-            columnSpacing: 0
+            rowSpacing: root.vertical ? root.spacing : 0
+            columnSpacing: root.vertical ? 0 : root.spacing
 
             Repeater {
                 id: cells
