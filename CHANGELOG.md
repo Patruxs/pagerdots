@@ -45,6 +45,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it crosses, its lighter face showing on the way), pour (drains from the old desktop into
   the new one down a thin stream, shrinking on one as it grows on the other), and shift (the
   old dot slips onwards and fades while a new one slides in behind it)
+- Six more dot animations: bloom (swells into a large, soft disc as it sets off, drifts
+  across, and condenses back into a dot on the new desktop), ribbon (streams across trailing
+  a soft ribbon of light that draws out with speed and, being spring-driven, keeps its
+  momentum when you switch quickly), runway (lights come on one after another along the row
+  ahead of the dot and go out as it passes over each), skip (skips across like a stone on
+  water, each bounce lower than the last), blink (closes to a thin line like an eye shutting
+  and opens again on the new desktop), and wipe (a curtain sweeps along the row, wiping the
+  dot off the old desktop and painting it onto the new one)
 
 ### Changed
 - The gliding animations (stretch, glide, comet, ripple, glow, streak and elastic) now ease
