@@ -17,6 +17,20 @@ KCM.SimpleKCM {
     property int cfg_spacing
     property string cfg_dotAnimation
     property int cfg_animationSpeed
+
+    // The animations in alphabetical order, arranged so that the two-column grid below
+    // reads top to bottom: the first half of the list fills the left column, the rest
+    // the right one. (The grid itself fills row by row.)
+    readonly property var animationModes: {
+        const sorted = [...Animations.MODES].sort((a, b) => i18n(a.name).localeCompare(i18n(b.name)));
+        const rows = Math.ceil(sorted.length / 2);
+        const ordered = [];
+        for (let row = 0; row < rows; row++) {
+            ordered.push(sorted[row]);
+            if (row + rows < sorted.length) ordered.push(sorted[row + rows]);
+        }
+        return ordered;
+    }
     // Plasma also hands the page the defaults from main.xml (for its "Defaults" button),
     // and warns if there is nowhere to put them.
     property var cfg_labelStyleDefault
@@ -273,7 +287,7 @@ KCM.SimpleKCM {
                 rowSpacing: 0
 
                 Repeater {
-                    model: Animations.MODES
+                    model: page.animationModes
 
                     QQC2.RadioButton {
                         required property var modelData
