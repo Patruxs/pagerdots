@@ -5,7 +5,7 @@
 A minimal virtual desktop switcher for the KDE Plasma panel.
 A dot marks the current desktop, dimmed numbers show the rest.
 
-![Pager Dots in a Plasma panel](assets/screenshot.png)
+<img width="256" height="32" alt="paperdots" src="https://github.com/user-attachments/assets/a8e3dd85-ebff-48bb-bd03-a839d810ba80" />
 
 </div>
 
