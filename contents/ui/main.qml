@@ -73,16 +73,16 @@ PlasmoidItem {
             return cells.itemAt(root.currentIndex);
         }
 
-        FontMetrics { id: fm }
-        TextMetrics { id: measure; font: Kirigami.Theme.defaultFont }
+        FontMetrics { id: fm; font: Kirigami.Theme.defaultFont }
 
         // All cells share one width: the widest label of the current style (e.g. "VIII")
         // plus breathing room, so the row stays evenly spaced whatever the labels are.
+        // Measured through the method rather than a TextMetrics property, which would
+        // make this binding depend on a value it changes itself and so loop.
         readonly property real cellWidth: {
             let widest = 0;
             for (let i = 0; i < vdi.numberOfDesktops; i++) {
-                measure.text = root.labelFor(i);
-                widest = Math.max(widest, measure.advanceWidth);
+                widest = Math.max(widest, fm.advanceWidth(root.labelFor(i)));
             }
             return Math.max(Kirigami.Units.gridUnit * 1.4, Math.ceil(widest) + Kirigami.Units.largeSpacing);
         }

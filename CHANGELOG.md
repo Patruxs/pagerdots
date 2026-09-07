@@ -16,8 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   snaps back), streak (a light trail that fades behind the dot), and glow (a soft halo
   that blooms as the dot sets off and fades as it lands)
 - Animation speed slider in the settings, from half to double speed
+- Five more dot animations: fluid (a drop of liquid that stretches with speed and, being
+  driven by a spring rather than a timer, keeps its momentum when you switch desktops in
+  quick succession), bridge (spans both desktops for a moment, then draws in onto the new
+  one), blur (a motion-blur smear while moving), drop (the old dot falls away while a new
+  one drops in), and flip (turns over like a coin)
 
 ### Changed
+- The gliding animations (stretch, glide, comet, ripple, glow, streak and elastic) now ease
+  off the mark before decelerating, instead of jerking into motion at full speed
+- The dot animation is chosen from a drop-down list in the settings, with a description of
+  the chosen one underneath, rather than from a long column of radio buttons
 - The label under the dot now fades back in only once the dot has actually left it, and
   ducks quickly under the dot as it arrives, so the two no longer overlap mid-move
 - Dot shapes are drawn antialiased, for smoother edges while moving

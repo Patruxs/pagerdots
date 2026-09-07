@@ -154,31 +154,26 @@ KCM.SimpleKCM {
 
         Item { Kirigami.FormData.isSection: true }
 
-        QQC2.ButtonGroup { id: animationGroup }
-
-        // One radio button per dot animation, with a short description beside it.
-        Repeater {
+        // The dot animations, with a description of the chosen one underneath. The
+        // preview above plays it, so stepping through the list with the arrow keys or
+        // the mouse wheel shows each in turn.
+        QQC2.ComboBox {
+            id: animationBox
+            Kirigami.FormData.label: i18n("Dot animation:")
+            enabled: preview.useDot
             model: Animations.MODES
-
-            RowLayout {
-                required property var modelData
-                required property int index
-
-                Kirigami.FormData.label: index === 0 ? i18n("Dot animation:") : ""
-                enabled: preview.useDot
-                spacing: Kirigami.Units.largeSpacing
-
-                QQC2.RadioButton {
-                    QQC2.ButtonGroup.group: animationGroup
-                    text: i18n(modelData.name)
-                    checked: page.cfg_dotAnimation === modelData.id
-                    onToggled: if (checked) page.cfg_dotAnimation = modelData.id
-                }
-                QQC2.Label {
-                    text: i18n(modelData.description)
-                    opacity: 0.6
-                }
-            }
+            textRole: "name"
+            valueRole: "id"
+            currentIndex: Math.max(0, Animations.MODES.findIndex(m => m.id === page.cfg_dotAnimation))
+            onActivated: page.cfg_dotAnimation = currentValue
+        }
+        QQC2.Label {
+            Layout.preferredWidth: animationBox.width
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+            enabled: preview.useDot
+            text: i18n(Animations.MODES[animationBox.currentIndex]?.description ?? "")
+            wrapMode: Text.Wrap
+            opacity: 0.6
         }
 
         Item { Kirigami.FormData.isSection: true }
