@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings page (right-click → Configure Pager Dots…) with a choice of desktop label styles:
   numbers, letters (A B C), lowercase letters, roman numerals (I II III), lowercase roman
   numerals, Greek letters (α β γ), Chinese numerals (一 二 三), Hangul (ㄱ ㄴ ㄷ),
-  Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, squares, or blank
+  Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, or blank
 - Option to show the current desktop as its own label (bold) instead of a dot
 - The dot now animates to the new desktop instead of jumping, and the label underneath
   cross-fades. Eleven animations to choose from in the settings: stretch (the dot

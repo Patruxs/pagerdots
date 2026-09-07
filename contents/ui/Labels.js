@@ -16,7 +16,6 @@ const STYLES = [
     { id: "arabicIndic",  name: "Arabic-Indic digits", preview: "١ ٢ ٣ ٤" },
     { id: "bars",         name: "Bars",                preview: "▁ ▂ ▃ ▄" },
     { id: "dots",         name: "Dots",                preview: "○ ○ ○ ○" },
-    { id: "squares",      name: "Squares",             preview: "□ □ □ □" },
     { id: "blank",        name: "Blank",               preview: "" },
 ];
 
@@ -77,7 +76,6 @@ function labelFor(style, n) {
     case "arabicIndic":  return arabicIndic(n);
     case "bars":         return n >= 1 ? BARS[Math.min(n, BARS.length) - 1] : String(n);
     case "dots":         return "○";
-    case "squares":      return "□";
     case "blank":        return "";
     default:             return String(n);
     }

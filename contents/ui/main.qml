@@ -145,9 +145,10 @@ PlasmoidItem {
             color: Kirigami.Theme.textColor
             unit: Kirigami.Units.longDuration
             vertical: root.vertical
-            // "hop" jumps away from the screen edge, towards the desktop.
-            hopSign: Plasmoid.location === PlasmaCore.Types.TopEdge
-                  || Plasmoid.location === PlasmaCore.Types.LeftEdge ? 1 : -1
+            // "hop" jumps upwards in a horizontal panel, and away from the screen
+            // edge (towards the desktop) in a vertical one.
+            hopSign: !root.vertical ? -1
+                   : Plasmoid.location === PlasmaCore.Types.LeftEdge ? 1 : -1
             visible: root.useDot
         }
     }
