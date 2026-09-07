@@ -70,6 +70,18 @@ PlasmoidItem {
         }
 
         FontMetrics { id: fm }
+        TextMetrics { id: measure; font: Kirigami.Theme.defaultFont }
+
+        // All cells share one width: the widest label of the current style (e.g. "VIII")
+        // plus breathing room, so the row stays evenly spaced whatever the labels are.
+        readonly property real cellWidth: {
+            let widest = 0;
+            for (let i = 0; i < vdi.numberOfDesktops; i++) {
+                measure.text = root.labelFor(i);
+                widest = Math.max(widest, measure.advanceWidth);
+            }
+            return Math.max(Kirigami.Units.gridUnit * 1.4, Math.ceil(widest) + Kirigami.Units.largeSpacing);
+        }
 
         GridLayout {
             id: grid
@@ -95,16 +107,9 @@ PlasmoidItem {
 
                     Layout.fillHeight: !root.vertical
                     Layout.fillWidth: root.vertical
-                    // Wide enough for the label (e.g. "VIII") plus breathing room.
-                    Layout.minimumWidth: Math.max(Kirigami.Units.gridUnit * 1.4,
-                                                  metrics.advanceWidth + Kirigami.Units.largeSpacing)
+                    Layout.minimumWidth: view.cellWidth
                     Layout.minimumHeight: Kirigami.Units.gridUnit * 1.4
 
-                    TextMetrics {
-                        id: metrics
-                        font: label.font
-                        text: root.labelFor(cell.index)
-                    }
                     PC3.Label {
                         id: label
                         anchors.fill: parent
