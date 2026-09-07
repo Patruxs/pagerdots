@@ -47,7 +47,7 @@ Item {
     readonly property bool zips: animation === "zip"
     // How long the dot takes to leave the old cell and settle on the new one, so that
     // whatever is underneath can time its own fade to it.
-    readonly property int travel: fluid ? unit * 2.5
+    readonly property int travel: sprung ? unit * 2.5
                                 : slides ? Math.max(leadDelay + leadDuration, trailDelay + trailDuration)
                                 : sparks ? unit * 2.4
                                 : unit * 2
@@ -74,10 +74,10 @@ Item {
     // lead tracker races ahead while the trail one lags, so the dot elongates into a
     // pill towards the new desktop and then contracts onto it. "elastic", "streak" and
     // "fluid" draw the gap as a band, a fading streak or a liquid neck instead.
-    property real leadX: fluid ? sim.lx : cx
-    property real leadY: fluid ? sim.ly : cy
-    property real trailX: fluid ? sim.tx : cx
-    property real trailY: fluid ? sim.ty : cy
+    property real leadX: sprung ? sim.lx : cx
+    property real leadY: sprung ? sim.ly : cy
+    property real trailX: fluid ? sim.tx : floats ? sim.lx : cx
+    property real trailY: fluid ? sim.ty : floats ? sim.ly : cy
     // Where the head of the dot is drawn: the lead tracker, pulled back along the row
     // by `wind` while "slingshot" winds up.
     readonly property real headX: leadX + (vertical ? 0 : wind)
@@ -248,37 +248,39 @@ Item {
         id: leadMoverX
         current: dot.leadX
         span: dot.leadDuration
-        enabled: dot.ready && dot.slides && !dot.fluid
+        enabled: dot.ready && dot.slides && !dot.sprung
         LeadAnimation { cutIn: leadMoverX.cutIn; curve: leadMoverX.curve }
     }
     Mover on leadY {
         id: leadMoverY
         current: dot.leadY
         span: dot.leadDuration
-        enabled: dot.ready && dot.slides && !dot.fluid
+        enabled: dot.ready && dot.slides && !dot.sprung
         LeadAnimation { cutIn: leadMoverY.cutIn; curve: leadMoverY.curve }
     }
     Mover on trailX {
         id: trailMoverX
         current: dot.trailX
         span: dot.trailDuration
-        enabled: dot.ready && dot.slides && !dot.fluid
+        enabled: dot.ready && dot.slides && !dot.sprung
         TrailAnimation { curve: trailMoverX.curve }
     }
     Mover on trailY {
         id: trailMoverY
         current: dot.trailY
         span: dot.trailDuration
-        enabled: dot.ready && dot.slides && !dot.fluid
+        enabled: dot.ready && dot.slides && !dot.sprung
         TrailAnimation { curve: trailMoverY.curve }
     }
 
-    // "fluid": the lead and trail trackers are two damped springs pulled towards the
-    // target, the lead a stiff one and the trail a soft one, integrated every frame.
-    // The dot stretches in proportion to how fast it is moving and, unlike a timed
-    // animation, keeps its momentum when the target changes mid-flight, so rapid
-    // switching stays smooth. The constants are scaled so that the settle time
-    // follows `unit` like the other animations.
+    // "fluid" and "float": the lead and trail trackers are two damped springs pulled
+    // towards the target, integrated every frame. Unlike a timed animation, a spring
+    // keeps its momentum when the target changes mid-flight, so rapid switching stays
+    // smooth. In "fluid" the lead is a stiff spring and the trail a soft one, so the
+    // dot stretches in proportion to how fast it is moving; "float" only uses the lead,
+    // a softer and slightly underdamped spring, so the dot drifts over and eases to a
+    // stop with the faintest of overshoots. The constants are scaled so that the settle
+    // time follows `unit` like the other animations.
     FrameAnimation {
         id: sim
         running: false
@@ -299,8 +301,10 @@ Item {
         }
         onTriggered: {
             const s = 200 / Math.max(1, dot.unit);
-            const kl = 170 * s * s, cl = 23.5 * s;   // lead: stiff, just under critical damping
-            const kt = 90 * s * s, ct = 19 * s;      // trail: softer, critically damped
+            // lead: stiff, just under critical damping ("fluid"), or softer and a
+            // little less damped still ("float"); trail: softer, critically damped
+            const kl = (dot.floats ? 110 : 170) * s * s, cl = (dot.floats ? 18 : 23.5) * s;
+            const kt = 90 * s * s, ct = 19 * s;
             // Sub-step so that a stalled frame cannot blow the integration up.
             const dt = Math.min(frameTime, 0.05);
             const steps = Math.ceil(dt / 0.004), h = dt / steps;
@@ -317,7 +321,7 @@ Item {
         }
     }
     function retargetFluid() {
-        if (!fluid) return;
+        if (!sprung) return;
         if (ready) sim.start();
         else sim.snap();
     }
@@ -358,6 +362,23 @@ Item {
             placeGhost(old);
             flipAnim.restart();
             break;
+        case "bubble":
+            placeGhost(old);
+            bubbleAnim.restart();
+            break;
+        case "dive":
+            diveAnim.restart();
+            break;
+        case "footprints": {
+            // One print on the old cell and one on every cell between it and the new
+            // one, a cell's width apart, since all the cells are the same size.
+            const along = vertical ? target.y - old.y : target.x - old.x;
+            const span = vertical ? target.height : target.width;
+            printFrom = vertical ? old.y + old.height / 2 : old.x + old.width / 2;
+            printStep = span * (along < 0 ? -1 : 1);
+            printCount = Math.min(prints.count, Math.max(1, Math.round(Math.abs(along) / Math.max(1, span))));
+            break;
+        }
         case "ripple":
             ripple.restart();
             break;
@@ -414,6 +435,8 @@ Item {
         snapAnim.stop();
         slingAnim.stop();
         sparksAnim.stop();
+        bubbleAnim.stop();
+        diveAnim.stop();
         sim.snap();
         ghost.visible = false;
         ring.opacity = 0;
@@ -426,6 +449,44 @@ Item {
         flip = 1;
         wind = 0;
         swarmT = 0;
+        printCount = 0;
+    }
+
+    // "footprints": a faint print is left on each cell as the dot passes over it, and
+    // fades away behind it. The prints are laid out from the old cell towards the new
+    // one when the move starts, and each shows itself once the dot has gone by.
+    property real printFrom: 0
+    property real printStep: 0
+    property int printCount: 0
+    Repeater {
+        id: prints
+        model: 8
+        Rectangle {
+            id: mark
+            required property int index
+            readonly property real extent: dot.size * 0.85
+            readonly property real at: dot.printFrom + dot.printStep * index
+            readonly property real head: dot.vertical ? dot.headY : dot.headX
+            // Gone by: the dot has moved on from this cell in the direction of travel.
+            readonly property bool passed: index < dot.printCount
+                                           && (dot.printStep > 0 ? head > at + dot.size * 0.6
+                                                                 : head < at - dot.size * 0.6)
+            x: (dot.vertical ? dot.cx : at) - extent / 2
+            y: (dot.vertical ? at : dot.cy) - extent / 2
+            width: extent
+            height: extent
+            radius: extent / 2
+            color: dot.color
+            opacity: 0
+            visible: dot.animation === "footprints" && opacity > 0
+            antialiasing: true
+            onPassedChanged: if (passed) printFade.restart()
+            SequentialAnimation {
+                id: printFade
+                PropertyAction { target: mark; property: "opacity"; value: 0.5 }
+                NumberAnimation { target: mark; property: "opacity"; to: 0; duration: dot.unit * 3; easing.type: Easing.InQuad }
+            }
+        }
     }
 
     // "glow": a soft halo that blooms around the dot as it sets off and fades once it lands.
@@ -722,6 +783,20 @@ Item {
         NumberAnimation { target: dot; property: "lift"; to: 1; duration: dot.unit * 0.8; easing.type: Easing.OutBack; easing.overshoot: 2 }
     }
 
+    // "dive": the opposite of "lift". The dot sinks away as it sets off, small and
+    // faint as if passing beneath the row, and surfaces on the new cell.
+    ParallelAnimation {
+        id: diveAnim
+        SequentialAnimation {
+            NumberAnimation { target: dot; property: "lift"; to: 0.45; duration: dot.leadDuration * 0.4; easing.type: Easing.OutCubic }
+            NumberAnimation { target: dot; property: "lift"; to: 1; duration: dot.leadDuration * 0.6; easing.type: Easing.OutBack; easing.overshoot: 1.6 }
+        }
+        SequentialAnimation {
+            NumberAnimation { target: pill; property: "opacity"; to: 0.35; duration: dot.leadDuration * 0.4; easing.type: Easing.OutCubic }
+            NumberAnimation { target: pill; property: "opacity"; to: 1; duration: dot.leadDuration * 0.6; easing.type: Easing.OutQuad }
+        }
+    }
+
     // "elastic": once the band has snapped back into the dot, the dot wobbles from the impact.
     SequentialAnimation {
         id: elasticAnim
@@ -813,6 +888,37 @@ Item {
             NumberAnimation { target: dot; property: "hop"; from: dot.hopLift * 1.2; to: 0; duration: dot.unit * 0.9; easing.type: Easing.InQuad }
             NumberAnimation { target: dot; property: "hop"; to: dot.hopLift * 0.3; duration: dot.unit * 0.35; easing.type: Easing.OutQuad }
             NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.unit * 0.35; easing.type: Easing.InQuad }
+        }
+    }
+
+    // "bubble": the ghost floats up off the old cell, swelling until it pops, while a
+    // new dot rises from below onto the new cell and settles like a bubble surfacing.
+    ParallelAnimation {
+        id: bubbleAnim
+        SequentialAnimation {
+            PropertyAction { target: ghost; property: "opacity"; value: 1 }
+            PropertyAction { target: ghost; property: "scale"; value: 1 }
+            PropertyAction { target: ghost; property: "visible"; value: true }
+            ParallelAnimation {
+                NumberAnimation { target: ghost; property: "fall"; from: 0; to: -dot.hopLift * 0.9; duration: dot.unit * 0.9; easing.type: Easing.OutQuad }
+                NumberAnimation { target: ghost; property: "scale"; from: 1; to: 1.3; duration: dot.unit * 0.9; easing.type: Easing.InQuad }
+            }
+            ParallelAnimation {
+                NumberAnimation { target: ghost; property: "scale"; to: 1.7; duration: dot.unit * 0.25; easing.type: Easing.OutQuad }
+                NumberAnimation { target: ghost; property: "opacity"; to: 0; duration: dot.unit * 0.25; easing.type: Easing.OutQuad }
+            }
+            PropertyAction { target: ghost; property: "visible"; value: false }
+        }
+        SequentialAnimation {
+            PropertyAction { target: pill; property: "opacity"; value: 0 }
+            PropertyAction { target: dot; property: "hop"; value: -dot.hopLift }
+            PropertyAction { target: dot; property: "lift"; value: 0.5 }
+            PauseAnimation { duration: dot.unit * 0.5 }
+            ParallelAnimation {
+                NumberAnimation { target: pill; property: "opacity"; to: 1; duration: dot.unit * 0.5; easing.type: Easing.OutQuad }
+                NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.unit * 1.4; easing.type: Easing.OutBack; easing.overshoot: 1.4 }
+                NumberAnimation { target: dot; property: "lift"; to: 1; duration: dot.unit * 1.4; easing.type: Easing.OutBack; easing.overshoot: 1.4 }
+            }
         }
     }
 

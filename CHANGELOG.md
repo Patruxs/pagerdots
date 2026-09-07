@@ -26,12 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   snap (drawn in faster and faster, hits the new desktop with a squash and springs back to
   round), and sparks (bursts into sparks that fly across on their own arcs and gather into
   a new dot)
+- Four more dot animations: float (drifts over on a soft spring and eases to a stop, keeping
+  its momentum when you switch quickly), footprints (leaves a fading print on each desktop
+  it passes), dive (sinks away, passes beneath the desktops and surfaces on the new one),
+  and bubble (floats up and pops while a new dot bubbles up from below)
 
 ### Changed
 - The gliding animations (stretch, glide, comet, ripple, glow, streak and elastic) now ease
   off the mark before decelerating, instead of jerking into motion at full speed
-- The dot animation is chosen from a drop-down list in the settings, with a description of
-  the chosen one underneath, rather than from a long column of radio buttons
+- The settings page is laid out in two columns, label styles beside the dot options, and
+  the dot animations are picked from a two-column grid with a description of the chosen
+  one underneath (and of any other on hover), rather than from a long single column
 - Switching desktops while the dot is still on its way no longer stalls it: a move that cuts
   in on another sets off at speed instead of easing in again, so stepping quickly through
   desktops with the mouse wheel flows as one motion
