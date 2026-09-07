@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More label styles: Cyrillic letters (а б в), Heavenly Stems (甲 乙 丙), Hiragana (あ い う),
   Katakana (ア イ ウ), and "fill up to current", which fills the circles of every desktop up to
   the current one (● ● ○ ○) so the row reads like a progress bar
+- Five more dot animations: lift (picked up, carried over and set down), roll (rolls along
+  the row like a ball), elastic (tethered to the old desktop by a band that stretches and
+  snaps back), streak (a light trail that fades behind the dot), and glow (a soft halo
+  that blooms as the dot sets off and fades as it lands)
+- Animation speed slider in the settings, from half to double speed
+
+### Changed
+- The label under the dot now fades back in only once the dot has actually left it, and
+  ducks quickly under the dot as it arrives, so the two no longer overlap mid-move
+- Dot shapes are drawn antialiased, for smoother edges while moving
 
 ## [1.1.0] - 2026-09-07
 

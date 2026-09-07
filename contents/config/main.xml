@@ -18,5 +18,11 @@
     <entry name="dotAnimation" type="String">
       <default>stretch</default>
     </entry>
+    <!-- Speed of the dot animation as a percentage of normal: 50 is half speed, 200 double. -->
+    <entry name="animationSpeed" type="Int">
+      <default>100</default>
+      <min>25</min>
+      <max>400</max>
+    </entry>
   </group>
 </kcfg>

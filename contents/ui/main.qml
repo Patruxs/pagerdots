@@ -24,6 +24,10 @@ PlasmoidItem {
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
     readonly property string dotAnimation: Plasmoid.configuration.dotAnimation
     readonly property bool animated: dotAnimation !== "none"
+    // Base duration of the dot animations: Plasma's own, scaled by the speed setting
+    // (a percentage, so 50 plays at half speed and 200 at double).
+    readonly property int animationUnit:
+        Math.round(Kirigami.Units.longDuration * 100 / Math.max(25, Plasmoid.configuration.animationSpeed))
     // Whether the current desktop is marked by the gliding dot (as opposed to its bold label).
     // The "blank" style has no label to show, so it always uses the dot.
     readonly property bool useDot: dotForCurrent || labelStyle === "blank"
@@ -117,15 +121,22 @@ PlasmoidItem {
                         verticalAlignment: Text.AlignVCenter
                         text: root.labelFor(cell.index)
                         font.bold: cell.isCurrent && !root.useDot
-                        // The label under the dot fades out; the dot glides in over it.
-                        opacity: cell.isCurrent ? (root.useDot ? 0 : 1)
-                               : (mouse.containsMouse ? 1 : root.dimOpacity)
-                        scale: cell.isCurrent && root.useDot ? 0.6 : 1
-                        Behavior on opacity {
+                        // 1 while the label is on show, 0 while the dot covers it.
+                        property real shown: cell.isCurrent && root.useDot ? 0 : 1
+                        property real emphasis: cell.isCurrent || mouse.containsMouse ? 1 : root.dimOpacity
+                        opacity: shown * emphasis
+                        scale: 0.6 + 0.4 * shown
+                        // The label ducks quickly under the arriving dot, and comes back
+                        // slowly enough that the dot has left before it shows again.
+                        Behavior on shown {
+                            id: shownBehavior
                             enabled: root.animated
-                            NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+                            NumberAnimation {
+                                duration: shownBehavior.targetValue === 0 ? Kirigami.Units.longDuration : dot.travel
+                                easing.type: shownBehavior.targetValue === 0 ? Easing.OutCubic : Easing.InCubic
+                            }
                         }
-                        Behavior on scale {
+                        Behavior on emphasis {
                             enabled: root.animated
                             NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
                         }
@@ -143,12 +154,14 @@ PlasmoidItem {
         // The current-desktop dot. One item for the whole widget, laid over the
         // current cell, so a desktop change animates instead of jumping.
         Dot {
+            id: dot
             anchors.fill: parent
             target: view.currentCell
             animation: root.dotAnimation
             size: Math.max(4, Math.round(fm.height * 0.45))
             color: Kirigami.Theme.textColor
-            unit: Kirigami.Units.longDuration
+            backgroundColor: Kirigami.Theme.backgroundColor
+            unit: root.animationUnit
             vertical: root.vertical
             // "hop" jumps upwards in a horizontal panel, and away from the screen
             // edge (towards the desktop) in a vertical one.

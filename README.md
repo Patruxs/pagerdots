@@ -13,7 +13,7 @@ A dot marks the current desktop, dimmed numbers show the rest.
 
 - Every virtual desktop shown as a label, with a dot for the current one
 - Choice of label style: numbers, letters (A B C), roman numerals (I II III), Greek (α β γ), Cyrillic (а б в), Chinese (一 二 三), Heavenly Stems (甲 乙 丙), Hiragana (あ い う), Katakana (ア イ ウ), Hangul (ㄱ ㄴ ㄷ), Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, fill up to current (● ● ○ ○), or blank
-- Smooth dot animation between desktops, with a choice of style: stretch, glide, comet, ripple, hop, jelly, spring, bounce, pop, fade, or none
+- Smooth dot animation between desktops, with a choice of style: stretch, glide, lift, roll, elastic, streak, glow, comet, ripple, hop, jelly, spring, bounce, pop, fade, or none, and a speed slider
 - Click a desktop to switch to it
 - Scroll the mouse wheel over the widget to step through desktops (wraps around)
 - Hover to see the desktop name in a tooltip
@@ -56,7 +56,7 @@ To remove the widget, run `kpackagetool6 -t Plasma/Applet -r pat.pagerdots`.
 
 1. Right-click the panel and choose **Add Widgets…**
 2. Search for **Pager Dots** and drag it onto the panel
-3. Right-click the widget and choose **Configure Pager Dots…** to pick a label style and the dot animation; the preview at the top plays your choices live
+3. Right-click the widget and choose **Configure Pager Dots…** to pick a label style, the dot animation and its speed; the preview at the top plays your choices live
 
 ## Development
 
