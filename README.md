@@ -11,12 +11,13 @@ A dot marks the current desktop, dimmed numbers show the rest.
 
 ## Features
 
-- Every virtual desktop shown as a number, with a dot for the current one
+- Every virtual desktop shown as a label, with a dot for the current one
+- Choice of label style: numbers, letters (A B C), roman numerals (I II III), Greek (α β γ), Chinese (一 二 三), Hangul (ㄱ ㄴ ㄷ), Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, squares, or blank
 - Click a desktop to switch to it
 - Scroll the mouse wheel over the widget to step through desktops (wraps around)
 - Hover to see the desktop name in a tooltip
 - Works in horizontal and vertical panels
-- Follows your Plasma colour scheme and font, no configuration needed
+- Follows your Plasma colour scheme and font
 
 ## Requirements
 
@@ -36,7 +37,7 @@ A dot marks the current desktop, dimmed numbers show the rest.
 Download the `.plasmoid` file from the [releases page](https://github.com/Patruxs/pagerdots/releases), then run:
 
 ```sh
-kpackagetool6 -t Plasma/Applet -i pat.pagerdots-1.0.0.plasmoid
+kpackagetool6 -t Plasma/Applet -i pat.pagerdots-1.1.0.plasmoid
 ```
 
 ### From source
@@ -54,6 +55,7 @@ To remove the widget, run `kpackagetool6 -t Plasma/Applet -r pat.pagerdots`.
 
 1. Right-click the panel and choose **Add Widgets…**
 2. Search for **Pager Dots** and drag it onto the panel
+3. Right-click the widget and choose **Configure Pager Dots…** to pick a label style
 
 ## Development
 
