@@ -21,12 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   quick succession), bridge (spans both desktops for a moment, then draws in onto the new
   one), blur (a motion-blur smear while moving), drop (the old dot falls away while a new
   one drops in), and flip (turns over like a coin)
+- Four more dot animations: slingshot (draws back from the new desktop, stretching like the
+  band of a slingshot, then shoots over and settles), zip (streaks across as a fine line),
+  snap (drawn in faster and faster, hits the new desktop with a squash and springs back to
+  round), and sparks (bursts into sparks that fly across on their own arcs and gather into
+  a new dot)
 
 ### Changed
 - The gliding animations (stretch, glide, comet, ripple, glow, streak and elastic) now ease
   off the mark before decelerating, instead of jerking into motion at full speed
 - The dot animation is chosen from a drop-down list in the settings, with a description of
   the chosen one underneath, rather than from a long column of radio buttons
+- Switching desktops while the dot is still on its way no longer stalls it: a move that cuts
+  in on another sets off at speed instead of easing in again, so stepping quickly through
+  desktops with the mouse wheel flows as one motion
 
 ### Fixed
 - The cell width measured its labels through a property it was itself changing, so Plasma

@@ -131,96 +131,120 @@ KCM.SimpleKCM {
         }
     }
 
-    Kirigami.FormLayout {
-        QQC2.ButtonGroup { id: styleGroup }
+    // Two columns, so that the label styles and the dot options are visible together
+    // without scrolling from one to the other.
+    RowLayout {
+        spacing: Kirigami.Units.gridUnit * 2
 
-        // One radio button per style, with a dimmed preview of its labels beside it.
-        Repeater {
-            model: Labels.STYLES
+        Kirigami.FormLayout {
+            Layout.alignment: Qt.AlignTop
 
+            QQC2.ButtonGroup { id: styleGroup }
+
+            // One radio button per style, with a dimmed preview of its labels beside it.
+            Repeater {
+                model: Labels.STYLES
+
+                RowLayout {
+                    required property var modelData
+                    required property int index
+
+                    Kirigami.FormData.label: index === 0 ? i18n("Desktop labels:") : ""
+                    spacing: Kirigami.Units.largeSpacing
+
+                    QQC2.RadioButton {
+                        QQC2.ButtonGroup.group: styleGroup
+                        text: i18n(modelData.name)
+                        checked: page.cfg_labelStyle === modelData.id
+                        onToggled: if (checked) page.cfg_labelStyle = modelData.id
+                    }
+                    QQC2.Label {
+                        text: modelData.preview
+                        opacity: 0.6
+                    }
+                }
+            }
+        }
+
+        Kirigami.FormLayout {
+            Layout.alignment: Qt.AlignTop
+
+            QQC2.CheckBox {
+                Kirigami.FormData.label: i18n("Current desktop:")
+                text: i18n("Show as a dot instead of its label")
+                checked: page.cfg_dotForCurrent
+                onToggled: page.cfg_dotForCurrent = checked
+            }
+
+            Item { Kirigami.FormData.isSection: true }
+
+            QQC2.ButtonGroup { id: animationGroup }
+
+            // The dot animations as a two-column grid of radio buttons. Hovering one shows
+            // its description; the preview above plays whichever is selected.
+            GridLayout {
+                Kirigami.FormData.label: i18n("Dot animation:")
+                enabled: preview.useDot
+                columns: 2
+                columnSpacing: Kirigami.Units.largeSpacing
+                rowSpacing: 0
+
+                Repeater {
+                    model: Animations.MODES
+
+                    QQC2.RadioButton {
+                        required property var modelData
+
+                        QQC2.ButtonGroup.group: animationGroup
+                        text: i18n(modelData.name)
+                        checked: page.cfg_dotAnimation === modelData.id
+                        onToggled: if (checked) page.cfg_dotAnimation = modelData.id
+
+                        QQC2.ToolTip.text: i18n(modelData.description)
+                        QQC2.ToolTip.visible: hovered
+                        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                    }
+                }
+            }
+            QQC2.Label {
+                Layout.maximumWidth: Kirigami.Units.gridUnit * 20
+                enabled: preview.useDot
+                text: i18n(Animations.MODES.find(m => m.id === page.cfg_dotAnimation)?.description ?? "")
+                wrapMode: Text.Wrap
+                opacity: 0.6
+            }
+
+            Item { Kirigami.FormData.isSection: true }
+
+            // Speed as a percentage of Plasma's default animation speed.
             RowLayout {
-                required property var modelData
-                required property int index
-
-                Kirigami.FormData.label: index === 0 ? i18n("Desktop labels:") : ""
+                Kirigami.FormData.label: i18n("Animation speed:")
+                enabled: preview.useDot && preview.animated
                 spacing: Kirigami.Units.largeSpacing
 
-                QQC2.RadioButton {
-                    QQC2.ButtonGroup.group: styleGroup
-                    text: i18n(modelData.name)
-                    checked: page.cfg_labelStyle === modelData.id
-                    onToggled: if (checked) page.cfg_labelStyle = modelData.id
-                }
                 QQC2.Label {
-                    text: modelData.preview
+                    text: i18n("Slower")
                     opacity: 0.6
                 }
-            }
-        }
-
-        Item { Kirigami.FormData.isSection: true }
-
-        QQC2.CheckBox {
-            Kirigami.FormData.label: i18n("Current desktop:")
-            text: i18n("Show as a dot instead of its label")
-            checked: page.cfg_dotForCurrent
-            onToggled: page.cfg_dotForCurrent = checked
-        }
-
-        Item { Kirigami.FormData.isSection: true }
-
-        // The dot animations, with a description of the chosen one underneath. The
-        // preview above plays it, so stepping through the list with the arrow keys or
-        // the mouse wheel shows each in turn.
-        QQC2.ComboBox {
-            id: animationBox
-            Kirigami.FormData.label: i18n("Dot animation:")
-            enabled: preview.useDot
-            model: Animations.MODES
-            textRole: "name"
-            valueRole: "id"
-            currentIndex: Math.max(0, Animations.MODES.findIndex(m => m.id === page.cfg_dotAnimation))
-            onActivated: page.cfg_dotAnimation = currentValue
-        }
-        QQC2.Label {
-            Layout.preferredWidth: animationBox.width
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-            enabled: preview.useDot
-            text: i18n(Animations.MODES[animationBox.currentIndex]?.description ?? "")
-            wrapMode: Text.Wrap
-            opacity: 0.6
-        }
-
-        Item { Kirigami.FormData.isSection: true }
-
-        // Speed as a percentage of Plasma's default animation speed.
-        RowLayout {
-            Kirigami.FormData.label: i18n("Animation speed:")
-            enabled: preview.useDot && preview.animated
-            spacing: Kirigami.Units.largeSpacing
-
-            QQC2.Label {
-                text: i18n("Slower")
-                opacity: 0.6
-            }
-            QQC2.Slider {
-                id: speedSlider
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 12
-                from: 50
-                to: 200
-                stepSize: 25
-                snapMode: QQC2.Slider.SnapAlways
-                value: page.cfg_animationSpeed
-                onMoved: page.cfg_animationSpeed = value
-            }
-            QQC2.Label {
-                text: i18n("Faster")
-                opacity: 0.6
-            }
-            QQC2.Label {
-                Layout.preferredWidth: Kirigami.Units.gridUnit * 3
-                horizontalAlignment: Text.AlignRight
-                text: i18nc("animation speed as a percentage", "%1%", page.cfg_animationSpeed)
+                QQC2.Slider {
+                    id: speedSlider
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 8
+                    from: 50
+                    to: 200
+                    stepSize: 25
+                    snapMode: QQC2.Slider.SnapAlways
+                    value: page.cfg_animationSpeed
+                    onMoved: page.cfg_animationSpeed = value
+                }
+                QQC2.Label {
+                    text: i18n("Faster")
+                    opacity: 0.6
+                }
+                QQC2.Label {
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                    horizontalAlignment: Text.AlignRight
+                    text: i18nc("animation speed as a percentage", "%1%", page.cfg_animationSpeed)
+                }
             }
         }
     }
