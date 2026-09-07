@@ -27,11 +27,12 @@ Item {
     property bool vertical: false
     property real hopSign: -1
 
-    // "pop", "fade", "drop", "flip", "bubble", "sparks" and "ring" swap the dot in place;
-    // everything else moves it across the panel.
+    // "pop", "fade", "shift", "drop", "flip", "bubble", "sparks", "pour" and "ring" swap
+    // the dot in place; everything else moves it across the panel.
     readonly property bool swaps: animation === "pop" || animation === "fade"
-                                  || animation === "drop" || animation === "flip"
-                                  || animation === "bubble" || animation === "sparks"
+                                  || animation === "shift" || animation === "drop"
+                                  || animation === "flip" || animation === "bubble"
+                                  || animation === "sparks" || animation === "pour"
                                   || animation === "ring"
     readonly property bool slides: !swaps && animation !== "none"
     // "fluid" and "float" are driven by a spring simulation (see `sim`) rather than the
@@ -349,6 +350,17 @@ Item {
     property real squish: 1     // scale along the row; the dot thins across it to compensate
     property real lift: 1       // uniform scale while "lift" carries the dot over
     property real flip: 1       // scale along the row while "flip" turns the dot over
+    property real along: 0      // offset along the row while "shift" slides the new dot in
+
+    // "tumble": the dot turns over like a coin as it crosses. `tumbleT` is the phase of
+    // that turn (one full turn per move), and the face is periodic in it, so a move that
+    // cuts in on another carries on turning from where it was. The back face is drawn a
+    // little lighter, so the turning shows even when the dot is not edge-on.
+    readonly property bool tumbles: animation === "tumble"
+    property real tumbleT: 0
+    readonly property real tumbleFace: Math.cos(2 * Math.PI * tumbleT)
+    readonly property real tumbleScale: tumbles ? Math.max(0.12, Math.abs(tumbleFace)) : 1
+    readonly property real tumbleShade: tumbles ? 0.45 * Math.max(0, -tumbleFace) : 0
 
     // "loop": the dot loops the loop once on its way over. `curl` is the phase of that
     // loop in turns, and the offsets are periodic in it, so a move that cuts in on
@@ -400,6 +412,30 @@ Item {
         case "swing":
             swingAnim.restart();
             break;
+        case "arc":
+            arcAnim.restart();
+            break;
+        case "beacon":
+            beaconAnim.restart();
+            break;
+        case "tumble":
+            // On to the next whole turn, so the dot lands face up; a move cutting in
+            // mid-turn carries on from where it was, and turns at least half a turn more.
+            tumbleAnim.from = tumbleT;
+            tumbleAnim.to = Math.ceil(tumbleT + 0.5);
+            tumbleAnim.restart();
+            break;
+        case "shift":
+            placeGhost(old);
+            shiftDist = size * 1.6 * (vertical ? (target.y < old.y ? -1 : 1) : (target.x < old.x ? -1 : 1));
+            shiftAnim.restart();
+            break;
+        case "pour":
+            placeGhost(old);
+            fromX = old.x + old.width / 2;
+            fromY = old.y + old.height / 2;
+            pourAnim.restart();
+            break;
         case "wave":
             waveAnim.restart();
             break;
@@ -420,8 +456,8 @@ Item {
             pulseAnim.restart();
             break;
         case "ring": {
-            irisFromX = old.x + old.width / 2;
-            irisFromY = old.y + old.height / 2;
+            fromX = old.x + old.width / 2;
+            fromY = old.y + old.height / 2;
             // Cutting in while a ring is still closing on the old cell: open back out
             // from wherever it got to, rather than from a dot that was never there.
             const closing = ringAnim.running;
@@ -483,6 +519,7 @@ Item {
         ghost.baseX = cell.x + (cell.width - size) / 2;
         ghost.baseY = cell.y + (cell.height - size) / 2;
         ghost.fall = 0;
+        ghost.slide = 0;
         ghost.flip = 1;
     }
     // A mode change mid-animation must not leave the dot half faded, squashed or lifted.
@@ -507,12 +544,19 @@ Item {
         orbitAnim.stop();
         loopAnim.stop();
         ringAnim.stop();
+        arcAnim.stop();
+        beaconAnim.stop();
+        tumbleAnim.stop();
+        shiftAnim.stop();
+        pourAnim.stop();
         sim.snap();
         ghost.visible = false;
         irisOut.visible = false;
         irisIn.visible = false;
         ring.opacity = 0;
         halo.opacity = 0;
+        beacon.opacity = 0;
+        beaconRing.opacity = 0;
         pill.opacity = 1;
         pill.scale = 1;
         hop = 0;
@@ -520,7 +564,10 @@ Item {
         lift = 1;
         flip = 1;
         wind = 0;
+        along = 0;
         curl = 0;
+        tumbleT = 0;
+        pourT = 0;
         orbitT = 0;
         swarmT = 0;
         printCount = 0;
@@ -779,11 +826,13 @@ Item {
         }
     }
 
+    // Centre of the old cell, for the swaps that draw something between the two cells.
+    property real fromX: 0
+    property real fromY: 0
+
     // "ring": the dot on the old cell opens out into a ring that spreads and fades, while
     // a ring closes in on the new cell and fills to become the dot. `fill` is how solid
     // the disc inside the ring is: 1 for a dot, 0 for a bare ring.
-    property real irisFromX: 0
-    property real irisFromY: 0
     component Iris: Rectangle {
         property real extent: dot.size
         property real fill: 1
@@ -799,8 +848,8 @@ Item {
     Iris {
         id: irisOut
         objectName: "irisOut"
-        x: dot.irisFromX - extent / 2
-        y: dot.irisFromY - extent / 2
+        x: dot.fromX - extent / 2
+        y: dot.fromY - extent / 2
     }
     Iris {
         id: irisIn
@@ -840,18 +889,127 @@ Item {
         }
     }
 
+    // "beacon": a faint marker lights up on the new cell as soon as the move starts and a
+    // ring pulses out from it, calling the dot over; the dot glides across and takes its
+    // place, and the marker fades under it as it lands.
+    readonly property bool beacons: animation === "beacon"
+    Rectangle {
+        id: beacon
+        objectName: "beacon"
+        x: dot.cx - dot.size / 2
+        y: dot.cy - dot.size / 2
+        width: dot.size
+        height: dot.size
+        radius: dot.size / 2
+        color: dot.color
+        opacity: 0
+        visible: opacity > 0
+        antialiasing: true
+    }
+    Rectangle {
+        id: beaconRing
+        objectName: "beaconRing"
+        property real extent: dot.size
+        x: dot.cx - extent / 2
+        y: dot.cy - extent / 2
+        width: extent
+        height: extent
+        radius: extent / 2
+        color: "transparent"
+        border.color: dot.color
+        border.width: Math.max(1, dot.size / 5)
+        opacity: 0
+        visible: opacity > 0
+        antialiasing: true
+    }
+    ParallelAnimation {
+        id: beaconAnim
+        SequentialAnimation {
+            ParallelAnimation {
+                NumberAnimation { target: beacon; property: "opacity"; from: 0; to: 0.45; duration: dot.unit * 0.4; easing.type: Easing.OutQuad }
+                NumberAnimation { target: beacon; property: "scale"; from: 0.3; to: 1; duration: dot.unit * 0.6; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+            }
+            PauseAnimation { duration: Math.max(0, dot.leadDuration - dot.unit * 1.1) }
+            NumberAnimation { target: beacon; property: "opacity"; to: 0; duration: dot.unit * 0.5; easing.type: Easing.OutQuad }
+        }
+        ParallelAnimation {
+            NumberAnimation { target: beaconRing; property: "extent"; from: dot.size * 0.8; to: dot.size * 3.2; duration: dot.unit * 1.8; easing.type: Easing.OutCubic }
+            NumberAnimation { target: beaconRing; property: "opacity"; from: 0.6; to: 0; duration: dot.unit * 1.8; easing.type: Easing.InQuad }
+        }
+    }
+
+    // "pour": the dot drains from the old cell into the new one. The ghost shrinks on the
+    // old cell as the dot grows on the new one, joined by a thin stream that is thickest
+    // while the two are the same size, and a bead runs down the stream to show the flow.
+    readonly property bool pours: animation === "pour"
+    property real pourT: 0
+    Rectangle {
+        id: stream
+        objectName: "stream"
+        readonly property real flow: Math.sqrt(Math.max(0, 4 * ghost.scale * pill.scale))
+        readonly property real thickness: Math.max(1, dot.size * 0.3) * Math.min(1, flow)
+        readonly property real span: dot.vertical ? Math.abs(dot.cy - dot.fromY) : Math.abs(dot.cx - dot.fromX)
+        x: dot.vertical ? dot.cx - thickness / 2 : Math.min(dot.cx, dot.fromX)
+        y: dot.vertical ? Math.min(dot.cy, dot.fromY) : dot.cy - thickness / 2
+        width: dot.vertical ? thickness : span
+        height: dot.vertical ? span : thickness
+        radius: thickness / 2
+        // Fainter in the middle, so the thread seems to thin between the two drops.
+        gradient: Gradient {
+            orientation: dot.vertical ? Gradient.Vertical : Gradient.Horizontal
+            GradientStop { position: 0; color: Qt.alpha(dot.color, 0.85) }
+            GradientStop { position: 0.5; color: Qt.alpha(dot.color, 0.3) }
+            GradientStop { position: 1; color: Qt.alpha(dot.color, 0.85) }
+        }
+        visible: dot.pours && pourAnim.running && thickness > 0.3
+        antialiasing: true
+    }
+    Rectangle {
+        id: bead
+        objectName: "bead"
+        readonly property real extent: dot.size * 0.6
+        // Eased in and out, so the bead leaves the shrinking dot gently and slows into the growing one.
+        readonly property real e: dot.pourT < 0.5 ? 2 * dot.pourT * dot.pourT : 1 - Math.pow(-2 * dot.pourT + 2, 2) / 2
+        x: dot.fromX + (dot.cx - dot.fromX) * e - extent / 2
+        y: dot.fromY + (dot.cy - dot.fromY) * e - extent / 2
+        width: extent
+        height: extent
+        radius: extent / 2
+        color: dot.color
+        opacity: Math.min(1, dot.pourT * 8, (1 - dot.pourT) * 8)
+        visible: dot.pours && pourAnim.running
+        antialiasing: true
+    }
+    ParallelAnimation {
+        id: pourAnim
+        SequentialAnimation {
+            PropertyAction { target: ghost; property: "opacity"; value: 1 }
+            PropertyAction { target: ghost; property: "scale"; value: 1 }
+            PropertyAction { target: ghost; property: "visible"; value: true }
+            NumberAnimation { target: ghost; property: "scale"; to: 0; duration: dot.unit * 1.8; easing.type: Easing.InOutSine }
+            PropertyAction { target: ghost; property: "visible"; value: false }
+        }
+        SequentialAnimation {
+            PropertyAction { target: pill; property: "scale"; value: 0 }
+            PauseAnimation { duration: dot.unit * 0.3 }
+            NumberAnimation { target: pill; property: "scale"; to: 1; duration: dot.unit * 1.7; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+        }
+        NumberAnimation { target: dot; property: "pourT"; from: 0; to: 1; duration: dot.unit * 1.6 }
+    }
+
     // Copy of the dot left on the old cell during a swap, animating out. `fall` moves
-    // it across the row, away from where "hop" jumps to (for "drop"); `flip` turns it
-    // edge-on (for "flip").
+    // it across the row, away from where "hop" jumps to (for "drop"); `slide` moves it
+    // along the row (for "shift"); `flip` turns it edge-on (for "flip").
     Rectangle {
         id: ghost
         objectName: "ghost"
         property real baseX: 0
         property real baseY: 0
         property real fall: 0
+        property real slide: 0
         property real flip: 1
-        x: baseX + (dot.vertical ? -fall * dot.hopSign : 0)
-        y: baseY + (dot.vertical ? 0 : -fall * dot.hopSign)
+        x: baseX + (dot.vertical ? -fall * dot.hopSign : slide)
+        y: baseY + (dot.vertical ? slide : -fall * dot.hopSign)
         width: dot.size
         height: dot.size
         radius: dot.size / 2
@@ -874,21 +1032,23 @@ Item {
         readonly property real length: dot.round ? 0 : dot.gap
         readonly property real start: dot.round ? (dot.vertical ? dot.dotY : dot.dotX) : dot.gapStart
         x: (dot.vertical ? dot.dotX : start) - dot.thickness / 2
-           + (dot.vertical ? (dot.hop + dot.curlAcross) * dot.hopSign : dot.curlAlong)
+           + (dot.vertical ? (dot.hop + dot.curlAcross) * dot.hopSign : dot.curlAlong + dot.along)
         y: (dot.vertical ? start : dot.dotY) - dot.thickness / 2
-           + (dot.vertical ? dot.curlAlong : (dot.hop + dot.curlAcross) * dot.hopSign)
+           + (dot.vertical ? dot.curlAlong + dot.along : (dot.hop + dot.curlAcross) * dot.hopSign)
         width: (dot.vertical ? 0 : length) + dot.thickness
         height: (dot.vertical ? length : 0) + dot.thickness
         radius: dot.thickness / 2
-        color: dot.color
+        color: Qt.alpha(dot.color, 1 - dot.tumbleShade)
         visible: dot.target !== null
         transformOrigin: Item.Center
         antialiasing: true
+        // `turn` is the scale along the row from the dot being turned over, by "flip" or "tumble".
+        readonly property real turn: dot.flip * dot.tumbleScale
         transform: Scale {
             origin.x: pill.width / 2
             origin.y: pill.height / 2
-            xScale: (dot.vertical ? 1 / dot.squish : dot.squish * dot.flip) * dot.lift
-            yScale: (dot.vertical ? dot.squish * dot.flip : 1 / dot.squish) * dot.lift
+            xScale: (dot.vertical ? 1 / dot.squish : dot.squish * pill.turn) * dot.lift
+            yScale: (dot.vertical ? dot.squish * pill.turn : 1 / dot.squish) * dot.lift
         }
 
         // "roll": a spot of the background off the dot's centre, turned in proportion
@@ -931,6 +1091,20 @@ Item {
         NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.leadDuration / 2; easing.type: Easing.InSine }
     }
 
+    // "arc": a gentler cousin of "hop". The dot rises over the row in a shallow arc,
+    // growing a little at the top as if coming towards the eye, and settles without a bump.
+    ParallelAnimation {
+        id: arcAnim
+        SequentialAnimation {
+            NumberAnimation { target: dot; property: "hop"; to: dot.hopLift * 0.75; duration: dot.leadDuration / 2; easing.type: Easing.OutSine }
+            NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.leadDuration / 2; easing.type: Easing.InSine }
+        }
+        SequentialAnimation {
+            NumberAnimation { target: dot; property: "lift"; to: 1.3; duration: dot.leadDuration / 2; easing.type: Easing.OutSine }
+            NumberAnimation { target: dot; property: "lift"; to: 1; duration: dot.leadDuration / 2; easing.type: Easing.InSine }
+        }
+    }
+
     // "wave": the dot undulates across the row as it crosses, as if carried on a wave,
     // and levels out as it settles.
     SequentialAnimation {
@@ -950,6 +1124,19 @@ Item {
         duration: dot.leadDuration * 0.9
         easing.type: Easing.InOutSine
         onFinished: dot.curl = 0
+    }
+
+    // "tumble": one full turn of the coin per move (see `tumbleT` above), timed to the
+    // slide so that it turns fastest mid-way and settles face up as it lands. It rests at 0
+    // so that a mode change leaves the dot face up.
+    NumberAnimation {
+        id: tumbleAnim
+        target: dot
+        property: "tumbleT"
+        duration: dot.leadDuration
+        easing.type: Easing.BezierSpline
+        easing.bezierCurve: dot.smoothCurve
+        onFinished: dot.tumbleT = 0
     }
 
     // "orbit": a smaller dot peels off as the dot sets off, circles it twice on the way
@@ -1095,6 +1282,33 @@ Item {
             duration: swap.fading ? dot.unit * 1.25 : dot.unit * 1.5
             easing.type: swap.fading ? Easing.OutCubic : Easing.OutBack
             easing.overshoot: 2.5
+        }
+    }
+
+    // "shift": the old dot slips a little way onwards and fades, while a new one fades in
+    // just short of the new cell and slides the last stretch onto it, in the same
+    // direction, so the eye reads one dot handing over to the next.
+    property real shiftDist: 0
+    ParallelAnimation {
+        id: shiftAnim
+        SequentialAnimation {
+            PropertyAction { target: ghost; property: "opacity"; value: 1 }
+            PropertyAction { target: ghost; property: "scale"; value: 1 }
+            PropertyAction { target: ghost; property: "visible"; value: true }
+            ParallelAnimation {
+                NumberAnimation { target: ghost; property: "slide"; from: 0; to: dot.shiftDist; duration: dot.unit * 1.2; easing.type: Easing.OutCubic }
+                NumberAnimation { target: ghost; property: "opacity"; to: 0; duration: dot.unit * 0.9; easing.type: Easing.InOutSine }
+            }
+            PropertyAction { target: ghost; property: "visible"; value: false }
+        }
+        SequentialAnimation {
+            PropertyAction { target: pill; property: "opacity"; value: 0 }
+            PropertyAction { target: dot; property: "along"; value: -dot.shiftDist }
+            PauseAnimation { duration: dot.unit * 0.15 }
+            ParallelAnimation {
+                NumberAnimation { target: pill; property: "opacity"; to: 1; duration: dot.unit * 1.0; easing.type: Easing.OutQuad }
+                NumberAnimation { target: dot; property: "along"; to: 0; duration: dot.unit * 1.6; easing.type: Easing.BezierSpline; easing.bezierCurve: dot.smoothCurve }
+            }
         }
     }
 

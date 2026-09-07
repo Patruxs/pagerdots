@@ -17,6 +17,13 @@ KCM.SimpleKCM {
     property int cfg_spacing
     property string cfg_dotAnimation
     property int cfg_animationSpeed
+    // Plasma also hands the page the defaults from main.xml (for its "Defaults" button),
+    // and warns if there is nowhere to put them.
+    property var cfg_labelStyleDefault
+    property var cfg_dotForCurrentDefault
+    property var cfg_spacingDefault
+    property var cfg_dotAnimationDefault
+    property var cfg_animationSpeedDefault
 
     // The preview lives in the page header rather than in the form, so it stays in
     // view while the options below are scrolled through.

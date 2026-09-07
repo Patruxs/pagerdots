@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   settles), orbit (a smaller dot peels off, circles the dot as it crosses, and merges back
   into it), wake (a ring ripples out from every desktop it passes, and from the one it lands
   on), and loop (loops the loop once on its way over)
+- Five more dot animations: arc (rises over the row in a gentle arc, growing a little at the
+  top, and settles softly), beacon (a marker lights up on the new desktop and a ring pulses
+  out from it, and the dot glides over to take its place), tumble (turns over like a coin as
+  it crosses, its lighter face showing on the way), pour (drains from the old desktop into
+  the new one down a thin stream, shrinking on one as it grows on the other), and shift (the
+  old dot slips onwards and fades while a new one slides in behind it)
 
 ### Changed
 - The gliding animations (stretch, glide, comet, ripple, glow, streak and elastic) now ease
@@ -51,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   desktops with the mouse wheel flows as one motion
 
 ### Fixed
+- The settings page no longer logs a warning for each option's default value when it opens
 - The cell width measured its labels through a property it was itself changing, so Plasma
   logged a binding-loop warning and re-laid the cells out on every desktop switch
 - The label under the dot now fades back in only once the dot has actually left it, and
