@@ -30,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   its momentum when you switch quickly), footprints (leaves a fading print on each desktop
   it passes), dive (sinks away, passes beneath the desktops and surfaces on the new one),
   and bubble (floats up and pops while a new dot bubbles up from below)
+- Four more dot animations: pulse (slides over and swells briefly as it settles, like a
+  heartbeat), swing (swings over in a smooth arc, like a pendulum), rail (a line shoots out
+  to the new desktop and the dot slides along it, taking it in), and ring (the dot opens out
+  into a ring that fades from the old desktop, while a ring closes in and fills to a dot on
+  the new one)
 
 ### Changed
 - The gliding animations (stretch, glide, comet, ripple, glow, streak and elastic) now ease

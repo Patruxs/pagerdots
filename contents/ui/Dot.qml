@@ -27,22 +27,25 @@ Item {
     property bool vertical: false
     property real hopSign: -1
 
-    // "pop", "fade", "drop", "flip", "bubble" and "sparks" swap the dot in place;
+    // "pop", "fade", "drop", "flip", "bubble", "sparks" and "ring" swap the dot in place;
     // everything else moves it across the panel.
     readonly property bool swaps: animation === "pop" || animation === "fade"
                                   || animation === "drop" || animation === "flip"
                                   || animation === "bubble" || animation === "sparks"
+                                  || animation === "ring"
     readonly property bool slides: !swaps && animation !== "none"
     // "fluid" and "float" are driven by a spring simulation (see `sim`) rather than the
     // Behaviors below; "fluid" stretches with a soft trail spring, "float" stays round.
     readonly property bool fluid: animation === "fluid"
     readonly property bool floats: animation === "float"
     readonly property bool sprung: fluid || floats
-    // "elastic", "streak" and "fluid" keep the dot round and draw the gap between the two
-    // trackers (see below) as a separate band, streak or neck rather than stretching the dot.
+    // "elastic", "streak", "fluid" and "rail" keep the dot round and draw the gap between
+    // the two trackers (see below) as a separate band, streak, neck or rail rather than
+    // stretching the dot.
     readonly property bool tethered: animation === "elastic"
     readonly property bool streaks: animation === "streak"
-    readonly property bool round: tethered || streaks || fluid
+    readonly property bool rails: animation === "rail"
+    readonly property bool round: tethered || streaks || fluid || rails
     // "zip" thins the pill the further it is stretched, so it streaks across as a fine line.
     readonly property bool zips: animation === "zip"
     // How long the dot takes to leave the old cell and settle on the new one, so that
@@ -82,6 +85,10 @@ Item {
     // by `wind` while "slingshot" winds up.
     readonly property real headX: leadX + (vertical ? 0 : wind)
     readonly property real headY: leadY + (vertical ? wind : 0)
+    // Where the round dot itself sits: on the head, except in "rail", where the lead
+    // tracker is the tip of the rail and the dot follows behind on the trail tracker.
+    readonly property real dotX: rails ? trailX : headX
+    readonly property real dotY: rails ? trailY : headY
 
     // The default curve: a brief ease-in so the dot never jerks off the mark, then a
     // long, gentle deceleration onto the new cell (the "standard" curve of most
@@ -104,6 +111,7 @@ Item {
         case "stretch": return unit * 1.5;
         case "bridge":  return unit * 1.5;
         case "elastic": return unit * 1.5;
+        case "rail":    return unit * 1;
         case "streak":  return unit * 1.75;
         case "zip":     return unit * 1.25;
         case "snap":    return unit * 1.75;
@@ -127,6 +135,8 @@ Item {
         case "roll":   return Easing.OutCubic;
         case "zip":    return Easing.OutExpo;   // off like a shot, then coasts in
         case "snap":   return Easing.InCubic;   // drawn in ever faster, stopped by the impact
+        case "rail":   return Easing.OutExpo;   // the rail shoots out ahead of the dot
+        case "swing":  return Easing.InOutSine; // with the dip below, a pendulum's arc
         default:       return Easing.BezierSpline;
         }
     }
@@ -137,12 +147,14 @@ Item {
     // "bridge" holds the trail on the old cell until the lead has all but arrived, so
     // the pill first spans both cells and then draws in behind itself. "slingshot"
     // holds it while the lead draws back, so the pill stretches like the band of a
-    // slingshot, and "zip" only until the lead is well away.
+    // slingshot, "zip" only until the lead is well away, and "rail" a moment, so the
+    // rail is seen to be laid before the dot sets off along it.
     readonly property int trailDelay: {
         switch (animation) {
         case "bridge":    return unit * 0.9;
         case "slingshot": return unit * 0.9;
         case "zip":       return unit * 0.2;
+        case "rail":      return unit * 0.15;
         default:          return 0;
         }
     }
@@ -154,6 +166,7 @@ Item {
         case "streak":    return unit * 2.75;
         case "slingshot": return unit * 1.1;
         case "zip":       return unit * 1.3;
+        case "rail":      return unit * 2;
         default:          return leadDuration;
         }
     }
@@ -166,6 +179,7 @@ Item {
         case "slingshot": return Easing.InOutCubic;
         case "zip":       return Easing.InOutExpo;
         case "snap":      return Easing.InQuart;    // lags the lead, smearing the dot as it speeds up
+        case "rail":      return Easing.BezierSpline; // the dot slides along the rail as usual
         default:          return leadEasing;
         }
     }
@@ -369,6 +383,24 @@ Item {
         case "dive":
             diveAnim.restart();
             break;
+        case "swing":
+            swingAnim.restart();
+            break;
+        case "pulse":
+            pulseAnim.restart();
+            break;
+        case "ring": {
+            irisFromX = old.x + old.width / 2;
+            irisFromY = old.y + old.height / 2;
+            // Cutting in while a ring is still closing on the old cell: open back out
+            // from wherever it got to, rather than from a dot that was never there.
+            const closing = ringAnim.running;
+            irisOut.extent = closing ? irisIn.extent : size;
+            irisOut.fill = closing ? irisIn.fill : 1;
+            irisOut.opacity = closing ? irisIn.opacity : 1;
+            ringAnim.restart();
+            break;
+        }
         case "footprints": {
             // One print on the old cell and one on every cell between it and the new
             // one, a cell's width apart, since all the cells are the same size.
@@ -437,8 +469,13 @@ Item {
         sparksAnim.stop();
         bubbleAnim.stop();
         diveAnim.stop();
+        swingAnim.stop();
+        pulseAnim.stop();
+        ringAnim.stop();
         sim.snap();
         ghost.visible = false;
+        irisOut.visible = false;
+        irisIn.visible = false;
         ring.opacity = 0;
         halo.opacity = 0;
         pill.opacity = 1;
@@ -625,6 +662,16 @@ Item {
             GradientStop { position: 1; color: streak.forward ? dot.color : Qt.alpha(dot.color, 0) }
         }
     }
+    // "rail": a thin line laid from the dot to the new cell, which the dot then slides
+    // along, taking it in as it goes.
+    Span {
+        id: rail
+        objectName: "rail"
+        visible: dot.rails && dot.target !== null
+        thickness: Math.max(1.5, dot.size * 0.3)
+        color: dot.color
+        opacity: 0.8
+    }
 
     // "fluid": the further the drop is stretched, the thinner its neck and the smaller
     // the tail it leaves on the old cell, as if its volume flowed into the head.
@@ -686,6 +733,67 @@ Item {
         }
     }
 
+    // "ring": the dot on the old cell opens out into a ring that spreads and fades, while
+    // a ring closes in on the new cell and fills to become the dot. `fill` is how solid
+    // the disc inside the ring is: 1 for a dot, 0 for a bare ring.
+    property real irisFromX: 0
+    property real irisFromY: 0
+    component Iris: Rectangle {
+        property real extent: dot.size
+        property real fill: 1
+        width: extent
+        height: extent
+        radius: extent / 2
+        color: Qt.alpha(dot.color, fill)
+        border.color: dot.color
+        border.width: Math.max(1, dot.size / 4)
+        visible: false
+        antialiasing: true
+    }
+    Iris {
+        id: irisOut
+        objectName: "irisOut"
+        x: dot.irisFromX - extent / 2
+        y: dot.irisFromY - extent / 2
+    }
+    Iris {
+        id: irisIn
+        objectName: "irisIn"
+        x: dot.cx - extent / 2
+        y: dot.cy - extent / 2
+    }
+    ParallelAnimation {
+        id: ringAnim
+        // The opening ring starts from whatever onTargetChanged set it to.
+        SequentialAnimation {
+            PropertyAction { target: irisOut; property: "visible"; value: true }
+            ParallelAnimation {
+                NumberAnimation { target: irisOut; property: "fill"; to: 0; duration: dot.unit * 0.5; easing.type: Easing.OutQuad }
+                NumberAnimation { target: irisOut; property: "extent"; to: dot.size * 2.6; duration: dot.unit * 1.5; easing.type: Easing.OutCubic }
+                NumberAnimation { target: irisOut; property: "opacity"; to: 0; duration: dot.unit * 1.5; easing.type: Easing.InQuad }
+            }
+            PropertyAction { target: irisOut; property: "visible"; value: false }
+        }
+        SequentialAnimation {
+            PropertyAction { target: pill; property: "opacity"; value: 0 }
+            PropertyAction { target: irisIn; property: "extent"; value: dot.size * 2.6 }
+            PropertyAction { target: irisIn; property: "fill"; value: 0 }
+            PropertyAction { target: irisIn; property: "opacity"; value: 0 }
+            PropertyAction { target: irisIn; property: "visible"; value: true }
+            PauseAnimation { duration: dot.unit * 0.25 }
+            ParallelAnimation {
+                NumberAnimation { target: irisIn; property: "opacity"; to: 1; duration: dot.unit * 0.5; easing.type: Easing.OutQuad }
+                NumberAnimation { target: irisIn; property: "extent"; to: dot.size; duration: dot.unit * 1.5; easing.type: Easing.InOutCubic }
+                SequentialAnimation {
+                    PauseAnimation { duration: dot.unit * 0.9 }
+                    NumberAnimation { target: irisIn; property: "fill"; to: 1; duration: dot.unit * 0.6; easing.type: Easing.InQuad }
+                }
+            }
+            PropertyAction { target: pill; property: "opacity"; value: 1 }
+            PropertyAction { target: irisIn; property: "visible"; value: false }
+        }
+    }
+
     // Copy of the dot left on the old cell during a swap, animating out. `fall` moves
     // it across the row, away from where "hop" jumps to (for "drop"); `flip` turns it
     // edge-on (for "flip").
@@ -718,9 +826,9 @@ Item {
         id: pill
         objectName: "pill"
         readonly property real length: dot.round ? 0 : dot.gap
-        readonly property real start: dot.round ? (dot.vertical ? dot.headY : dot.headX) : dot.gapStart
-        x: (dot.vertical ? dot.headX : start) - dot.thickness / 2 + (dot.vertical ? dot.hop * dot.hopSign : 0)
-        y: (dot.vertical ? start : dot.headY) - dot.thickness / 2 + (dot.vertical ? 0 : dot.hop * dot.hopSign)
+        readonly property real start: dot.round ? (dot.vertical ? dot.dotY : dot.dotX) : dot.gapStart
+        x: (dot.vertical ? dot.dotX : start) - dot.thickness / 2 + (dot.vertical ? dot.hop * dot.hopSign : 0)
+        y: (dot.vertical ? start : dot.dotY) - dot.thickness / 2 + (dot.vertical ? 0 : dot.hop * dot.hopSign)
         width: (dot.vertical ? 0 : length) + dot.thickness
         height: (dot.vertical ? length : 0) + dot.thickness
         radius: dot.thickness / 2
@@ -765,6 +873,24 @@ Item {
         NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.leadDuration / 2; easing.type: Easing.InQuad }
         NumberAnimation { target: dot; property: "squish"; to: 1.3; duration: dot.unit * 0.4; easing.type: Easing.OutQuad }
         NumberAnimation { target: dot; property: "squish"; to: 1; duration: dot.unit * 0.9; easing.type: Easing.OutBack; easing.overshoot: 2 }
+    }
+
+    // "swing": dip below the row and rise again while sliding, so that with the sine
+    // easing of the slide the dot swings over on a pendulum's arc.
+    SequentialAnimation {
+        id: swingAnim
+        NumberAnimation { target: dot; property: "hop"; to: -dot.hopLift; duration: dot.leadDuration / 2; easing.type: Easing.OutSine }
+        NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.leadDuration / 2; easing.type: Easing.InSine }
+    }
+
+    // "pulse": as the dot settles on the new cell it swells briefly, like a heartbeat.
+    // The first step does nothing on a fresh move, but eases a swell that was cut short
+    // by a new move back to round on the way, rather than carrying it over.
+    SequentialAnimation {
+        id: pulseAnim
+        NumberAnimation { target: dot; property: "lift"; to: 1; duration: dot.leadDuration * 0.7; easing.type: Easing.OutCubic }
+        NumberAnimation { target: dot; property: "lift"; to: 1.45; duration: dot.unit * 0.4; easing.type: Easing.OutQuad }
+        NumberAnimation { target: dot; property: "lift"; to: 1; duration: dot.unit * 1.1; easing.type: Easing.OutCubic }
     }
 
     // "jelly": stretch out on departure, squash on arrival, then wobble back to round.
