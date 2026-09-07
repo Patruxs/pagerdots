@@ -1,0 +1,21 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build .plasmoid archive
+        run: ./build
+      - name: Attach archive to the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.plasmoid
+          generate_release_notes: true

@@ -1,0 +1,14 @@
+# Build output
+dist/
+*.plasmoid
+
+# Qt QML / JS caches
+*.qmlc
+*.jsc
+
+# Editors and tools
+*~
+.*.swp
+.vscode/
+.idea/
+.claude/

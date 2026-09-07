@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Package Pager Dots for https://store.kde.org, or install it locally.
+#
+#   ./build            build dist/pat.pagerdots-<version>.plasmoid
+#   ./build --install  build, then install or upgrade it for the current user
+#   ./build --test     run the widget in plasmoidviewer (needs plasma-sdk)
+set -euo pipefail
+cd "$(dirname "$(readlink -f "$0")")"
+
+meta() {
+    python3 -c 'import json, sys; print(json.load(open("metadata.json"))["KPlugin"][sys.argv[1]])' "$1"
+}
+id=$(meta Id)
+version=$(meta Version)
+out="dist/${id}-${version}.plasmoid"
+
+mkdir -p dist
+rm -f "$out"
+zip -r -q "$out" metadata.json contents -x '*.qmlc' '*.jsc' '*~'
+echo "Built $out"
+
+case "${1:-}" in
+    --install)
+        target="${XDG_DATA_HOME:-$HOME/.local/share}/plasma/plasmoids/$id"
+        if [ "$(readlink -f "$target")" = "$(pwd)" ]; then
+            echo "This checkout already is the installed package ($target); nothing to install." >&2
+            exit 1
+        fi
+        if [ -e "$target" ]; then
+            kpackagetool6 -t Plasma/Applet -u "$out"
+        else
+            kpackagetool6 -t Plasma/Applet -i "$out"
+        fi
+        echo "Installed. Restart Plasma to reload it:"
+        echo "  systemctl --user restart plasma-plasmashell.service"
+        ;;
+    --test)
+        plasmoidviewer -a "$(pwd)"
+        ;;
+    "")
+        ;;
+    *)
+        echo "Unknown option: $1" >&2
+        exit 2
+        ;;
+esac

@@ -1,0 +1,22 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Thuan Phat",
+                "Email": "laithuanphat@gmail.com"
+            }
+        ],
+        "BugReportUrl": "https://github.com/Patruxs/pagerdots/issues",
+        "Category": "Windows and Tasks",
+        "Description": "Minimal virtual desktop switcher: a dot for the current desktop, numbers for the rest",
+        "Icon": "user-desktop",
+        "Id": "pat.pagerdots",
+        "License": "GPL-2.0+",
+        "Name": "Pager Dots",
+        "Version": "1.0.0",
+        "Website": "https://github.com/Patruxs/pagerdots"
+    },
+    "X-Plasma-API-Minimum-Version": "6.2",
+    "X-Plasma-Provides": [ "org.kde.plasma.virtualdesktops" ]
+}
