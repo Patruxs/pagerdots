@@ -13,8 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   numerals, Greek letters (α β γ), Chinese numerals (一 二 三), Hangul (ㄱ ㄴ ㄷ),
   Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, squares, or blank
 - Option to show the current desktop as its own label (bold) instead of a dot
-- The dot now glides smoothly to the new desktop, with a small pulse on arrival, and the
-  label underneath cross-fades
+- The dot now animates to the new desktop instead of jumping, and the label underneath
+  cross-fades. Eleven animations to choose from in the settings: stretch (the dot
+  elongates into a pill towards the new desktop, then snaps back), glide, comet (fading
+  trail), ripple (a ring spreads out where it lands), hop (arc jump with a landing
+  squash), jelly (squash and stretch with a wobble), spring, bounce, pop, fade, or none
+- Live preview in the settings page showing the chosen label style and animation
 
 ## [1.0.0] - 2026-09-07
 

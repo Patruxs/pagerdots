@@ -12,8 +12,8 @@ import org.kde.plasma.workspace.dbus as DBus
 import "Labels.js" as Labels
 
 // Pager Dots: a dot for the current virtual desktop, dimmed labels for the others.
-// Click a desktop to switch, mouse wheel to step. Label style is configurable.
-// The dot is a single item that glides between cells when the desktop changes.
+// Click a desktop to switch, mouse wheel to step. Label style and the animation
+// the dot makes between desktops are configurable.
 PlasmoidItem {
     id: root
 
@@ -22,6 +22,8 @@ PlasmoidItem {
     readonly property int currentIndex: vdi.desktopIds.indexOf(vdi.currentDesktop)
     readonly property string labelStyle: Plasmoid.configuration.labelStyle
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
+    readonly property string dotAnimation: Plasmoid.configuration.dotAnimation
+    readonly property bool animated: dotAnimation !== "none"
     // Whether the current desktop is marked by the gliding dot (as opposed to its bold label).
     // The "blank" style has no label to show, so it always uses the dot.
     readonly property bool useDot: dotForCurrent || labelStyle === "blank"
@@ -114,8 +116,14 @@ PlasmoidItem {
                         opacity: cell.isCurrent ? (root.useDot ? 0 : 1)
                                : (mouse.containsMouse ? 1 : root.dimOpacity)
                         scale: cell.isCurrent && root.useDot ? 0.6 : 1
-                        Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
+                        Behavior on opacity {
+                            enabled: root.animated
+                            NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on scale {
+                            enabled: root.animated
+                            NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+                        }
                     }
                     MouseArea {
                         id: mouse
@@ -127,48 +135,20 @@ PlasmoidItem {
             }
         }
 
-        // The current-desktop dot. One item for the whole widget, positioned over
-        // the current cell, so a desktop change animates as a glide rather than a jump.
-        Rectangle {
-            id: dot
-            readonly property Item target: view.currentCell
-            readonly property int size: Math.max(4, Math.round(fm.height * 0.45))
-
-            width: size
-            height: size
-            radius: size / 2
+        // The current-desktop dot. One item for the whole widget, laid over the
+        // current cell, so a desktop change animates instead of jumping.
+        Dot {
+            anchors.fill: parent
+            target: view.currentCell
+            animation: root.dotAnimation
+            size: Math.max(4, Math.round(fm.height * 0.45))
             color: Kirigami.Theme.textColor
-            visible: root.useDot && target !== null
-            x: target ? target.x + (target.width - width) / 2 : 0
-            y: target ? target.y + (target.height - height) / 2 : 0
-            transformOrigin: Item.Center
-
-            // Glide with a fast start and soft landing. Enabled only after the first
-            // layout so the dot does not fly in from the corner when the widget loads.
-            Behavior on x {
-                enabled: dot.ready
-                NumberAnimation { duration: Kirigami.Units.veryLongDuration; easing.type: Easing.OutQuint }
-            }
-            Behavior on y {
-                enabled: dot.ready
-                NumberAnimation { duration: Kirigami.Units.veryLongDuration; easing.type: Easing.OutQuint }
-            }
-
-            property bool ready: false
-            Component.onCompleted: Qt.callLater(() => ready = true)
-
-            // On every desktop change the dot briefly swells, then settles.
-            Connections {
-                target: root
-                function onCurrentIndexChanged() {
-                    if (dot.ready) pulse.restart();
-                }
-            }
-            SequentialAnimation {
-                id: pulse
-                NumberAnimation { target: dot; property: "scale"; to: 1.45; duration: Kirigami.Units.shortDuration; easing.type: Easing.OutCubic }
-                NumberAnimation { target: dot; property: "scale"; to: 1.0;  duration: Kirigami.Units.longDuration;  easing.type: Easing.OutBack }
-            }
+            unit: Kirigami.Units.longDuration
+            vertical: root.vertical
+            // "hop" jumps away from the screen edge, towards the desktop.
+            hopSign: Plasmoid.location === PlasmaCore.Types.TopEdge
+                  || Plasmoid.location === PlasmaCore.Types.LeftEdge ? 1 : -1
+            visible: root.useDot
         }
     }
 }

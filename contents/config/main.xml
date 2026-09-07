@@ -14,5 +14,9 @@
     <entry name="dotForCurrent" type="Bool">
       <default>true</default>
     </entry>
+    <!-- How the dot moves to the new desktop. See MODES in Animations.js. -->
+    <entry name="dotAnimation" type="String">
+      <default>stretch</default>
+    </entry>
   </group>
 </kcfg>
