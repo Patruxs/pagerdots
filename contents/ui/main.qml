@@ -31,7 +31,7 @@ PlasmoidItem {
     TaskManager.VirtualDesktopInfo { id: vdi }
 
     function labelFor(index) {
-        return Labels.labelFor(labelStyle, index + 1);
+        return Labels.labelFor(labelStyle, index + 1, currentIndex + 1);
     }
 
     function switchTo(index) {

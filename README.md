@@ -12,7 +12,7 @@ A dot marks the current desktop, dimmed numbers show the rest.
 ## Features
 
 - Every virtual desktop shown as a label, with a dot for the current one
-- Choice of label style: numbers, letters (A B C), roman numerals (I II III), Greek (α β γ), Chinese (一 二 三), Hangul (ㄱ ㄴ ㄷ), Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, or blank
+- Choice of label style: numbers, letters (A B C), roman numerals (I II III), Greek (α β γ), Cyrillic (а б в), Chinese (一 二 三), Heavenly Stems (甲 乙 丙), Hiragana (あ い う), Katakana (ア イ ウ), Hangul (ㄱ ㄴ ㄷ), Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, fill up to current (● ● ○ ○), or blank
 - Smooth dot animation between desktops, with a choice of style: stretch, glide, comet, ripple, hop, jelly, spring, bounce, pop, fade, or none
 - Click a desktop to switch to it
 - Scroll the mouse wheel over the widget to step through desktops (wraps around)

@@ -75,7 +75,7 @@ KCM.SimpleKCM {
                             anchors.fill: parent
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            text: Labels.labelFor(page.cfg_labelStyle, cell.index + 1)
+                            text: Labels.labelFor(page.cfg_labelStyle, cell.index + 1, preview.current + 1)
                             font.bold: cell.isCurrent && !preview.useDot
                             opacity: cell.isCurrent ? (preview.useDot ? 0 : 1) : 0.55
                             scale: cell.isCurrent && preview.useDot ? 0.6 : 1

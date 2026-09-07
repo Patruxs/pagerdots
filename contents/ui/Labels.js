@@ -11,11 +11,16 @@ const STYLES = [
     { id: "roman",        name: "Roman numerals",      preview: "I II III IV" },
     { id: "lowerRoman",   name: "Lowercase roman",     preview: "i ii iii iv" },
     { id: "greek",        name: "Greek letters",       preview: "α β γ δ" },
+    { id: "cyrillic",     name: "Cyrillic letters",    preview: "а б в г" },
     { id: "chinese",      name: "Chinese numerals",    preview: "一 二 三 四" },
+    { id: "stems",        name: "Heavenly Stems",      preview: "甲 乙 丙 丁" },
+    { id: "hiragana",     name: "Hiragana",            preview: "あ い う え" },
+    { id: "katakana",     name: "Katakana",            preview: "ア イ ウ エ" },
     { id: "hangul",       name: "Hangul",              preview: "ㄱ ㄴ ㄷ ㄹ" },
     { id: "arabicIndic",  name: "Arabic-Indic digits", preview: "١ ٢ ٣ ٤" },
     { id: "bars",         name: "Bars",                preview: "▁ ▂ ▃ ▄" },
     { id: "dots",         name: "Dots",                preview: "○ ○ ○ ○" },
+    { id: "fill",         name: "Fill up to current",  preview: "● ● ○ ○" },
     { id: "blank",        name: "Blank",               preview: "" },
 ];
 
@@ -44,9 +49,16 @@ function roman(n) {
 function fromAlphabet(alphabet, n) {
     return n >= 1 && n <= alphabet.length ? alphabet[n - 1] : String(n);
 }
-const GREEK  = "αβγδεζηθικλμνξοπρστυφχψω";
-const HANGUL = "ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ";
-const BARS   = "▁▂▃▄▅▆▇█";
+const GREEK    = "αβγδεζηθικλμνξοπρστυφχψω";
+// Russian letters in the order used for numbered lists, which skips ё, й, ъ, ы and ь.
+const CYRILLIC = "абвгдежзиклмнопрстуфхцчшщэюя";
+// The ten Heavenly Stems, the traditional East Asian ordinal sequence.
+const STEMS    = "甲乙丙丁戊己庚辛壬癸";
+// Japanese kana in gojūon order.
+const HIRAGANA = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん";
+const KATAKANA = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
+const HANGUL   = "ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ";
+const BARS     = "▁▂▃▄▅▆▇█";
 
 // Chinese numerals 一 .. 九十九; larger numbers fall back to digits.
 function chinese(n) {
@@ -62,20 +74,26 @@ function arabicIndic(n) {
     return String(n).replace(/\d/g, c => String.fromCharCode(0x0660 + Number(c)));
 }
 
-// Label for the 1-based desktop number `n` in the given style.
+// Label for the 1-based desktop number `n` in the given style. `current` is the
+// 1-based number of the current desktop; only the "fill" style looks at it.
 // An empty string means "show nothing" (the current desktop still gets the dot).
-function labelFor(style, n) {
+function labelFor(style, n, current) {
     switch (style) {
     case "letters":      return letters(n);
     case "lowerLetters": return letters(n).toLowerCase();
     case "roman":        return roman(n);
     case "lowerRoman":   return roman(n).toLowerCase();
     case "greek":        return fromAlphabet(GREEK, n);
+    case "cyrillic":     return fromAlphabet(CYRILLIC, n);
+    case "stems":        return fromAlphabet(STEMS, n);
+    case "hiragana":     return fromAlphabet(HIRAGANA, n);
+    case "katakana":     return fromAlphabet(KATAKANA, n);
     case "hangul":       return fromAlphabet(HANGUL, n);
     case "chinese":      return chinese(n);
     case "arabicIndic":  return arabicIndic(n);
     case "bars":         return n >= 1 ? BARS[Math.min(n, BARS.length) - 1] : String(n);
     case "dots":         return "○";
+    case "fill":         return n <= current ? "●" : "○";
     case "blank":        return "";
     default:             return String(n);
     }
