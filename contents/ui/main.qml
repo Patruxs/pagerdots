@@ -13,26 +13,24 @@ import "Labels.js" as Labels
 
 // Pager Dots: a dot for the current virtual desktop, dimmed labels for the others.
 // Click a desktop to switch, mouse wheel to step. Label style is configurable.
+// The dot is a single item that glides between cells when the desktop changes.
 PlasmoidItem {
     id: root
 
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
-    readonly property string activeMark: "●"      // shown for the current desktop
     readonly property real dimOpacity: 0.55            // opacity of the other desktops
     readonly property int currentIndex: vdi.desktopIds.indexOf(vdi.currentDesktop)
     readonly property string labelStyle: Plasmoid.configuration.labelStyle
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
+    // Whether the current desktop is marked by the gliding dot (as opposed to its bold label).
+    // The "blank" style has no label to show, so it always uses the dot.
+    readonly property bool useDot: dotForCurrent || labelStyle === "blank"
+
+    TaskManager.VirtualDesktopInfo { id: vdi }
 
     function labelFor(index) {
         return Labels.labelFor(labelStyle, index + 1);
     }
-    // The current desktop shows the dot when configured to, or when its style
-    // has no label of its own (the "blank" style); otherwise its label in bold.
-    function currentIsDot(index) {
-        return dotForCurrent || labelFor(index) === "";
-    }
-
-    TaskManager.VirtualDesktopInfo { id: vdi }
 
     function switchTo(index) {
         // Plain JS numbers are silently dropped from the message inside plasmashell,
@@ -51,6 +49,7 @@ PlasmoidItem {
     preferredRepresentation: fullRepresentation
 
     fullRepresentation: MouseArea {
+        id: view
         acceptedButtons: Qt.NoButton
         onWheel: wheel => root.step(wheel.angleDelta.y < 0 ? 1 : -1)
         implicitWidth: grid.implicitWidth
@@ -59,6 +58,16 @@ PlasmoidItem {
         Layout.minimumHeight: root.vertical ? grid.implicitHeight : 0
         Layout.preferredWidth: Layout.minimumWidth
         Layout.preferredHeight: Layout.minimumHeight
+
+        // Bumped whenever the repeater adds or removes a cell, so bindings that
+        // look cells up through itemAt() (which is not a notifying property) re-run.
+        property int cellsRevision: 0
+        readonly property Item currentCell: {
+            void cellsRevision;
+            return cells.itemAt(root.currentIndex);
+        }
+
+        FontMetrics { id: fm }
 
         GridLayout {
             id: grid
@@ -69,7 +78,11 @@ PlasmoidItem {
             columnSpacing: 0
 
             Repeater {
+                id: cells
                 model: vdi.numberOfDesktops
+                onItemAdded: view.cellsRevision++
+                onItemRemoved: view.cellsRevision++
+
                 // Plasma tooltip with the desktop name; `location` keeps it outside the panel.
                 delegate: PlasmaCore.ToolTipArea {
                     id: cell
@@ -80,9 +93,7 @@ PlasmoidItem {
 
                     Layout.fillHeight: !root.vertical
                     Layout.fillWidth: root.vertical
-                    // Wide enough for the label (e.g. "VIII") plus breathing room,
-                    // measured on the label itself so the cell keeps its width when
-                    // it becomes the current desktop and turns into a dot.
+                    // Wide enough for the label (e.g. "VIII") plus breathing room.
                     Layout.minimumWidth: Math.max(Kirigami.Units.gridUnit * 1.4,
                                                   metrics.advanceWidth + Kirigami.Units.largeSpacing)
                     Layout.minimumHeight: Kirigami.Units.gridUnit * 1.4
@@ -97,10 +108,14 @@ PlasmoidItem {
                         anchors.fill: parent
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        text: cell.isCurrent && root.currentIsDot(cell.index) ? root.activeMark : root.labelFor(cell.index)
-                        font.bold: cell.isCurrent && !root.currentIsDot(cell.index)
-                        opacity: cell.isCurrent || mouse.containsMouse ? 1 : root.dimOpacity
-                        Behavior on opacity { NumberAnimation { duration: Kirigami.Units.shortDuration } }
+                        text: root.labelFor(cell.index)
+                        font.bold: cell.isCurrent && !root.useDot
+                        // The label under the dot fades out; the dot glides in over it.
+                        opacity: cell.isCurrent ? (root.useDot ? 0 : 1)
+                               : (mouse.containsMouse ? 1 : root.dimOpacity)
+                        scale: cell.isCurrent && root.useDot ? 0.6 : 1
+                        Behavior on opacity { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic } }
                     }
                     MouseArea {
                         id: mouse
@@ -109,6 +124,50 @@ PlasmoidItem {
                         onClicked: root.switchTo(cell.index)
                     }
                 }
+            }
+        }
+
+        // The current-desktop dot. One item for the whole widget, positioned over
+        // the current cell, so a desktop change animates as a glide rather than a jump.
+        Rectangle {
+            id: dot
+            readonly property Item target: view.currentCell
+            readonly property int size: Math.max(4, Math.round(fm.height * 0.45))
+
+            width: size
+            height: size
+            radius: size / 2
+            color: Kirigami.Theme.textColor
+            visible: root.useDot && target !== null
+            x: target ? target.x + (target.width - width) / 2 : 0
+            y: target ? target.y + (target.height - height) / 2 : 0
+            transformOrigin: Item.Center
+
+            // Glide with a fast start and soft landing. Enabled only after the first
+            // layout so the dot does not fly in from the corner when the widget loads.
+            Behavior on x {
+                enabled: dot.ready
+                NumberAnimation { duration: Kirigami.Units.veryLongDuration; easing.type: Easing.OutQuint }
+            }
+            Behavior on y {
+                enabled: dot.ready
+                NumberAnimation { duration: Kirigami.Units.veryLongDuration; easing.type: Easing.OutQuint }
+            }
+
+            property bool ready: false
+            Component.onCompleted: Qt.callLater(() => ready = true)
+
+            // On every desktop change the dot briefly swells, then settles.
+            Connections {
+                target: root
+                function onCurrentIndexChanged() {
+                    if (dot.ready) pulse.restart();
+                }
+            }
+            SequentialAnimation {
+                id: pulse
+                NumberAnimation { target: dot; property: "scale"; to: 1.45; duration: Kirigami.Units.shortDuration; easing.type: Easing.OutCubic }
+                NumberAnimation { target: dot; property: "scale"; to: 1.0;  duration: Kirigami.Units.longDuration;  easing.type: Easing.OutBack }
             }
         }
     }
