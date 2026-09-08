@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-08
+
 ### Added
 - More label styles: Cyrillic letters (а б в), Heavenly Stems (甲 乙 丙), Hiragana (あ い う),
   Katakana (ア イ ウ), and "fill up to current", which fills the circles of every desktop up to
@@ -59,7 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switching desktops while the dot is still on its way no longer stalls it: a move that cuts
   in on another sets off at speed instead of easing in again, so stepping quickly through
   desktops with the mouse wheel flows as one motion
-
 - Each dot animation now lives in its own file under `contents/ui/animations/`, on a shared
   base that documents the hooks it can drive, and `tests/run` checks every one of them
   without a Plasma session; the README explains how to add one
@@ -110,6 +111,7 @@ Initial release.
 - Tooltip showing the desktop name
 - Horizontal and vertical panel layouts
 
-[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Patruxs/pagerdots/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Patruxs/pagerdots/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Patruxs/pagerdots/releases/tag/v1.0.0
