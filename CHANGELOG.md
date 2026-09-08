@@ -32,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (leaves past the end of the row and comes back in from the other end), steps (jumps over
   in a few discrete stops, stop-motion style), and boomerang (draws back a whole desktop
   away, then flies across and lands)
+- Four more dot animations: topple (stands up into a post that topples over like a domino
+  onto the new desktop), cartwheel (flattens into a short bar that turns end over end as
+  it crosses), arrow (sharpens into an arrowhead that shoots over and rounds off into a
+  dot again), and train (breaks into a file of three beads that run across in line and
+  merge again)
 
 ### Changed
 - The gliding animations (stretch, glide, ripple, glow and elastic) now ease

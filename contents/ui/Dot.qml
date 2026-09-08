@@ -27,13 +27,17 @@ Item {
     property real hopSign: -1
 
     // "pop", "fade", "drop", "sparks", "pour", "ring", "beam", "split" and "flash" swap
-    // the dot in place; "wrap", "steps" and "boomerang" move it along the row on a path
-    // of their own (see `shift`); everything else slides it across the panel.
+    // the dot in place, as do "topple", "cartwheel", "arrow" and "train", which draw
+    // something else crossing over; "wrap", "steps" and "boomerang" move the dot along
+    // the row on a path of their own (see `shift`); everything else slides it across
+    // the panel.
     readonly property bool swaps: animation === "pop" || animation === "fade"
                                   || animation === "drop" || animation === "sparks"
                                   || animation === "pour" || animation === "ring"
                                   || animation === "beam" || animation === "split"
-                                  || animation === "flash"
+                                  || animation === "flash" || animation === "topple"
+                                  || animation === "cartwheel" || animation === "arrow"
+                                  || animation === "train"
     readonly property bool shifts: animation === "wrap" || animation === "steps"
                                    || animation === "boomerang"
     readonly property bool slides: !swaps && !shifts && animation !== "none"
@@ -48,6 +52,10 @@ Item {
                                 : sparks ? unit * 2.4
                                 : animation === "wrap" ? unit * 2.2
                                 : animation === "flash" ? unit * 1.3
+                                : animation === "train" ? unit * 1.8
+                                : animation === "topple" ? unit * 1.4
+                                : animation === "cartwheel" ? unit * 1.8
+                                : animation === "arrow" ? unit * 1.3
                                 : unit * 2
 
     // Centre of the target. Kept at its last value while there is no target, so the
@@ -399,6 +407,65 @@ Item {
             boomerangAnim.restart();
             break;
         }
+        case "train": {
+            // Cutting in mid-flight: the beads set off again from where the first one is.
+            const mid = trainAnim.running;
+            const e = mid ? easeInOut(Math.min(1, trainT / trainSlice)) : 0;
+            const ox = old.x + old.width / 2;
+            const oy = old.y + old.height / 2;
+            fromX = mid ? fromX + (ox - fromX) * e : ox;
+            fromY = mid ? fromY + (oy - fromY) * e : oy;
+            trainGhost = !mid;
+            if (!mid) placeGhost(old);
+            trainAnim.restart();
+            break;
+        }
+        case "topple": {
+            if (topplePhase === 1) {
+                // Still standing or falling: the post keeps its pivot and falls towards
+                // the new cell instead (or stands back up, if that is where the pivot is).
+                if (toppleFall.running) toppleFall.restart();
+                break;
+            }
+            toppleFall.stop();
+            fromX = old.x + old.width / 2;
+            fromY = old.y + old.height / 2;
+            postAngle = 0;
+            postLen = 0;
+            toppleAnim.restart();
+            break;
+        }
+        case "cartwheel": {
+            // Cutting in mid-flight: the bar rolls on from where it is.
+            const mid = wheelAnim.running || wheelRoll.running;
+            const ox = old.x + old.width / 2;
+            const oy = old.y + old.height / 2;
+            fromX = mid ? fromX + (ox - fromX) * wheel.e : ox;
+            fromY = mid ? fromY + (oy - fromY) * wheel.e : oy;
+            wheelT = 0;
+            const c = centreOf(target);
+            const from = vertical ? fromY : fromX;
+            const span = vertical ? target.height : target.width;
+            // A whole turn per cell crossed, turning the way a wheel rolling that way
+            // would, and (after a cut-in) rounded to a half turn so it lands lying flat.
+            const turns = Math.max(1, Math.round(Math.abs(c - from) / Math.max(1, span)));
+            wheelSpinTo = Math.round((wheelSpin + Math.sign(c - from) * 360 * turns) / 180) * 180;
+            if (wheelRoll.running) wheelRoll.restart();
+            else if (!wheelAnim.running) wheelAnim.restart();
+            break;
+        }
+        case "arrow": {
+            // Cutting in mid-flight: the arrowhead turns and shoots on from where it is.
+            const mid = arrowAnim.running || arrowFly.running;
+            const ox = old.x + old.width / 2;
+            const oy = old.y + old.height / 2;
+            fromX = mid ? fromX + (ox - fromX) * arrow.e : ox;
+            fromY = mid ? fromY + (oy - fromY) * arrow.e : oy;
+            arrowT = 0;
+            if (arrowFly.running) arrowFly.restart();
+            else if (!arrowAnim.running) arrowAnim.restart();
+            break;
+        }
         }
     }
     function placeGhost(cell) {
@@ -426,7 +493,28 @@ Item {
         wrapEnter.stop();
         stepsAnim.stop();
         boomerangAnim.stop();
+        trainAnim.stop();
+        toppleAnim.stop();
+        toppleFall.stop();
+        wheelAnim.stop();
+        wheelRoll.stop();
+        arrowAnim.stop();
+        arrowFly.stop();
         ghost.visible = false;
+        post.visible = false;
+        post.opacity = 1;
+        postLen = 0;
+        postAngle = 0;
+        topplePhase = 0;
+        wheel.visible = false;
+        wheel.len = size;
+        wheel.thick = size;
+        wheelSpin = 0;
+        arrow.visible = false;
+        arrow.scale = 0;
+        trainT = 0;
+        wheelT = 0;
+        arrowT = 0;
         irisOut.visible = false;
         irisIn.visible = false;
         beamOut.visible = false;
@@ -1023,5 +1111,221 @@ Item {
         id: boomerangAnim
         NumberAnimation { target: dot; property: "shift"; to: dot.backTo; duration: dot.unit * 0.8; easing.type: Easing.InOutSine }
         NumberAnimation { target: dot; property: "shift"; to: 0; duration: dot.unit * 1.2; easing.type: Easing.InOutCubic }
+    }
+
+    // "train": the dot breaks into a file of three beads that run across in line, each
+    // setting off a little after the last, and merge into a new dot on the new cell.
+    // `trainT` runs from 0 to 1 over the whole run and each bead takes its own slice of it.
+    readonly property bool training: animation === "train"
+    property real trainT: 0
+    property bool trainGhost: true
+    readonly property real trainSlice: 0.76
+    Repeater {
+        model: 3
+        Rectangle {
+            id: bead
+            required property int index
+            readonly property real p: Math.max(0, Math.min(1, (dot.trainT - bead.index * 0.12) / dot.trainSlice))
+            readonly property real e: dot.easeInOut(bead.p)
+            readonly property real extent: dot.size * 0.5
+            x: dot.fromX + (dot.cx - dot.fromX) * bead.e - bead.extent / 2
+            y: dot.fromY + (dot.cy - dot.fromY) * bead.e - bead.extent / 2
+            width: bead.extent
+            height: bead.extent
+            radius: bead.extent / 2
+            color: dot.color
+            // Shows as it leaves the shrinking old dot and goes as it merges into the new one.
+            opacity: Math.min(1, bead.p * 8, (1 - bead.p) * 8)
+            visible: dot.training && trainAnim.running
+            antialiasing: true
+        }
+    }
+    ParallelAnimation {
+        id: trainAnim
+        NumberAnimation { target: dot; property: "trainT"; from: 0; to: 1; duration: dot.unit * 1.8 }
+        SequentialAnimation {
+            PropertyAction { target: ghost; property: "opacity"; value: 1 }
+            PropertyAction { target: ghost; property: "scale"; value: 1 }
+            PropertyAction { target: ghost; property: "visible"; value: dot.trainGhost }
+            NumberAnimation { target: ghost; property: "scale"; to: 0; duration: dot.unit * 0.6; easing.type: Easing.InQuad }
+            PropertyAction { target: ghost; property: "visible"; value: false }
+        }
+        SequentialAnimation {
+            PropertyAction { target: pill; property: "scale"; value: 0 }
+            PauseAnimation { duration: dot.unit * 1.1 }
+            NumberAnimation { target: pill; property: "scale"; to: 1; duration: dot.unit * 0.7; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+        }
+    }
+
+    // "topple": the dot stands up into a short post on the old cell, which topples over
+    // like a domino towards the new cell, reaching out as it falls so that its tip runs
+    // along the edge of the panel and comes down on the new cell. The post vanishes as
+    // it lands, leaving the dot there. The post pivots on the old cell's centre.
+    property real postLen: 0
+    property real postAngle: 0
+    property int topplePhase: 0     // 1 while standing up and falling, 2 while landing
+    readonly property real standLen: hopLift + size / 2
+    readonly property real toppleDist: vertical ? Math.abs(cy - fromY) : Math.abs(cx - fromX)
+    // A quarter turn towards the new cell, from a post that stands the way "hop" jumps.
+    readonly property real toppleAngle: Math.sign(vertical ? cy - fromY : cx - fromX) * 90
+                                        * (vertical ? hopSign : -hopSign)
+    Rectangle {
+        id: post
+        objectName: "post"
+        readonly property real thick: Math.max(1.5, dot.size * 0.35)
+        // Standing, its own length; falling, as much as keeps the tip inside the panel,
+        // up to the new cell (or, cut in on back to the pivot, back to standing).
+        readonly property real len: Math.min(Math.max(dot.toppleDist, dot.standLen),
+                                             dot.postLen / Math.max(0.05, Math.cos(dot.postAngle * Math.PI / 180)))
+        readonly property bool up: dot.hopSign < 0   // stands towards the top or the left
+        x: dot.vertical ? (post.up ? dot.fromX - post.len : dot.fromX) : dot.fromX - post.thick / 2
+        y: dot.vertical ? dot.fromY - post.thick / 2 : (post.up ? dot.fromY - post.len : dot.fromY)
+        width: dot.vertical ? post.len : post.thick
+        height: dot.vertical ? post.thick : post.len
+        radius: post.thick / 2
+        color: dot.color
+        transformOrigin: dot.vertical ? (post.up ? Item.Right : Item.Left) : (post.up ? Item.Bottom : Item.Top)
+        rotation: dot.postAngle
+        visible: false
+        antialiasing: true
+    }
+    SequentialAnimation {
+        id: toppleAnim
+        PropertyAction { target: dot; property: "topplePhase"; value: 1 }
+        PropertyAction { target: pill; property: "opacity"; value: 0 }
+        PropertyAction { target: post; property: "opacity"; value: 1 }
+        PropertyAction { target: post; property: "visible"; value: true }
+        PropertyAction { target: ghost; property: "opacity"; value: 1 }
+        PropertyAction { target: ghost; property: "scale"; value: 1 }
+        PropertyAction { target: ghost; property: "visible"; value: true }
+        ParallelAnimation {
+            NumberAnimation { target: dot; property: "postLen"; to: dot.standLen; duration: dot.unit * 0.4; easing.type: Easing.OutQuad }
+            NumberAnimation { target: ghost; property: "scale"; to: 0; duration: dot.unit * 0.3; easing.type: Easing.InQuad }
+        }
+        PropertyAction { target: ghost; property: "visible"; value: false }
+        ScriptAction { script: toppleFall.restart() }
+    }
+    SequentialAnimation {
+        id: toppleFall
+        NumberAnimation { target: dot; property: "postAngle"; to: dot.toppleAngle; duration: dot.unit * 0.7; easing.type: Easing.InQuad }
+        PropertyAction { target: dot; property: "topplePhase"; value: 2 }
+        PropertyAction { target: pill; property: "scale"; value: 0.6 }
+        PropertyAction { target: pill; property: "opacity"; value: 1 }
+        ParallelAnimation {
+            NumberAnimation { target: pill; property: "scale"; to: 1; duration: dot.unit * 0.4; easing.type: Easing.OutBack; easing.overshoot: 2 }
+            NumberAnimation { target: post; property: "opacity"; to: 0; duration: dot.unit * 0.12 }
+        }
+        PropertyAction { target: post; property: "visible"; value: false }
+        PropertyAction { target: dot; property: "postAngle"; value: 0 }
+        PropertyAction { target: dot; property: "postLen"; value: 0 }
+        PropertyAction { target: dot; property: "topplePhase"; value: 0 }
+    }
+
+    // "cartwheel": the dot flattens into a short bar that turns end over end as it
+    // travels, a whole turn for every cell it crosses, and rounds off into a dot again.
+    // `wheelT` is its progress from the old cell and `wheelSpin` its turn so far.
+    property real wheelT: 0
+    property real wheelSpin: 0
+    property real wheelSpinTo: 0
+    Rectangle {
+        id: wheel
+        objectName: "wheel"
+        property real len: dot.size
+        property real thick: dot.size
+        readonly property real e: dot.wheelT < 0.5 ? 2 * dot.wheelT * dot.wheelT : 1 - Math.pow(-2 * dot.wheelT + 2, 2) / 2
+        x: dot.fromX + (dot.cx - dot.fromX) * wheel.e - wheel.len / 2
+        y: dot.fromY + (dot.cy - dot.fromY) * wheel.e - wheel.thick / 2
+        width: wheel.len
+        height: wheel.thick
+        radius: wheel.thick / 2
+        color: dot.color
+        // The bar lies along the row between turns.
+        rotation: dot.wheelSpin + (dot.vertical ? 90 : 0)
+        visible: false
+        antialiasing: true
+    }
+    SequentialAnimation {
+        id: wheelAnim
+        PropertyAction { target: pill; property: "opacity"; value: 0 }
+        PropertyAction { target: wheel; property: "visible"; value: true }
+        ParallelAnimation {
+            NumberAnimation { target: wheel; property: "len"; to: dot.size * 2.4; duration: dot.unit * 0.3; easing.type: Easing.OutQuad }
+            NumberAnimation { target: wheel; property: "thick"; to: Math.max(1.5, dot.size * 0.4); duration: dot.unit * 0.3; easing.type: Easing.OutQuad }
+        }
+        ScriptAction { script: wheelRoll.restart() }
+    }
+    SequentialAnimation {
+        id: wheelRoll
+        ParallelAnimation {
+            NumberAnimation { target: dot; property: "wheelT"; to: 1; duration: dot.unit * 1.2 }
+            NumberAnimation { target: dot; property: "wheelSpin"; to: dot.wheelSpinTo; duration: dot.unit * 1.2; easing.type: Easing.InOutQuad }
+        }
+        ParallelAnimation {
+            NumberAnimation { target: wheel; property: "len"; to: dot.size; duration: dot.unit * 0.3; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: wheel; property: "thick"; to: dot.size; duration: dot.unit * 0.3; easing.type: Easing.InOutQuad }
+        }
+        PropertyAction { target: pill; property: "opacity"; value: 1 }
+        PropertyAction { target: wheel; property: "visible"; value: false }
+        // Whole turns look the same as none, so start the next from zero.
+        PropertyAction { target: dot; property: "wheelSpin"; value: 0 }
+    }
+
+    // "arrow": the dot sharpens into an arrowhead pointing at the new cell, shoots over,
+    // and rounds off into a dot again. `arrowT` is its progress from the old cell.
+    property real arrowT: 0
+    Item {
+        id: arrow
+        objectName: "arrow"
+        readonly property real arm: dot.size * 1.2
+        readonly property real thick: Math.max(1.5, dot.size * 0.3)
+        // Off like a shot, then coasting in.
+        readonly property real e: 1 - Math.pow(1 - dot.arrowT, 3)
+        // The tip, which the arms trail behind.
+        x: dot.fromX + (dot.cx - dot.fromX) * arrow.e
+        y: dot.fromY + (dot.cy - dot.fromY) * arrow.e
+        rotation: dot.vertical ? (dot.cy < dot.fromY ? -90 : 90) : (dot.cx < dot.fromX ? 180 : 0)
+        scale: 0
+        visible: false
+        Repeater {
+            model: 2
+            Rectangle {
+                id: arm
+                required property int index
+                x: -arrow.arm
+                y: -arrow.thick / 2
+                width: arrow.arm
+                height: arrow.thick
+                radius: arrow.thick / 2
+                color: dot.color
+                transformOrigin: Item.Right
+                rotation: arm.index ? 45 : -45
+                antialiasing: true
+            }
+        }
+    }
+    SequentialAnimation {
+        id: arrowAnim
+        PropertyAction { target: pill; property: "opacity"; value: 0 }
+        PropertyAction { target: arrow; property: "visible"; value: true }
+        PropertyAction { target: ghost; property: "opacity"; value: 1 }
+        PropertyAction { target: ghost; property: "scale"; value: 1 }
+        PropertyAction { target: ghost; property: "visible"; value: true }
+        ParallelAnimation {
+            NumberAnimation { target: arrow; property: "scale"; to: 1; duration: dot.unit * 0.3; easing.type: Easing.OutQuad }
+            NumberAnimation { target: ghost; property: "scale"; to: 0; duration: dot.unit * 0.3; easing.type: Easing.InQuad }
+        }
+        PropertyAction { target: ghost; property: "visible"; value: false }
+        ScriptAction { script: arrowFly.restart() }
+    }
+    SequentialAnimation {
+        id: arrowFly
+        NumberAnimation { target: dot; property: "arrowT"; to: 1; duration: dot.unit * 0.7 }
+        PropertyAction { target: pill; property: "scale"; value: 0 }
+        PropertyAction { target: pill; property: "opacity"; value: 1 }
+        ParallelAnimation {
+            NumberAnimation { target: arrow; property: "scale"; to: 0; duration: dot.unit * 0.3; easing.type: Easing.InQuad }
+            NumberAnimation { target: pill; property: "scale"; to: 1; duration: dot.unit * 0.4; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+        }
+        PropertyAction { target: arrow; property: "visible"; value: false }
     }
 }

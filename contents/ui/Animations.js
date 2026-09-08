@@ -30,5 +30,9 @@ const MODES = [
     { id: "wrap",    name: "Wrap",    description: "Leaves past the end of the row and comes back in from the other end, the long way round" },
     { id: "steps",   name: "Steps",   description: "Jumps over in a few discrete stops, stop-motion style" },
     { id: "boomerang", name: "Boomerang", description: "Draws back a whole desktop away, then flies across and lands" },
+    { id: "topple",  name: "Topple",  description: "Stands up into a post that topples over like a domino onto the new desktop, then fades away to leave the dot there" },
+    { id: "cartwheel", name: "Cartwheel", description: "Flattens into a short bar that turns end over end as it crosses, and rounds off into a dot again" },
+    { id: "arrow",   name: "Arrow",   description: "Sharpens into an arrowhead that shoots over to the new desktop and rounds off into a dot again" },
+    { id: "train",   name: "Train",   description: "Breaks into a file of three beads that run across in line and merge again on the new desktop" },
     { id: "none",    name: "None",    description: "Jumps instantly" },
 ];
