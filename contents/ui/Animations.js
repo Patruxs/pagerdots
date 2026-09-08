@@ -16,7 +16,6 @@ function unitFor(base, speedPercent) {
 const MODES = [
     { id: "stretch", name: "Stretch", description: "Stretches into a pill towards the new desktop, then snaps back" },
     { id: "glide",   name: "Glide",   description: "Slides smoothly to the new desktop" },
-    { id: "zip",     name: "Zip",     description: "Zips across as a fine line and snaps back into a dot" },
     { id: "elastic", name: "Elastic", description: "Tethered to the old desktop by a band that stretches, then snaps back" },
     { id: "spring",  name: "Spring",  description: "Slides over and wobbles into place like a spring" },
     { id: "hop",     name: "Hop",     description: "Jumps over in a little arc and squashes on landing" },
@@ -51,3 +50,11 @@ const MODES = [
     { id: "burst",   name: "Burst",   description: "Bursts into pieces that fly out all round and fade on the old desktop, while pieces fly in from all round the new one and gather into a dot" },
     { id: "none",    name: "None",    description: "Jumps instantly" },
 ];
+
+// The id of a known animation, or the default one for an id that is not offered any
+// more (a setting saved by an older version). An empty id is left alone: the settings
+// page has one until Plasma hands it the config.
+function normalize(id) {
+    if (id === "" || MODES.some(m => m.id === id)) return id;
+    return "stretch";
+}

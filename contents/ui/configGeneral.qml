@@ -17,6 +17,9 @@ KCM.SimpleKCM {
     property string cfg_dotColor
     property int cfg_spacing
     property string cfg_dotAnimation
+    // The animation to show and mark as selected: the configured one, or the default
+    // one if the configured one is no longer offered.
+    readonly property string dotAnimation: Animations.normalize(cfg_dotAnimation)
     property int cfg_animationSpeed
 
     // The animations in alphabetical order, arranged so that the two-column grid below
@@ -70,7 +73,7 @@ KCM.SimpleKCM {
 
                     property int current: 0
                     readonly property bool useDot: Labels.usesDot(page.cfg_labelStyle, page.cfg_dotForCurrent)
-                    readonly property bool animated: page.cfg_dotAnimation !== "none"
+                    readonly property bool animated: page.dotAnimation !== "none"
                     readonly property color dotColor: page.cfg_dotColor === "accent"
                                                       ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
                     readonly property int unit: Animations.unitFor(Kirigami.Units.longDuration, page.cfg_animationSpeed)
@@ -130,7 +133,7 @@ KCM.SimpleKCM {
                         id: previewDot
                         anchors.fill: previewRow
                         target: preview.currentCell
-                        animation: page.cfg_dotAnimation
+                        animation: page.dotAnimation
                         size: Math.max(4, Math.round(fm.height * 0.45))
                         color: preview.dotColor
                         unit: preview.unit
@@ -286,7 +289,7 @@ KCM.SimpleKCM {
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 20
                 Layout.bottomMargin: Kirigami.Units.smallSpacing
                 enabled: preview.useDot
-                text: i18n(Animations.MODES.find(m => m.id === page.cfg_dotAnimation)?.description ?? "")
+                text: i18n(Animations.MODES.find(m => m.id === page.dotAnimation)?.description ?? "")
                 wrapMode: Text.Wrap
                 opacity: 0.6
             }
@@ -309,7 +312,7 @@ KCM.SimpleKCM {
 
                         QQC2.ButtonGroup.group: animationGroup
                         text: i18n(modelData.name)
-                        checked: page.cfg_dotAnimation === modelData.id
+                        checked: page.dotAnimation === modelData.id
                         onToggled: if (checked) page.cfg_dotAnimation = modelData.id
 
                         QQC2.ToolTip.text: i18n(modelData.description)

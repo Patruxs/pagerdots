@@ -22,7 +22,7 @@ PlasmoidItem {
     readonly property string labelStyle: Plasmoid.configuration.labelStyle
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
     readonly property int spacing: Plasmoid.configuration.spacing
-    readonly property string dotAnimation: Plasmoid.configuration.dotAnimation
+    readonly property string dotAnimation: Animations.normalize(Plasmoid.configuration.dotAnimation)
     // The dot is drawn in the text colour, or the accent colour if so configured.
     readonly property color dotColor: Plasmoid.configuration.dotColor === "accent"
                                       ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor

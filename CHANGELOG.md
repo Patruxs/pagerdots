@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   than in the preview; the room across the row is now capped at about the dot's size,
   which is what the preview's cells allow.
 
+### Removed
+- The zip animation: on a dot a few pixels across it read as stretch, only thinner. A
+  saved "zip" setting falls back to stretch.
+
 ## [1.2.0] - 2026-09-08
 
 ### Added
