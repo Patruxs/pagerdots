@@ -11,55 +11,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More label styles: Cyrillic letters (а б в), Heavenly Stems (甲 乙 丙), Hiragana (あ い う),
   Katakana (ア イ ウ), and "fill up to current", which fills the circles of every desktop up to
   the current one (● ● ○ ○) so the row reads like a progress bar
-- Five more dot animations: lift (picked up, carried over and set down), roll (rolls along
+- Four more dot animations: lift (picked up, carried over and set down), roll (rolls along
   the row like a ball), elastic (tethered to the old desktop by a band that stretches and
-  snaps back), streak (a light trail that fades behind the dot), and glow (a soft halo
-  that blooms as the dot sets off and fades as it lands)
+  snaps back), and glow (a soft halo that blooms as the dot sets off and fades as it lands)
 - Animation speed slider in the settings, from half to double speed
-- Five more dot animations: fluid (a drop of liquid that stretches with speed and, being
+- Three more dot animations: fluid (a drop of liquid that stretches with speed and, being
   driven by a spring rather than a timer, keeps its momentum when you switch desktops in
-  quick succession), bridge (spans both desktops for a moment, then draws in onto the new
-  one), blur (a motion-blur smear while moving), drop (the old dot falls away while a new
-  one drops in), and flip (turns over like a coin)
+  quick succession), drop (the old dot falls away while a new one drops in), and flip
+  (turns over like a coin)
 - Four more dot animations: slingshot (draws back from the new desktop, stretching like the
   band of a slingshot, then shoots over and settles), zip (streaks across as a fine line),
   snap (drawn in faster and faster, hits the new desktop with a squash and springs back to
   round), and sparks (bursts into sparks that fly across on their own arcs and gather into
   a new dot)
-- Four more dot animations: float (drifts over on a soft spring and eases to a stop, keeping
-  its momentum when you switch quickly), footprints (leaves a fading print on each desktop
-  it passes), dive (sinks away, passes beneath the desktops and surfaces on the new one),
-  and bubble (floats up and pops while a new dot bubbles up from below)
+- Three more dot animations: footprints (leaves a fading print on each desktop it passes),
+  dive (sinks away, passes beneath the desktops and surfaces on the new one), and bubble
+  (floats up and pops while a new dot bubbles up from below)
 - Four more dot animations: pulse (slides over and swells briefly as it settles, like a
   heartbeat), swing (swings over in a smooth arc, like a pendulum), rail (a line shoots out
   to the new desktop and the dot slides along it, taking it in), and ring (the dot opens out
   into a ring that fades from the old desktop, while a ring closes in and fills to a dot on
   the new one)
-- Four more dot animations: wave (undulates across the row as it goes, levelling out as it
+- Three more dot animations: wave (undulates across the row as it goes, levelling out as it
   settles), orbit (a smaller dot peels off, circles the dot as it crosses, and merges back
-  into it), wake (a ring ripples out from every desktop it passes, and from the one it lands
-  on), and loop (loops the loop once on its way over)
-- Five more dot animations: arc (rises over the row in a gentle arc, growing a little at the
-  top, and settles softly), beacon (a marker lights up on the new desktop and a ring pulses
+  into it), and loop (loops the loop once on its way over)
+- Three more dot animations: beacon (a marker lights up on the new desktop and a ring pulses
   out from it, and the dot glides over to take its place), tumble (turns over like a coin as
-  it crosses, its lighter face showing on the way), pour (drains from the old desktop into
-  the new one down a thin stream, shrinking on one as it grows on the other), and shift (the
-  old dot slips onwards and fades while a new one slides in behind it)
-- Six more dot animations: bloom (swells into a large, soft disc as it sets off, drifts
-  across, and condenses back into a dot on the new desktop), ribbon (streams across trailing
-  a soft ribbon of light that draws out with speed and, being spring-driven, keeps its
-  momentum when you switch quickly), runway (lights come on one after another along the row
-  ahead of the dot and go out as it passes over each), skip (skips across like a stone on
-  water, each bounce lower than the last), blink (closes to a thin line like an eye shutting
-  and opens again on the new desktop), and wipe (a curtain sweeps along the row, wiping the
-  dot off the old desktop and painting it onto the new one)
-- Silk dot animation: spring-driven like float, so it keeps its momentum when you switch
-  quickly, but the dot draws out along its path in proportion to its speed, like a thread
-  of silk, and gathers back into a dot as it settles
+  it crosses, its lighter face showing on the way), and pour (drains from the old desktop
+  into the new one down a thin stream, shrinking on one as it grows on the other)
+- Two more dot animations: skip (skips across like a stone on water, each bounce lower than
+  the last), and wipe (a curtain sweeps along the row, wiping the dot off the old desktop
+  and painting it onto the new one)
 - Option to draw the dot in the colour scheme's accent colour instead of the text colour
 
 ### Changed
-- The gliding animations (stretch, glide, comet, ripple, glow, streak and elastic) now ease
+- The gliding animations (stretch, glide, comet, ripple, glow and elastic) now ease
   off the mark before decelerating, instead of jerking into motion at full speed
 - The settings page is laid out in two columns, label styles beside the dot options, and
   the dot animations are picked from a two-column grid with a description of the chosen

@@ -27,36 +27,26 @@ Item {
     property bool vertical: false
     property real hopSign: -1
 
-    // "pop", "fade", "shift", "drop", "flip", "bubble", "sparks", "pour", "ring", "blink"
-    // and "wipe" swap the dot in place; everything else moves it across the panel.
+    // "pop", "fade", "drop", "flip", "bubble", "sparks", "pour", "ring" and "wipe" swap
+    // the dot in place; everything else moves it across the panel.
     readonly property bool swaps: animation === "pop" || animation === "fade"
-                                  || animation === "shift" || animation === "drop"
-                                  || animation === "flip" || animation === "bubble"
-                                  || animation === "sparks" || animation === "pour"
-                                  || animation === "ring" || animation === "blink"
+                                  || animation === "drop" || animation === "flip"
+                                  || animation === "bubble" || animation === "sparks"
+                                  || animation === "pour" || animation === "ring"
                                   || animation === "wipe"
     readonly property bool slides: !swaps && animation !== "none"
-    // "fluid", "float", "silk" and "ribbon" are driven by a spring simulation (see `sim`)
-    // rather than the Behaviors below; "fluid" stretches with a soft trail spring, "float"
-    // stays round, "silk" stretches along its path in proportion to its speed, and
-    // "ribbon" trails a streak from a softer trail spring still.
+    // "fluid" is driven by a spring simulation (see `sim`) rather than the Behaviors below.
     readonly property bool fluid: animation === "fluid"
-    readonly property bool floats: animation === "float"
-    readonly property bool silk: animation === "silk"
-    readonly property bool ribbon: animation === "ribbon"
-    readonly property bool sprung: fluid || floats || ribbon || silk
-    // "elastic", "streak", "fluid", "ribbon" and "rail" keep the dot round and draw the
-    // gap between the two trackers (see below) as a separate band, streak, neck or rail
-    // rather than stretching the dot.
+    // "elastic", "fluid" and "rail" keep the dot round and draw the gap between the two
+    // trackers (see below) as a separate band, neck or rail rather than stretching the dot.
     readonly property bool tethered: animation === "elastic"
-    readonly property bool streaks: animation === "streak" || ribbon
     readonly property bool rails: animation === "rail"
-    readonly property bool round: tethered || streaks || fluid || rails
+    readonly property bool round: tethered || fluid || rails
     // "zip" thins the pill the further it is stretched, so it streaks across as a fine line.
     readonly property bool zips: animation === "zip"
     // How long the dot takes to leave the old cell and settle on the new one, so that
     // whatever is underneath can time its own fade to it.
-    readonly property int travel: sprung ? unit * 2.5
+    readonly property int travel: fluid ? unit * 2.5
                                 : slides ? Math.max(leadDelay + leadDuration, trailDelay + trailDuration)
                                 : sparks ? unit * 2.4
                                 : unit * 2
@@ -81,12 +71,12 @@ Item {
     // Two trackers per axis follow the target centre, and the pill spans the gap between
     // them. With equal timing they coincide and the dot simply slides; in "stretch" the
     // lead tracker races ahead while the trail one lags, so the dot elongates into a
-    // pill towards the new desktop and then contracts onto it. "elastic", "streak" and
-    // "fluid" draw the gap as a band, a fading streak or a liquid neck instead.
-    property real leadX: sprung ? sim.lx : cx
-    property real leadY: sprung ? sim.ly : cy
-    property real trailX: fluid || ribbon ? sim.tx : floats || silk ? sim.lx : cx
-    property real trailY: fluid || ribbon ? sim.ty : floats || silk ? sim.ly : cy
+    // pill towards the new desktop and then contracts onto it. "elastic" and "fluid"
+    // draw the gap as a band or a liquid neck instead.
+    property real leadX: fluid ? sim.lx : cx
+    property real leadY: fluid ? sim.ly : cy
+    property real trailX: fluid ? sim.tx : cx
+    property real trailY: fluid ? sim.ty : cy
     // Where the head of the dot is drawn: the lead tracker, pulled back along the row
     // by `wind` while "slingshot" winds up.
     readonly property real headX: leadX + (vertical ? 0 : wind)
@@ -115,10 +105,8 @@ Item {
     readonly property int leadDuration: {
         switch (animation) {
         case "stretch": return unit * 1.5;
-        case "bridge":  return unit * 1.5;
         case "elastic": return unit * 1.5;
         case "rail":    return unit * 1;
-        case "streak":  return unit * 1.75;
         case "zip":     return unit * 1.25;
         case "snap":    return unit * 1.75;
         case "lift":    return unit * 2.25;
@@ -151,14 +139,11 @@ Item {
     // "slingshot" holds the lead on the old cell while it is drawn back (see `wind`),
     // then lets it fly.
     readonly property int leadDelay: animation === "slingshot" ? unit * 0.7 : 0
-    // "bridge" holds the trail on the old cell until the lead has all but arrived, so
-    // the pill first spans both cells and then draws in behind itself. "slingshot"
-    // holds it while the lead draws back, so the pill stretches like the band of a
-    // slingshot, "zip" only until the lead is well away, and "rail" a moment, so the
-    // rail is seen to be laid before the dot sets off along it.
+    // "slingshot" holds the trail on the old cell while the lead draws back, so the pill
+    // stretches like the band of a slingshot, "zip" only until the lead is well away, and
+    // "rail" a moment, so the rail is seen to be laid before the dot sets off along it.
     readonly property int trailDelay: {
         switch (animation) {
-        case "bridge":    return unit * 0.9;
         case "slingshot": return unit * 0.9;
         case "zip":       return unit * 0.2;
         case "rail":      return unit * 0.15;
@@ -168,9 +153,7 @@ Item {
     readonly property int trailDuration: {
         switch (animation) {
         case "stretch":   return unit * 2.25;
-        case "bridge":    return unit * 1.5;
         case "elastic":   return unit * 2.5;
-        case "streak":    return unit * 2.75;
         case "slingshot": return unit * 1.1;
         case "zip":       return unit * 1.3;
         case "rail":      return unit * 2;
@@ -180,9 +163,7 @@ Item {
     readonly property int trailEasing: {
         switch (animation) {
         case "stretch":   return Easing.InOutQuart;
-        case "bridge":    return Easing.InOutCubic;
         case "elastic":   return Easing.InQuart;    // the band stays taut, then snaps in
-        case "streak":    return Easing.InOutCubic;
         case "slingshot": return Easing.InOutCubic;
         case "zip":       return Easing.InOutExpo;
         case "snap":      return Easing.InQuart;    // lags the lead, smearing the dot as it speeds up
@@ -269,39 +250,37 @@ Item {
         id: leadMoverX
         current: dot.leadX
         span: dot.leadDuration
-        enabled: dot.ready && dot.slides && !dot.sprung
+        enabled: dot.ready && dot.slides && !dot.fluid
         LeadAnimation { cutIn: leadMoverX.cutIn; curve: leadMoverX.curve }
     }
     Mover on leadY {
         id: leadMoverY
         current: dot.leadY
         span: dot.leadDuration
-        enabled: dot.ready && dot.slides && !dot.sprung
+        enabled: dot.ready && dot.slides && !dot.fluid
         LeadAnimation { cutIn: leadMoverY.cutIn; curve: leadMoverY.curve }
     }
     Mover on trailX {
         id: trailMoverX
         current: dot.trailX
         span: dot.trailDuration
-        enabled: dot.ready && dot.slides && !dot.sprung
+        enabled: dot.ready && dot.slides && !dot.fluid
         TrailAnimation { curve: trailMoverX.curve }
     }
     Mover on trailY {
         id: trailMoverY
         current: dot.trailY
         span: dot.trailDuration
-        enabled: dot.ready && dot.slides && !dot.sprung
+        enabled: dot.ready && dot.slides && !dot.fluid
         TrailAnimation { curve: trailMoverY.curve }
     }
 
-    // "fluid" and "float": the lead and trail trackers are two damped springs pulled
-    // towards the target, integrated every frame. Unlike a timed animation, a spring
-    // keeps its momentum when the target changes mid-flight, so rapid switching stays
-    // smooth. In "fluid" the lead is a stiff spring and the trail a soft one, so the
-    // dot stretches in proportion to how fast it is moving; "float" only uses the lead,
-    // a softer and slightly underdamped spring, so the dot drifts over and eases to a
-    // stop with the faintest of overshoots. The constants are scaled so that the settle
-    // time follows `unit` like the other animations.
+    // "fluid": the lead and trail trackers are two damped springs pulled towards the
+    // target, integrated every frame. Unlike a timed animation, a spring keeps its
+    // momentum when the target changes mid-flight, so rapid switching stays smooth. The
+    // lead is a stiff spring and the trail a soft one, so the dot stretches in proportion
+    // to how fast it is moving. The constants are scaled so that the settle time follows
+    // `unit` like the other animations.
     FrameAnimation {
         id: sim
         running: false
@@ -322,14 +301,9 @@ Item {
         }
         onTriggered: {
             const s = 200 / Math.max(1, dot.unit);
-            // lead: stiff, just under critical damping ("fluid", "ribbon"), softer and a
-            // little less damped still ("float"), or in between ("silk", whose stretch
-            // shows the speed, so it must neither overshoot nor crawl in); trail: softer,
-            // critically damped, and softer again for "ribbon", so its streak draws out
-            // long behind the dot
-            const kl = (dot.floats ? 110 : dot.silk ? 140 : 170) * s * s;
-            const cl = (dot.floats ? 18 : dot.silk ? 22 : 23.5) * s;
-            const kt = (dot.ribbon ? 60 : 90) * s * s, ct = (dot.ribbon ? 15.5 : 19) * s;
+            // lead: stiff, just under critical damping; trail: softer, critically damped
+            const kl = 170 * s * s, cl = 23.5 * s;
+            const kt = 90 * s * s, ct = 19 * s;
             // Sub-step so that a stalled frame cannot blow the integration up.
             const dt = Math.min(frameTime, 0.05);
             const steps = Math.ceil(dt / 0.004), h = dt / steps;
@@ -346,20 +320,10 @@ Item {
         }
     }
     function retargetFluid() {
-        if (!sprung) return;
+        if (!fluid) return;
         if (ready) sim.start();
         else sim.snap();
     }
-
-    // "silk": the dot stretches along the row in proportion to how fast the spring is
-    // moving it, and thins across the row to keep its volume, so it draws out like a
-    // thread of silk mid-move and gathers back into a dot as it settles. The speed is
-    // taken relative to the speed setting, so the shape is the same at any setting, and
-    // one cell's move stretches it to about half again its length, two cells to double.
-    readonly property real silkSpeed: silk ? Math.abs(vertical ? sim.vly : sim.vlx) * unit / 200 : 0
-    readonly property real silkStretch: Math.min(1, silkSpeed / (size * 40))
-    readonly property real silkAlong: 1 + silkStretch
-    readonly property real silkAcross: 1 / (1 + silkStretch * 0.4)
 
     // Extra flourishes layered on top of the slide, driven by the animations below.
     property real hop: 0        // offset across the row while hopping or dropping in
@@ -369,8 +333,6 @@ Item {
     property real squish: 1     // scale along the row; the dot thins across it to compensate
     property real lift: 1       // uniform scale while "lift" carries the dot over
     property real flip: 1       // scale along the row while "flip" turns the dot over
-    property real wink: 1       // scale across the row while "blink" closes and opens the dot
-    property real along: 0      // offset along the row while "shift" slides the new dot in
 
     // "tumble": the dot turns over like a coin as it crosses. `tumbleT` is the phase of
     // that turn (one full turn per move), and the face is periodic in it, so a move that
@@ -422,18 +384,11 @@ Item {
             placeGhost(old);
             flipAnim.restart();
             break;
-        case "blink":
-            placeGhost(old);
-            blinkAnim.restart();
-            break;
         case "wipe":
             fromX = old.x + old.width / 2;
             fromY = old.y + old.height / 2;
             wipeDir = vertical ? (target.y < old.y ? -1 : 1) : (target.x < old.x ? -1 : 1);
             wipeAnim.restart();
-            break;
-        case "bloom":
-            bloomAnim.restart();
             break;
         case "skip":
             skipAnim.restart();
@@ -448,9 +403,6 @@ Item {
         case "swing":
             swingAnim.restart();
             break;
-        case "arc":
-            arcAnim.restart();
-            break;
         case "beacon":
             beaconAnim.restart();
             break;
@@ -460,11 +412,6 @@ Item {
             tumbleAnim.from = tumbleT;
             tumbleAnim.to = Math.ceil(tumbleT + 0.5);
             tumbleAnim.restart();
-            break;
-        case "shift":
-            placeGhost(old);
-            shiftDist = size * 1.6 * (vertical ? (target.y < old.y ? -1 : 1) : (target.x < old.x ? -1 : 1));
-            shiftAnim.restart();
             break;
         case "pour":
             placeGhost(old);
@@ -503,21 +450,15 @@ Item {
             ringAnim.restart();
             break;
         }
-        case "footprints":
-        case "wake":
-        case "runway": {
+        case "footprints": {
             // One print on the old cell and one on every cell between it and the new
-            // one, a cell's width apart, since all the cells are the same size. The
-            // runway lights run from the cell after the old one up to the new one instead.
+            // one, a cell's width apart, since all the cells are the same size.
             const along = vertical ? target.y - old.y : target.x - old.x;
             const span = vertical ? target.height : target.width;
             printCount = 0;
             printStep = span * (along < 0 ? -1 : 1);
-            printFrom = (vertical ? old.y + old.height / 2 : old.x + old.width / 2)
-                        + (runway ? printStep : 0);
+            printFrom = vertical ? old.y + old.height / 2 : old.x + old.width / 2;
             printCount = Math.min(prints.count, Math.max(1, Math.round(Math.abs(along) / Math.max(1, span))));
-            if (animation === "wake") ripple.restart();
-            if (runway) runwayRev++;
             break;
         }
         case "ripple":
@@ -560,9 +501,7 @@ Item {
         ghost.baseX = cell.x + (cell.width - size) / 2;
         ghost.baseY = cell.y + (cell.height - size) / 2;
         ghost.fall = 0;
-        ghost.slide = 0;
         ghost.flip = 1;
-        ghost.wink = 1;
     }
     // A mode change mid-animation must not leave the dot half faded, squashed or lifted.
     onAnimationChanged: {
@@ -586,14 +525,10 @@ Item {
         orbitAnim.stop();
         loopAnim.stop();
         ringAnim.stop();
-        arcAnim.stop();
         beaconAnim.stop();
         tumbleAnim.stop();
-        shiftAnim.stop();
         pourAnim.stop();
-        blinkAnim.stop();
         wipeAnim.stop();
-        bloomAnim.stop();
         skipAnim.stop();
         sim.snap();
         ghost.visible = false;
@@ -611,9 +546,7 @@ Item {
         squish = 1;
         lift = 1;
         flip = 1;
-        wink = 1;
         wind = 0;
-        along = 0;
         curl = 0;
         tumbleT = 0;
         pourT = 0;
@@ -622,90 +555,39 @@ Item {
         printCount = 0;
     }
 
-    // "footprints" and "wake": a mark is left on each cell as the dot passes over it and
-    // fades away behind it, a faint print for "footprints" and a ring spreading outwards
-    // for "wake". The marks are laid out from the old cell towards the new one when the
-    // move starts, and each shows itself once the dot has gone by.
-    // "runway": the same marks, but as small lights that come on one after another ahead
-    // of the dot, from the cell after the old one up to the new one, and go out as the
-    // dot reaches each of them. `runwayRev` is bumped to light them up.
-    readonly property bool wakes: animation === "wake"
-    readonly property bool runway: animation === "runway"
+    // "footprints": a faint print is left on each cell as the dot passes over it and
+    // fades away behind it. The prints are laid out from the old cell towards the new
+    // one when the move starts, and each shows itself once the dot has gone by.
     property real printFrom: 0
     property real printStep: 0
     property int printCount: 0
-    property int runwayRev: 0
     Repeater {
         id: prints
         model: 8
         Rectangle {
             id: mark
             required property int index
-            property real grow: 1
-            readonly property real extent: dot.size * (dot.wakes ? 0.9 : dot.runway ? 0.55 : 0.85) * grow
+            readonly property real extent: dot.size * 0.85
             readonly property real at: dot.printFrom + dot.printStep * index
             readonly property real head: dot.vertical ? dot.headY : dot.headX
             // Gone by: the dot has moved on from this cell in the direction of travel.
             readonly property bool passed: index < dot.printCount
                                            && (dot.printStep > 0 ? head > at + dot.size * 0.6
                                                                  : head < at - dot.size * 0.6)
-            // Reached: the dot is about to cover this cell, so its runway light goes out.
-            readonly property bool reached: index < dot.printCount
-                                            && (dot.printStep > 0 ? head > at - dot.size * 0.5
-                                                                  : head < at + dot.size * 0.5)
             x: (dot.vertical ? dot.cx : at) - extent / 2
             y: (dot.vertical ? at : dot.cy) - extent / 2
             width: extent
             height: extent
             radius: extent / 2
-            color: dot.wakes ? "transparent" : dot.color
-            border.color: dot.color
-            border.width: dot.wakes ? Math.max(1, dot.size / 5) : 0
+            color: dot.color
             opacity: 0
-            visible: (dot.animation === "footprints" || dot.wakes || dot.runway) && opacity > 0
+            visible: dot.animation === "footprints" && opacity > 0
             antialiasing: true
-            onPassedChanged: if (passed && !dot.runway) printFade.restart()
-            onReachedChanged: if (reached && dot.runway && opacity > 0) lightOff.restart()
+            onPassedChanged: if (passed) printFade.restart()
             SequentialAnimation {
                 id: printFade
-                PropertyAction { target: mark; property: "opacity"; value: dot.wakes ? 0.7 : 0.5 }
-                PropertyAction { target: mark; property: "grow"; value: 1 }
-                ParallelAnimation {
-                    NumberAnimation { target: mark; property: "opacity"; to: 0; duration: dot.unit * (dot.wakes ? 2.5 : 3); easing.type: Easing.InQuad }
-                    NumberAnimation { target: mark; property: "grow"; to: dot.wakes ? 3 : 1; duration: dot.unit * 2.5; easing.type: Easing.OutCubic }
-                }
-            }
-            // The runway lights come on in turn, a little after the one before, and each
-            // goes out as the dot reaches it. A new move relights the ones it needs and
-            // puts out the rest, so a cut-in does not leave stray lights along the row.
-            Connections {
-                target: dot
-                function onRunwayRevChanged() {
-                    lightOff.stop();
-                    if (mark.index < dot.printCount && !mark.reached) {
-                        lightOn.restart();
-                    } else {
-                        lightOn.stop();
-                        mark.opacity = 0;
-                    }
-                }
-            }
-            SequentialAnimation {
-                id: lightOn
-                PauseAnimation { duration: dot.unit * 0.1 * mark.index }
-                PropertyAction { target: mark; property: "grow"; value: 0.4 }
-                ParallelAnimation {
-                    NumberAnimation { target: mark; property: "opacity"; to: 0.55; duration: dot.unit * 0.35; easing.type: Easing.OutQuad }
-                    NumberAnimation { target: mark; property: "grow"; to: 1; duration: dot.unit * 0.5; easing.type: Easing.OutBack; easing.overshoot: 1.6 }
-                }
-            }
-            NumberAnimation {
-                id: lightOff
-                target: mark
-                property: "opacity"
-                to: 0
-                duration: dot.unit * 0.7
-                easing.type: Easing.OutQuad
+                PropertyAction { target: mark; property: "opacity"; value: 0.5 }
+                NumberAnimation { target: mark; property: "opacity"; to: 0; duration: dot.unit * 3; easing.type: Easing.InQuad }
             }
         }
     }
@@ -734,20 +616,17 @@ Item {
         }
     }
 
-    // "comet" and "blur": copies that follow the dot with a growing delay, spreading out
-    // behind it while it moves and tucking back under it at rest. "comet" uses three
-    // that shrink and fade into a tail; "blur" four full-size, faint ones that lag only
-    // a little, so the dot smears like a motion blur and is sharp again when it stops.
+    // "comet": three copies that follow the dot with a growing delay, shrinking and
+    // fading into a tail that spreads out behind it while it moves and tucks back
+    // under it at rest.
     readonly property bool comet: animation === "comet"
-    readonly property bool blurs: animation === "blur"
     Repeater {
-        model: 4
+        model: 3
         Rectangle {
             id: follower
             required property int index
             readonly property real k: index + 1
-            readonly property real extent: dot.comet ? dot.size * (1 - 0.2 * k) : dot.size
-            readonly property real lag: dot.comet ? 0.22 : 0.09
+            readonly property real extent: dot.size * (1 - 0.2 * k)
             property real fx: dot.cx
             property real fy: dot.cy
 
@@ -757,22 +636,22 @@ Item {
             height: extent
             radius: extent / 2
             color: dot.color
-            opacity: dot.comet ? 0.55 - 0.15 * k : 0.45 - 0.1 * k
-            visible: dot.blurs || (dot.comet && index < 3)
+            opacity: 0.55 - 0.15 * k
+            visible: dot.comet
             antialiasing: true
 
             Mover on fx {
                 id: followerMoverX
                 current: follower.fx
-                span: dot.leadDuration * (1 + follower.lag * follower.k)
-                enabled: dot.ready && (dot.comet || dot.blurs)
+                span: dot.leadDuration * (1 + 0.22 * follower.k)
+                enabled: dot.ready && dot.comet
                 NumberAnimation { duration: followerMoverX.span; easing.type: Easing.BezierSpline; easing.bezierCurve: followerMoverX.curve }
             }
             Mover on fy {
                 id: followerMoverY
                 current: follower.fy
-                span: dot.leadDuration * (1 + follower.lag * follower.k)
-                enabled: dot.ready && (dot.comet || dot.blurs)
+                span: dot.leadDuration * (1 + 0.22 * follower.k)
+                enabled: dot.ready && dot.comet
                 NumberAnimation { duration: followerMoverY.span; easing.type: Easing.BezierSpline; easing.bezierCurve: followerMoverY.curve }
             }
         }
@@ -813,9 +692,8 @@ Item {
     readonly property real thickness: zips ? size * (1 - 0.55 * Math.min(1, gap / (size * 4))) : size
 
     // The span between the trail and lead trackers, along the row. "elastic" draws it
-    // as a thin band tethering the dot to the old cell, "streak" as a streak that
-    // fades away from the dot, "fluid" as the neck of a stretching drop. All vanish
-    // once the trackers meet.
+    // as a thin band tethering the dot to the old cell, "fluid" as the neck of a
+    // stretching drop. All vanish once the trackers meet.
     component Span: Rectangle {
         required property real thickness
         readonly property bool forward: dot.vertical ? dot.headY >= dot.trailY : dot.headX >= dot.trailX
@@ -833,18 +711,6 @@ Item {
         thickness: Math.max(1.5, dot.size * 0.35)
         color: dot.color
         opacity: 0.9
-    }
-    Span {
-        id: streak
-        objectName: "streak"
-        visible: dot.streaks && dot.target !== null
-        thickness: dot.size * (dot.ribbon ? 0.45 : 0.6)
-        opacity: dot.ribbon ? 0.7 : 0.85
-        gradient: Gradient {
-            orientation: dot.vertical ? Gradient.Vertical : Gradient.Horizontal
-            GradientStop { position: 0; color: streak.forward ? Qt.alpha(dot.color, 0) : dot.color }
-            GradientStop { position: 1; color: streak.forward ? dot.color : Qt.alpha(dot.color, 0) }
-        }
     }
     // "rail": a thin line laid from the dot to the new cell, which the dot then slides
     // along, taking it in as it goes.
@@ -1155,20 +1021,17 @@ Item {
     }
 
     // Copy of the dot left on the old cell during a swap, animating out. `fall` moves
-    // it across the row, away from where "hop" jumps to (for "drop"); `slide` moves it
-    // along the row (for "shift"); `flip` turns it edge-on (for "flip"); `wink` closes it
-    // to a line across the row (for "blink").
+    // it across the row, away from where "hop" jumps to (for "drop" and "bubble");
+    // `flip` turns it edge-on (for "flip").
     Rectangle {
         id: ghost
         objectName: "ghost"
         property real baseX: 0
         property real baseY: 0
         property real fall: 0
-        property real slide: 0
         property real flip: 1
-        property real wink: 1
-        x: baseX + (dot.vertical ? -fall * dot.hopSign : slide)
-        y: baseY + (dot.vertical ? slide : -fall * dot.hopSign)
+        x: baseX + (dot.vertical ? -fall * dot.hopSign : 0)
+        y: baseY + (dot.vertical ? 0 : -fall * dot.hopSign)
         width: dot.size
         height: dot.size
         radius: dot.size / 2
@@ -1179,8 +1042,8 @@ Item {
         transform: Scale {
             origin.x: ghost.width / 2
             origin.y: ghost.height / 2
-            xScale: dot.vertical ? ghost.wink : ghost.flip
-            yScale: dot.vertical ? ghost.flip : ghost.wink
+            xScale: dot.vertical ? 1 : ghost.flip
+            yScale: dot.vertical ? ghost.flip : 1
         }
     }
 
@@ -1191,9 +1054,9 @@ Item {
         readonly property real length: dot.round ? 0 : dot.gap
         readonly property real start: dot.round ? (dot.vertical ? dot.dotY : dot.dotX) : dot.gapStart
         x: (dot.vertical ? dot.dotX : start) - dot.thickness / 2
-           + (dot.vertical ? (dot.hop + dot.curlAcross) * dot.hopSign : dot.curlAlong + dot.along)
+           + (dot.vertical ? (dot.hop + dot.curlAcross) * dot.hopSign : dot.curlAlong)
         y: (dot.vertical ? start : dot.dotY) - dot.thickness / 2
-           + (dot.vertical ? dot.curlAlong + dot.along : (dot.hop + dot.curlAcross) * dot.hopSign)
+           + (dot.vertical ? dot.curlAlong : (dot.hop + dot.curlAcross) * dot.hopSign)
         width: (dot.vertical ? 0 : length) + dot.thickness
         height: (dot.vertical ? length : 0) + dot.thickness
         radius: dot.thickness / 2
@@ -1206,10 +1069,8 @@ Item {
         transform: Scale {
             origin.x: pill.width / 2
             origin.y: pill.height / 2
-            xScale: (dot.vertical ? dot.wink / dot.squish * dot.silkAcross
-                                  : dot.squish * pill.turn * dot.silkAlong) * dot.lift
-            yScale: (dot.vertical ? dot.squish * pill.turn * dot.silkAlong
-                                  : dot.wink / dot.squish * dot.silkAcross) * dot.lift
+            xScale: (dot.vertical ? 1 / dot.squish : dot.squish * pill.turn) * dot.lift
+            yScale: (dot.vertical ? dot.squish * pill.turn : 1 / dot.squish) * dot.lift
         }
 
         // "roll": a spot of the background off the dot's centre, turned in proportion
@@ -1258,41 +1119,12 @@ Item {
         NumberAnimation { target: dot; property: "squish"; to: 1; duration: dot.unit * 0.8; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
     }
 
-    // "bloom": the dot swells into a large, faint disc as it sets off, drifts across as
-    // that soft disc, and condenses back into a dot on the new cell. The first step
-    // eases a bloom cut short by a new move on from where it was rather than restarting.
-    ParallelAnimation {
-        id: bloomAnim
-        SequentialAnimation {
-            NumberAnimation { target: dot; property: "lift"; to: 2.4; duration: dot.leadDuration * 0.45; easing.type: Easing.OutSine }
-            NumberAnimation { target: dot; property: "lift"; to: 1; duration: dot.leadDuration * 0.55; easing.type: Easing.InOutCubic }
-        }
-        SequentialAnimation {
-            NumberAnimation { target: pill; property: "opacity"; to: 0.3; duration: dot.leadDuration * 0.45; easing.type: Easing.OutSine }
-            NumberAnimation { target: pill; property: "opacity"; to: 1; duration: dot.leadDuration * 0.55; easing.type: Easing.InOutCubic }
-        }
-    }
-
     // "swing": dip below the row and rise again while sliding, so that with the sine
     // easing of the slide the dot swings over on a pendulum's arc.
     SequentialAnimation {
         id: swingAnim
         NumberAnimation { target: dot; property: "hop"; to: -dot.hopLift; duration: dot.leadDuration / 2; easing.type: Easing.OutSine }
         NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.leadDuration / 2; easing.type: Easing.InSine }
-    }
-
-    // "arc": a gentler cousin of "hop". The dot rises over the row in a shallow arc,
-    // growing a little at the top as if coming towards the eye, and settles without a bump.
-    ParallelAnimation {
-        id: arcAnim
-        SequentialAnimation {
-            NumberAnimation { target: dot; property: "hop"; to: dot.hopLift * 0.75; duration: dot.leadDuration / 2; easing.type: Easing.OutSine }
-            NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.leadDuration / 2; easing.type: Easing.InSine }
-        }
-        SequentialAnimation {
-            NumberAnimation { target: dot; property: "lift"; to: 1.3; duration: dot.leadDuration / 2; easing.type: Easing.OutSine }
-            NumberAnimation { target: dot; property: "lift"; to: 1; duration: dot.leadDuration / 2; easing.type: Easing.InSine }
-        }
     }
 
     // "wave": the dot undulates across the row as it crosses, as if carried on a wave,
@@ -1475,33 +1307,6 @@ Item {
         }
     }
 
-    // "shift": the old dot slips a little way onwards and fades, while a new one fades in
-    // just short of the new cell and slides the last stretch onto it, in the same
-    // direction, so the eye reads one dot handing over to the next.
-    property real shiftDist: 0
-    ParallelAnimation {
-        id: shiftAnim
-        SequentialAnimation {
-            PropertyAction { target: ghost; property: "opacity"; value: 1 }
-            PropertyAction { target: ghost; property: "scale"; value: 1 }
-            PropertyAction { target: ghost; property: "visible"; value: true }
-            ParallelAnimation {
-                NumberAnimation { target: ghost; property: "slide"; from: 0; to: dot.shiftDist; duration: dot.unit * 1.2; easing.type: Easing.OutCubic }
-                NumberAnimation { target: ghost; property: "opacity"; to: 0; duration: dot.unit * 0.9; easing.type: Easing.InOutSine }
-            }
-            PropertyAction { target: ghost; property: "visible"; value: false }
-        }
-        SequentialAnimation {
-            PropertyAction { target: pill; property: "opacity"; value: 0 }
-            PropertyAction { target: dot; property: "along"; value: -dot.shiftDist }
-            PauseAnimation { duration: dot.unit * 0.15 }
-            ParallelAnimation {
-                NumberAnimation { target: pill; property: "opacity"; to: 1; duration: dot.unit * 1.0; easing.type: Easing.OutQuad }
-                NumberAnimation { target: dot; property: "along"; to: 0; duration: dot.unit * 1.6; easing.type: Easing.BezierSpline; easing.bezierCurve: dot.smoothCurve }
-            }
-        }
-    }
-
     // "drop": the ghost falls away off the old cell while a new dot drops onto the
     // new one, landing with a small bounce.
     ParallelAnimation {
@@ -1565,20 +1370,5 @@ Item {
         NumberAnimation { target: ghost; property: "flip"; from: 1; to: 0; duration: dot.unit * 0.75; easing.type: Easing.InSine }
         PropertyAction { target: ghost; property: "visible"; value: false }
         NumberAnimation { target: dot; property: "flip"; from: 0; to: 1; duration: dot.unit * 0.75; easing.type: Easing.OutSine }
-    }
-
-    // "blink": the ghost closes to a thin line across the row, like an eye shutting, and
-    // the dot opens out from a line on the new cell. The line is kept just visible at
-    // its thinnest, so the eye can follow the dot from one cell to the other.
-    SequentialAnimation {
-        id: blinkAnim
-        PropertyAction { target: ghost; property: "opacity"; value: 1 }
-        PropertyAction { target: ghost; property: "scale"; value: 1 }
-        PropertyAction { target: ghost; property: "visible"; value: true }
-        PropertyAction { target: dot; property: "wink"; value: 0.2 }
-        NumberAnimation { target: ghost; property: "wink"; from: 1; to: 0.2; duration: dot.unit * 0.6; easing.type: Easing.InSine }
-        PropertyAction { target: ghost; property: "visible"; value: false }
-        PauseAnimation { duration: dot.unit * 0.15 }
-        NumberAnimation { target: dot; property: "wink"; from: 0.2; to: 1; duration: dot.unit * 0.9; easing.type: Easing.OutBack; easing.overshoot: 1.4 }
     }
 }
