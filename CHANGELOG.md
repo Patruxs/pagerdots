@@ -25,6 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pour dot animation: drains from the old desktop into the new one down a thin stream,
   shrinking on one as it grows on the other
 - Option to draw the dot in the colour scheme's accent colour instead of the text colour
+- Six more dot animations, each with a shape of its own: beam (stretches into a tall thin
+  beam that fades from the old desktop, while a beam appears on the new one and collapses
+  into a dot), split (divides into two half dots that swing out to either side, cross over
+  and merge again), flash (appears on the new desktop at once and blinks twice), wrap
+  (leaves past the end of the row and comes back in from the other end), steps (jumps over
+  in a few discrete stops, stop-motion style), and boomerang (draws back a whole desktop
+  away, then flies across and lands)
 
 ### Changed
 - The gliding animations (stretch, glide, ripple, glow and elastic) now ease

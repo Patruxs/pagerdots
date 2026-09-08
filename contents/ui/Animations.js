@@ -24,5 +24,11 @@ const MODES = [
     { id: "drop",    name: "Drop",    description: "Falls away from the old desktop while a new dot drops onto the new one" },
     { id: "pop",     name: "Pop",     description: "Shrinks away and pops up at the new desktop" },
     { id: "fade",    name: "Fade",    description: "Cross-fades from the old desktop to the new one" },
+    { id: "beam",    name: "Beam",    description: "Stretches into a tall thin beam that fades from the old desktop, while a beam appears on the new one and collapses into a dot" },
+    { id: "split",   name: "Split",   description: "Splits into two half dots that swing out to either side, cross over, and merge again on the new desktop" },
+    { id: "flash",   name: "Flash",   description: "Appears on the new desktop at once and blinks twice" },
+    { id: "wrap",    name: "Wrap",    description: "Leaves past the end of the row and comes back in from the other end, the long way round" },
+    { id: "steps",   name: "Steps",   description: "Jumps over in a few discrete stops, stop-motion style" },
+    { id: "boomerang", name: "Boomerang", description: "Draws back a whole desktop away, then flies across and lands" },
     { id: "none",    name: "None",    description: "Jumps instantly" },
 ];

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Thuan Phat <laithuanphat@gmail.com>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 
 // The current-desktop marker: a single dot that moves from cell to cell with one
@@ -24,12 +26,17 @@ Item {
     property bool vertical: false
     property real hopSign: -1
 
-    // "pop", "fade", "drop", "sparks", "pour" and "ring" swap the dot in place; everything
-    // else moves it across the panel.
+    // "pop", "fade", "drop", "sparks", "pour", "ring", "beam", "split" and "flash" swap
+    // the dot in place; "wrap", "steps" and "boomerang" move it along the row on a path
+    // of their own (see `shift`); everything else slides it across the panel.
     readonly property bool swaps: animation === "pop" || animation === "fade"
                                   || animation === "drop" || animation === "sparks"
                                   || animation === "pour" || animation === "ring"
-    readonly property bool slides: !swaps && animation !== "none"
+                                  || animation === "beam" || animation === "split"
+                                  || animation === "flash"
+    readonly property bool shifts: animation === "wrap" || animation === "steps"
+                                   || animation === "boomerang"
+    readonly property bool slides: !swaps && !shifts && animation !== "none"
     // "elastic" keeps the dot round and draws the gap between the two trackers (see
     // below) as a separate band rather than stretching the dot.
     readonly property bool tethered: animation === "elastic"
@@ -39,6 +46,8 @@ Item {
     // whatever is underneath can time its own fade to it.
     readonly property int travel: slides ? Math.max(leadDuration, trailDelay + trailDuration)
                                 : sparks ? unit * 2.4
+                                : animation === "wrap" ? unit * 2.2
+                                : animation === "flash" ? unit * 1.3
                                 : unit * 2
 
     // Centre of the target. Kept at its last value while there is no target, so the
@@ -220,6 +229,32 @@ Item {
     property real hopLift: 0    // how high the current hop goes, or how far the drop falls
     property real squish: 1     // scale along the row; the dot thins across it to compensate
     property real lift: 1       // uniform scale while "lift" carries the dot over
+    // Offset along the row for the modes that move the dot on a path of their own
+    // ("wrap", "steps" and "boomerang"): the trackers sit on the new cell at once, and
+    // the dot is drawn this far from them. A move starts by setting it to the old
+    // cell's distance, so the dot stays put, and the animation brings it to 0.
+    property real shift: 0
+    // "steps": the same offset, quantised into a few stops (see stepsAnim).
+    property real stepFrom: 0
+    property real stepT: 0
+    property int stepCount: 3
+    readonly property real stepShift: animation === "steps"
+                                      ? stepFrom * (1 - Math.ceil(stepT * stepCount) / stepCount) : 0
+    readonly property real along: shift + stepShift
+    // "wrap": the dot fades out as it leaves the row past its end, and in as it re-enters.
+    readonly property real edgeFade: {
+        if (animation !== "wrap") return 1;
+        const at = (vertical ? cy : cx) + along;
+        const extent = vertical ? height : width;
+        const margin = size * 2.5;
+        return Math.max(0, Math.min(1, (at + size) / margin, (extent + size - at) / margin));
+    }
+    function centreOf(cell) {
+        return vertical ? cell.y + cell.height / 2 : cell.x + cell.width / 2;
+    }
+    function easeInOut(p) {
+        return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(2 - 2 * p, 3) / 2;
+    }
 
     // The cell currently marked, remembered so a swap can leave a ghost behind on it.
     property Item shown: null
@@ -299,6 +334,71 @@ Item {
             sparksToY = target.y + target.height / 2;
             sparksAnim.restart();
             break;
+        case "beam": {
+            fromX = old.x + old.width / 2;
+            fromY = old.y + old.height / 2;
+            // Cutting in while a beam is still collapsing on the old cell: beam back out
+            // from that, rather than from a dot that was never there.
+            const mid = beamAnim.running;
+            beamOut.reach = mid ? beamIn.reach : size;
+            beamOut.thick = mid ? beamIn.thick : size;
+            beamOut.opacity = mid ? beamIn.opacity : 1;
+            beamAnim.restart();
+            break;
+        }
+        case "split": {
+            // Cutting in mid-flight: the halves set off again from where they are.
+            const mid = splitAnim.running;
+            const e = mid ? easeInOut(splitT) : 0;
+            const ox = old.x + old.width / 2;
+            const oy = old.y + old.height / 2;
+            splitFromX = mid ? splitFromX + (ox - splitFromX) * e : ox;
+            splitFromY = mid ? splitFromY + (oy - splitFromY) * e : oy;
+            splitGhost = !mid;
+            if (!mid) placeGhost(old);
+            splitAnim.restart();
+            break;
+        }
+        case "flash":
+            flashAnim.restart();
+            break;
+        case "wrap": {
+            const c = centreOf(target);
+            const extent = vertical ? height : width;
+            shift = centreOf(old) + along - c;
+            if ((wrapAnim.running && wrapPhase === 2) || wrapEnter.running) {
+                // Already back on the row: just carry on to the new cell.
+                wrapAnim.stop();
+                wrapEnter.restart();
+                break;
+            }
+            // Leave by the end away from the new cell (still the same end if the dot is
+            // already on its way out) and come back in by the other.
+            if (!wrapAnim.running) wrapExitAt = c > centreOf(old) ? -size : extent + size;
+            wrapExit = wrapExitAt - c;
+            wrapEntry = (wrapExitAt < 0 ? extent + size : -size) - c;
+            wrapAnim.restart();
+            break;
+        }
+        case "steps": {
+            const c = centreOf(target);
+            const span = vertical ? target.height : target.width;
+            stepFrom = centreOf(old) + along - c;
+            stepT = 0;
+            // Three stops for a one-cell move, and one more for every cell beyond that.
+            stepCount = Math.min(6, 2 + Math.max(1, Math.round(Math.abs(stepFrom) / Math.max(1, span))));
+            stepsAnim.restart();
+            break;
+        }
+        case "boomerang": {
+            const c = centreOf(target);
+            const span = vertical ? target.height : target.width;
+            shift = centreOf(old) + along - c;
+            // A whole cell beyond the old one, away from the new one.
+            backTo = centreOf(old) - c + (c > centreOf(old) ? -span : span);
+            boomerangAnim.restart();
+            break;
+        }
         }
     }
     function placeGhost(cell) {
@@ -319,9 +419,18 @@ Item {
         swingAnim.stop();
         ringAnim.stop();
         pourAnim.stop();
+        beamAnim.stop();
+        splitAnim.stop();
+        flashAnim.stop();
+        wrapAnim.stop();
+        wrapEnter.stop();
+        stepsAnim.stop();
+        boomerangAnim.stop();
         ghost.visible = false;
         irisOut.visible = false;
         irisIn.visible = false;
+        beamOut.visible = false;
+        beamIn.visible = false;
         ring.opacity = 0;
         halo.opacity = 0;
         pill.opacity = 1;
@@ -331,6 +440,12 @@ Item {
         lift = 1;
         pourT = 0;
         swarmT = 0;
+        splitT = 0;
+        spread = 0;
+        shift = 0;
+        stepFrom = 0;
+        stepT = 0;
+        wrapPhase = 0;
         printCount = 0;
     }
 
@@ -630,13 +745,13 @@ Item {
         readonly property real length: dot.tethered ? 0 : dot.gap
         readonly property real start: dot.tethered ? (dot.vertical ? dot.leadY : dot.leadX) : dot.gapStart
         x: (dot.vertical ? dot.leadX : start) - dot.thickness / 2
-           + (dot.vertical ? dot.hop * dot.hopSign : 0)
+           + (dot.vertical ? dot.hop * dot.hopSign : dot.along)
         y: (dot.vertical ? start : dot.leadY) - dot.thickness / 2
-           + (dot.vertical ? 0 : dot.hop * dot.hopSign)
+           + (dot.vertical ? dot.along : dot.hop * dot.hopSign)
         width: (dot.vertical ? 0 : length) + dot.thickness
         height: (dot.vertical ? length : 0) + dot.thickness
         radius: dot.thickness / 2
-        color: dot.color
+        color: Qt.alpha(dot.color, dot.edgeFade)
         visible: dot.target !== null
         transformOrigin: Item.Center
         antialiasing: true
@@ -748,5 +863,165 @@ Item {
             NumberAnimation { target: dot; property: "hop"; to: dot.hopLift * 0.3; duration: dot.unit * 0.35; easing.type: Easing.OutQuad }
             NumberAnimation { target: dot; property: "hop"; to: 0; duration: dot.unit * 0.35; easing.type: Easing.InQuad }
         }
+    }
+
+    // "beam": the dot on the old cell stretches across the row into a tall thin bar that
+    // fades away, while a bar appears on the new cell and collapses into the dot.
+    component Beam: Rectangle {
+        id: beam
+        property real reach: dot.size   // extent across the row
+        property real thick: dot.size   // thickness along it
+        width: dot.vertical ? beam.reach : beam.thick
+        height: dot.vertical ? beam.thick : beam.reach
+        radius: Math.min(beam.width, beam.height) / 2
+        color: dot.color
+        visible: false
+        antialiasing: true
+    }
+    Beam {
+        id: beamOut
+        objectName: "beamOut"
+        x: dot.fromX - width / 2
+        y: dot.fromY - height / 2
+    }
+    Beam {
+        id: beamIn
+        objectName: "beamIn"
+        x: dot.cx - width / 2
+        y: dot.cy - height / 2
+    }
+    readonly property real beamReach: dot.hopLift * 2 + dot.size
+    readonly property real beamThick: Math.max(1.5, dot.size * 0.3)
+    ParallelAnimation {
+        id: beamAnim
+        // The outgoing beam starts from whatever onTargetChanged set it to.
+        SequentialAnimation {
+            PropertyAction { target: beamOut; property: "visible"; value: true }
+            ParallelAnimation {
+                NumberAnimation { target: beamOut; property: "reach"; to: dot.beamReach; duration: dot.unit * 0.5; easing.type: Easing.OutQuad }
+                NumberAnimation { target: beamOut; property: "thick"; to: dot.beamThick; duration: dot.unit * 0.5; easing.type: Easing.OutQuad }
+            }
+            NumberAnimation { target: beamOut; property: "opacity"; to: 0; duration: dot.unit * 0.7; easing.type: Easing.InQuad }
+            PropertyAction { target: beamOut; property: "visible"; value: false }
+        }
+        SequentialAnimation {
+            PropertyAction { target: pill; property: "opacity"; value: 0 }
+            PropertyAction { target: beamIn; property: "reach"; value: dot.beamReach }
+            PropertyAction { target: beamIn; property: "thick"; value: dot.beamThick }
+            PropertyAction { target: beamIn; property: "opacity"; value: 0 }
+            PropertyAction { target: beamIn; property: "visible"; value: true }
+            PauseAnimation { duration: dot.unit * 0.4 }
+            NumberAnimation { target: beamIn; property: "opacity"; to: 1; duration: dot.unit * 0.4; easing.type: Easing.OutQuad }
+            PauseAnimation { duration: dot.unit * 0.2 }
+            ParallelAnimation {
+                NumberAnimation { target: beamIn; property: "reach"; to: dot.size; duration: dot.unit * 0.6; easing.type: Easing.InOutQuad }
+                NumberAnimation { target: beamIn; property: "thick"; to: dot.size; duration: dot.unit * 0.6; easing.type: Easing.InOutQuad }
+            }
+            PropertyAction { target: pill; property: "opacity"; value: 1 }
+            PropertyAction { target: beamIn; property: "visible"; value: false }
+        }
+    }
+
+    // "split": the dot divides into two half-size dots that swing out to either side of
+    // the row, travel across, and merge again on the new cell. `splitT` is the progress
+    // along the row and `spread` how far apart the halves are.
+    readonly property bool splitting: animation === "split"
+    property real splitT: 0
+    property real spread: 0
+    property real splitFromX: 0
+    property real splitFromY: 0
+    property bool splitGhost: true
+    Repeater {
+        model: 2
+        Rectangle {
+            id: half
+            required property int index
+            readonly property real e: dot.easeInOut(dot.splitT)
+            readonly property real across: (half.index ? 1 : -1) * dot.spread * dot.hopLift
+            readonly property real extent: dot.size * 0.7
+            x: dot.splitFromX + (dot.cx - dot.splitFromX) * half.e + (dot.vertical ? half.across : 0) - half.extent / 2
+            y: dot.splitFromY + (dot.cy - dot.splitFromY) * half.e + (dot.vertical ? 0 : half.across) - half.extent / 2
+            width: half.extent
+            height: half.extent
+            radius: half.extent / 2
+            color: dot.color
+            visible: dot.splitting && splitAnim.running
+            antialiasing: true
+        }
+    }
+    ParallelAnimation {
+        id: splitAnim
+        NumberAnimation { target: dot; property: "splitT"; from: 0; to: 1; duration: dot.unit * 1.6 }
+        SequentialAnimation {
+            NumberAnimation { target: dot; property: "spread"; to: 1; duration: dot.unit * 0.7; easing.type: Easing.OutQuad }
+            NumberAnimation { target: dot; property: "spread"; to: 0; duration: dot.unit * 0.9; easing.type: Easing.InQuad }
+        }
+        SequentialAnimation {
+            PropertyAction { target: ghost; property: "opacity"; value: 1 }
+            PropertyAction { target: ghost; property: "scale"; value: 1 }
+            PropertyAction { target: ghost; property: "visible"; value: dot.splitGhost }
+            NumberAnimation { target: ghost; property: "scale"; to: 0; duration: dot.unit * 0.35; easing.type: Easing.InQuad }
+            PropertyAction { target: ghost; property: "visible"; value: false }
+        }
+        SequentialAnimation {
+            PropertyAction { target: pill; property: "scale"; value: 0 }
+            PauseAnimation { duration: dot.unit * 1.4 }
+            NumberAnimation { target: pill; property: "scale"; to: 1; duration: dot.unit * 0.5; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+        }
+    }
+
+    // "flash": no motion at all; the dot shows up on the new cell and blinks twice.
+    SequentialAnimation {
+        id: flashAnim
+        PropertyAction { target: pill; property: "opacity"; value: 1 }
+        PauseAnimation { duration: dot.unit * 0.3 }
+        PropertyAction { target: pill; property: "opacity"; value: 0 }
+        PauseAnimation { duration: dot.unit * 0.25 }
+        PropertyAction { target: pill; property: "opacity"; value: 1 }
+        PauseAnimation { duration: dot.unit * 0.3 }
+        PropertyAction { target: pill; property: "opacity"; value: 0 }
+        PauseAnimation { duration: dot.unit * 0.25 }
+        PropertyAction { target: pill; property: "opacity"; value: 1 }
+    }
+
+    // "wrap": the dot leaves the row past the end away from the new cell, and comes back
+    // in from the other end to reach it the long way round. `wrapExitAt` is the
+    // position past the end it heads for; `wrapExit` and `wrapEntry` are that and the
+    // re-entry point as offsets from the new cell.
+    property real wrapExitAt: 0
+    property real wrapExit: 0
+    property real wrapEntry: 0
+    property int wrapPhase: 0   // 1 while leaving, 2 while coming back in
+    SequentialAnimation {
+        id: wrapAnim
+        PropertyAction { target: dot; property: "wrapPhase"; value: 1 }
+        NumberAnimation { target: dot; property: "shift"; to: dot.wrapExit; duration: dot.unit * 0.9; easing.type: Easing.InQuad }
+        PropertyAction { target: dot; property: "shift"; value: dot.wrapEntry }
+        PropertyAction { target: dot; property: "wrapPhase"; value: 2 }
+        NumberAnimation { target: dot; property: "shift"; to: 0; duration: dot.unit * 1.3; easing.type: Easing.OutQuad }
+        PropertyAction { target: dot; property: "wrapPhase"; value: 0 }
+    }
+    NumberAnimation {
+        id: wrapEnter
+        target: dot; property: "shift"; to: 0
+        duration: dot.unit * 1.3
+        easing.type: Easing.OutQuad
+    }
+
+    // "steps": the dot jumps to the new cell in a few discrete stops, holding still
+    // between them (see `stepShift`).
+    NumberAnimation {
+        id: stepsAnim
+        target: dot; property: "stepT"; from: 0; to: 1
+        duration: dot.unit * 0.6 * dot.stepCount
+    }
+
+    // "boomerang": the dot first draws back a whole cell away from the new one, then
+    // flies across and lands.
+    property real backTo: 0
+    SequentialAnimation {
+        id: boomerangAnim
+        NumberAnimation { target: dot; property: "shift"; to: dot.backTo; duration: dot.unit * 0.8; easing.type: Easing.InOutSine }
+        NumberAnimation { target: dot; property: "shift"; to: 0; duration: dot.unit * 1.2; easing.type: Easing.InOutCubic }
     }
 }
