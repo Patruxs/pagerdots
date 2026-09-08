@@ -10,36 +10,24 @@
 </p>
 
 <p align="center">
-  <img width="256" height="32" alt="Pager Dots in a panel" src="https://github.com/user-attachments/assets/a8e3dd85-ebff-48bb-bd03-a839d810ba80">
+  <img width="256" height="32" alt="pagerdot-1" src="https://github.com/user-attachments/assets/aafb9201-fc67-492a-a425-84a74ab1ef5b" />
 </p>
-
-## Demo
-
-<!-- ─────────────────────────────────────────────────────────────
-     GIF 1 — drop the file in assets/ and uncomment the line below
-     suggested file: assets/demo-switching.gif
-     ───────────────────────────────────────────────────────────── -->
-
-<!-- <img src="assets/demo-switching.gif" alt="Switching desktops" width="640"> -->
-
 &nbsp;
-
-<!-- ─────────────────────────────────────────────────────────────
-     GIF 2 — drop the file in assets/ and uncomment the line below
-     suggested file: assets/demo-animations.gif
-     ───────────────────────────────────────────────────────────── -->
-
-<!-- <img src="assets/demo-animations.gif" alt="Dot animation styles" width="640"> -->
-
+<p align="center">
+  <img width="256" height="32" alt="pagerdot-3" src="https://github.com/user-attachments/assets/438bb584-dee1-4a18-af84-1a266bf836e1" />
+</p>
 &nbsp;
-
-<!-- ─────────────────────────────────────────────────────────────
-     GIF 3 — drop the file in assets/ and uncomment the line below
-     suggested file: assets/demo-labels.gif
-     ───────────────────────────────────────────────────────────── -->
-
-<!-- <img src="assets/demo-labels.gif" alt="Label styles" width="640"> -->
-
+<p align="center">
+  <img width="256" height="32" alt="pagerdot-4" src="https://github.com/user-attachments/assets/36cbf06a-fa23-4edb-8c53-892ea137c415" />
+</p>
+&nbsp;
+<p align="center">
+  <img width="256" height="32" alt="pagerdot-5" src="https://github.com/user-attachments/assets/92a5f2f2-9d51-4395-b9f1-3c3a35d8fa90" />
+</p>
+&nbsp;
+<p align="center">
+  <img width="256" height="32" alt="pagerdot-6" src="https://github.com/user-attachments/assets/7700e207-6419-4b9e-87e6-dccee81f5cc3" />
+</p>
 &nbsp;
 
 ## Install
