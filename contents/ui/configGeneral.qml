@@ -150,7 +150,6 @@ KCM.SimpleKCM {
                         animation: page.cfg_dotAnimation
                         size: Math.max(4, Math.round(fm.height * 0.45))
                         color: preview.dotColor
-                        backgroundColor: preview.color
                         unit: preview.unit
                         visible: preview.useDot
                     }

@@ -175,7 +175,6 @@ PlasmoidItem {
             animation: root.dotAnimation
             size: Math.max(4, Math.round(fm.height * 0.45))
             color: root.dotColor
-            backgroundColor: Kirigami.Theme.backgroundColor
             unit: root.animationUnit
             vertical: root.vertical
             // "hop" jumps upwards in a horizontal panel, and away from the screen
