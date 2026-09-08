@@ -43,6 +43,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a dot), billiards (slides across at a steady pace and stops dead on the new desktop,
   knocking a second dot out ahead of it that flies on and fades), and recoil (pops up on
   the new desktop at once, kicking the old dot back the other way, where it fades)
+- Four more dot animations: loop (loops the loop on the way over, forward and up over the
+  top, back underneath, and on to the new desktop), volley (flies over, is batted straight
+  back to the old desktop, and flies over again to stay), flip (slides across while
+  flipping over like a coin, thinning to a sliver edge on and back), and burst (bursts into
+  pieces that fly out all round and fade on the old desktop, while pieces fly in from all
+  round the new one and gather into a dot)
 
 ### Changed
 - The gliding animations (stretch, glide, ripple, glow and elastic) now ease

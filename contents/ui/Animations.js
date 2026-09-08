@@ -38,5 +38,9 @@ const MODES = [
     { id: "hoop",    name: "Hoop",    description: "Opens out into a hollow hoop, larger than itself, that rolls across to the new desktop and closes back into a dot" },
     { id: "billiards", name: "Billiards", description: "Slides across at a steady pace and stops dead on the new desktop, knocking a second dot out ahead of it that flies on and fades" },
     { id: "recoil",  name: "Recoil",  description: "Pops up on the new desktop at once, kicking the old dot back the other way, where it fades" },
+    { id: "loop",    name: "Loop",    description: "Loops the loop on the way over: forward and up over the top, back underneath, and on to the new desktop" },
+    { id: "volley",  name: "Volley",  description: "Flies over, is batted straight back to the old desktop, and flies over again to stay" },
+    { id: "flip",    name: "Flip",    description: "Slides across while flipping over like a coin, thinning to a sliver edge on and back" },
+    { id: "burst",   name: "Burst",   description: "Bursts into pieces that fly out all round and fade on the old desktop, while pieces fly in from all round the new one and gather into a dot" },
     { id: "none",    name: "None",    description: "Jumps instantly" },
 ];

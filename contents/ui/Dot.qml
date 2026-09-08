@@ -26,10 +26,11 @@ Item {
     property bool vertical: false
     property real hopSign: -1
 
-    // "pop", "fade", "drop", "sparks", "pour", "ring", "beam", "split", "flash", "twinkle"
-    // and "recoil" swap the dot in place, as do "topple", "cartwheel", "arrow", "train"
-    // and "hoop", which draw something else crossing over; "wrap", "steps", "boomerang"
-    // and "billiards" move the dot along the row on a path of their own (see `shift`);
+    // "pop", "fade", "drop", "sparks", "pour", "ring", "beam", "split", "flash", "twinkle",
+    // "recoil" and "burst" swap the dot in place, as do "topple", "cartwheel", "arrow",
+    // "train" and "hoop", which draw something else crossing over; "wrap", "steps",
+    // "boomerang" and "billiards" move the dot along the row on a path of their own (see
+    // `shift`), and "loop", "volley" and "flip" on a path across it too (see `pathT`);
     // everything else slides it across the panel.
     readonly property bool swaps: animation === "pop" || animation === "fade"
                                   || animation === "drop" || animation === "sparks"
@@ -39,8 +40,10 @@ Item {
                                   || animation === "cartwheel" || animation === "arrow"
                                   || animation === "train" || animation === "twinkle"
                                   || animation === "hoop" || animation === "recoil"
+                                  || animation === "burst"
     readonly property bool shifts: animation === "wrap" || animation === "steps"
                                    || animation === "boomerang" || animation === "billiards"
+                                   || pathed
     readonly property bool slides: !swaps && !shifts && animation !== "none"
     // "elastic" keeps the dot round and draws the gap between the two trackers (see
     // below) as a separate band rather than stretching the dot.
@@ -61,6 +64,8 @@ Item {
                                 : animation === "hoop" ? unit * 1.8
                                 : animation === "billiards" ? strikeTime
                                 : animation === "recoil" ? unit * 0.8
+                                : animation === "burst" ? unit * 1.3
+                                : pathed ? pathDuration
                                 : unit * 2
 
     // Centre of the target. Kept at its last value while there is no target, so the
@@ -253,7 +258,7 @@ Item {
     property int stepCount: 3
     readonly property real stepShift: animation === "steps"
                                       ? stepFrom * (1 - Math.ceil(stepT * stepCount) / stepCount) : 0
-    readonly property real along: shift + stepShift
+    readonly property real along: shift + stepShift + pathAlong
     // "wrap": the dot fades out as it leaves the row past its end, and in as it re-enters.
     readonly property real edgeFade: {
         if (animation !== "wrap") return 1;
@@ -513,6 +518,38 @@ Item {
             recoilAnim.restart();
             break;
         }
+        case "loop":
+        case "volley":
+        case "flip": {
+            // Cutting in mid-flight: the path sets off again from where the dot is, and
+            // whatever offset across the row it has is eased away over the new move.
+            pathCarry = pathAcross;
+            const c = centreOf(target);
+            shift = centreOf(old) + along - c;
+            pathDir = c > centreOf(old) ? 1 : -1;
+            const span = vertical ? target.height : target.width;
+            pathCells = Math.max(1, Math.round(Math.abs(shift) / Math.max(1, span)));
+            // The coin lands face on: it turns on from where it is to the next whole turn
+            // past a full turn per cell crossed.
+            flipBase += flipTurns * pathT;
+            flipTurns = 2 * Math.min(2, pathCells) - (flipBase - Math.floor(flipBase));
+            pathT = 0;
+            pathAnim.restart();
+            break;
+        }
+        case "burst": {
+            fromX = old.x + old.width / 2;
+            fromY = old.y + old.height / 2;
+            // Cutting in while the pieces are still gathering on the old cell: they fly
+            // back out from where they are, and whatever dot had formed shrinks away.
+            const mid = burstAnim.running;
+            burstOut.dist = mid ? burstIn.dist : 0;
+            burstOut.opacity = mid ? burstIn.opacity : 1;
+            burstGhostScale = mid ? pill.scale : 1;
+            placeGhost(old);
+            burstAnim.restart();
+            break;
+        }
         }
     }
     function placeGhost(cell) {
@@ -553,6 +590,14 @@ Item {
         hoopRoll.stop();
         billiardsAnim.stop();
         recoilAnim.stop();
+        pathAnim.stop();
+        burstAnim.stop();
+        pathT = 0;
+        pathCarry = 0;
+        flipBase = 0;
+        flipTurns = 0;
+        burstOut.visible = false;
+        burstIn.visible = false;
         ghost.visible = false;
         starOut.visible = false;
         starIn.visible = false;
@@ -895,9 +940,9 @@ Item {
         readonly property real length: dot.tethered ? 0 : dot.gap
         readonly property real start: dot.tethered ? (dot.vertical ? dot.leadY : dot.leadX) : dot.gapStart
         x: (dot.vertical ? dot.leadX : start) - dot.thickness / 2
-           + (dot.vertical ? dot.hop * dot.hopSign : dot.along)
+           + (dot.vertical ? (dot.hop + dot.pathAcross) * dot.hopSign : dot.along)
         y: (dot.vertical ? start : dot.leadY) - dot.thickness / 2
-           + (dot.vertical ? dot.along : dot.hop * dot.hopSign)
+           + (dot.vertical ? dot.along : (dot.hop + dot.pathAcross) * dot.hopSign)
         width: (dot.vertical ? 0 : length) + dot.thickness
         height: (dot.vertical ? length : 0) + dot.thickness
         radius: dot.thickness / 2
@@ -908,8 +953,8 @@ Item {
         transform: Scale {
             origin.x: pill.width / 2
             origin.y: pill.height / 2
-            xScale: (dot.vertical ? 1 / dot.squish : dot.squish) * dot.lift
-            yScale: (dot.vertical ? dot.squish : 1 / dot.squish) * dot.lift
+            xScale: (dot.vertical ? 1 / dot.squish : dot.squish * dot.flipScale) * dot.lift
+            yScale: (dot.vertical ? dot.squish * dot.flipScale : 1 / dot.squish) * dot.lift
         }
     }
 
@@ -1568,5 +1613,142 @@ Item {
             PropertyAction { target: ghost; property: "visible"; value: false }
         }
         NumberAnimation { target: pill; property: "scale"; from: 0; to: 1; duration: dot.unit * 0.6; easing.type: Easing.OutBack; easing.overshoot: 2 }
+    }
+
+    // "loop", "volley" and "flip": the dot moves on a path of its own between the cells. `pathT` runs from 0 to 1 over the move; `shift` holds the old
+    // cell's offset from the new one when the move starts, and `pathPoint()` gives how far
+    // the dot has come along the row from there and how far it is across it. A move that
+    // cuts in on another carries the offset across the row over (`pathCarry`) and eases it
+    // away, so the dot never jumps back onto the row.
+    readonly property bool pathed: animation === "loop" || animation === "volley"
+                                   || animation === "flip"
+    property real pathT: 0
+    property real pathCarry: 0
+    property int pathDir: 1         // which way along the row the move goes
+    property int pathCells: 1       // how many cells it crosses
+    readonly property int pathDuration: {
+        switch (animation) {
+        case "loop":   return unit * 2.6;
+        case "volley": return unit * 2.4;
+        default:       return unit * 2;
+        }
+    }
+    readonly property var pathPos: pathed ? pathPoint(pathT) : [0, 0]
+    readonly property real pathAlong: pathDir * pathPos[0]
+    readonly property real pathAcross: pathPos[1] + pathCarry * (1 - pathT) * (1 - pathT)
+    // [distance come along the row, offset across it] at progress t, for the current mode.
+    function pathPoint(t) {
+        const dist = Math.abs(shift);
+        const reach = hopLift;
+        switch (animation) {
+        case "loop": {
+            // Along the row to the near side of a circle between the cells, once round it
+            // at a steady pace (forward over the top, back underneath) and on along the
+            // row: the circle gets most of the time, however far the move is.
+            const inLeg = Math.max(0, dist / 2 - reach);
+            if (t < 0.2) { const f = t / 0.2; return [inLeg * f * f, 0]; }
+            if (t < 0.75) {
+                const a = 2 * Math.PI * (t - 0.2) / 0.55;
+                return [inLeg + reach - reach * Math.cos(a), reach * Math.sin(a)];
+            }
+            const f = (t - 0.75) / 0.25;
+            return [inLeg + (dist - inLeg) * (1 - (1 - f) * (1 - f)), 0];
+        }
+        case "volley": {
+            // Over, batted straight back, and over again: picks up speed on the way
+            // over, comes back at that speed, and sets off again with it to settle.
+            if (t < 0.4) { const f = t / 0.4; return [dist * f * f, 0]; }
+            if (t < 0.6) return [dist * (1 - (t - 0.4) / 0.2), 0];
+            const f = (t - 0.6) / 0.4;
+            return [dist * (1 - (1 - f) * (1 - f)), 0];
+        }
+        case "flip":
+            return [dist * easeInOut(t), 0];
+        }
+        return [0, 0];
+    }
+    NumberAnimation {
+        id: pathAnim
+        target: dot; property: "pathT"; from: 0; to: 1
+        duration: dot.pathDuration
+    }
+    // "flip": the dot turns over like a coin as it slides, thinning to a sliver edge on
+    // and back, a full turn per cell crossed. The turn is counted in half turns, `flipBase`
+    // done when the move started and `flipTurns` to come.
+    property real flipBase: 0
+    property real flipTurns: 0
+    readonly property real flipScale: animation === "flip"
+                                      ? Math.max(0.18, Math.abs(Math.cos(Math.PI * (flipBase + flipTurns * pathT))))
+                                      : 1
+
+    // "burst": the dot on the old cell bursts into pieces that fly out all round it and
+    // fade, while pieces fly in from all round the new cell and gather into the dot.
+    component Pieces: Item {
+        id: pieces
+        property real dist: 0       // how far out from the centre the pieces are
+        readonly property real extent: dot.size * 0.42
+        visible: false
+        Repeater {
+            model: 6
+            Rectangle {
+                id: piece
+                required property int index
+                readonly property real angle: (piece.index + 0.5) * Math.PI / 3
+                x: Math.cos(piece.angle) * pieces.dist - pieces.extent / 2
+                y: Math.sin(piece.angle) * pieces.dist - pieces.extent / 2
+                width: pieces.extent
+                height: pieces.extent
+                radius: pieces.extent / 2
+                color: dot.color
+                antialiasing: true
+            }
+        }
+    }
+    Pieces {
+        id: burstOut
+        objectName: "burstOut"
+        x: dot.fromX
+        y: dot.fromY
+    }
+    Pieces {
+        id: burstIn
+        objectName: "burstIn"
+        x: dot.cx
+        y: dot.cy
+    }
+    property real burstGhostScale: 1
+    readonly property real burstReach: hopLift + size * 0.2
+    ParallelAnimation {
+        id: burstAnim
+        // The outgoing pieces start from whatever onTargetChanged set them to.
+        SequentialAnimation {
+            PropertyAction { target: ghost; property: "opacity"; value: 1 }
+            PropertyAction { target: ghost; property: "scale"; value: dot.burstGhostScale }
+            PropertyAction { target: ghost; property: "visible"; value: true }
+            PropertyAction { target: burstOut; property: "visible"; value: true }
+            ParallelAnimation {
+                NumberAnimation { target: ghost; property: "scale"; to: 0; duration: dot.unit * 0.3; easing.type: Easing.InQuad }
+                NumberAnimation { target: burstOut; property: "dist"; to: dot.burstReach; duration: dot.unit * 0.7; easing.type: Easing.OutCubic }
+                NumberAnimation { target: burstOut; property: "opacity"; to: 0; duration: dot.unit * 0.7; easing.type: Easing.InQuad }
+            }
+            PropertyAction { target: ghost; property: "visible"; value: false }
+            PropertyAction { target: burstOut; property: "visible"; value: false }
+        }
+        SequentialAnimation {
+            PropertyAction { target: pill; property: "scale"; value: 0 }
+            PropertyAction { target: burstIn; property: "dist"; value: dot.burstReach }
+            PropertyAction { target: burstIn; property: "opacity"; value: 0 }
+            PropertyAction { target: burstIn; property: "visible"; value: true }
+            PauseAnimation { duration: dot.unit * 0.3 }
+            ParallelAnimation {
+                NumberAnimation { target: burstIn; property: "opacity"; to: 1; duration: dot.unit * 0.3; easing.type: Easing.OutQuad }
+                NumberAnimation { target: burstIn; property: "dist"; to: 0; duration: dot.unit * 0.6; easing.type: Easing.InCubic }
+                SequentialAnimation {
+                    PauseAnimation { duration: dot.unit * 0.45 }
+                    NumberAnimation { target: pill; property: "scale"; to: 1; duration: dot.unit * 0.55; easing.type: Easing.OutBack; easing.overshoot: 1.8 }
+                }
+            }
+            PropertyAction { target: burstIn; property: "visible"; value: false }
+        }
     }
 }
