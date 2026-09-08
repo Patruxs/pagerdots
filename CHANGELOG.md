@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The dot animations played differently in the panel and in the settings preview. Every
+  slide ran on the same smooth curve in the panel, so zip, stretch, spring, hop, swing and
+  elastic all looked alike there, and spring wobbled at a different rate in the two
+  places. Setting the bezier curve on a Qt easing replaces its type, and changing the
+  type resets the elastic period, so with separate bindings the result depended on
+  whether the animation was chosen before or after the widget loaded. The easing is now
+  built in one piece.
+- Hops, arcs, drops, beams and bursts reached further across the row in a thick panel
+  than in the preview; the room across the row is now capped at about the dot's size,
+  which is what the preview's cells allow.
+
 ## [1.2.0] - 2026-09-08
 
 ### Added

@@ -76,11 +76,13 @@ Item {
         restoreMode: Binding.RestoreNone
     }
     // Room across the row: how far the dot can go across it (or a shape reach out)
-    // without leaving the cell.
+    // without leaving the cell. Capped at about the dot's size, which is what a cell of
+    // the usual height (1.4 gridUnits, as on the settings page) allows, so the hops and
+    // arcs look the same in a thick panel as they do in the preview.
     readonly property real room: {
         if (!target) return size;
         const extent = vertical ? target.width : target.height;
-        return Math.max(size * 0.8, (extent - size) / 2);
+        return Math.max(size * 0.8, Math.min(size * 1.05, (extent - size) / 2));
     }
     // Position of a cell's centre along the row.
     function centreOf(cell) {
@@ -165,14 +167,21 @@ Item {
             moving = true;
         }
     }
-    // The amplitude and period only apply to OutElastic, and the curve only to BezierSpline.
+    // The whole easing is built in one go rather than bound piece by piece: setting
+    // `easing.bezierCurve` on its own replaces the type with BezierSpline whatever
+    // `easing.type` says, and changing `easing.type` resets the amplitude and period to
+    // Qt's defaults, so with separate bindings the outcome depended on which of them
+    // happened to run last (and so on whether the mode was chosen before or after the
+    // widget loaded). The amplitude and period only apply to OutElastic, and the curve
+    // only to BezierSpline.
+    function easingFor(type, curve) {
+        return type === Easing.BezierSpline ? { type: type, bezierCurve: curve }
+                                            : { type: type, amplitude: 1, period: 0.45 };
+    }
     component LeadAnimation: NumberAnimation {
         property var curve: dot.smoothCurve
         duration: dot.leadDuration
-        easing.type: dot.leadEasing
-        easing.amplitude: 1
-        easing.period: 0.45
-        easing.bezierCurve: curve
+        easing: dot.easingFor(dot.leadEasing, curve)
     }
     component TrailAnimation: SequentialAnimation {
         id: trailAnimation
@@ -180,10 +189,7 @@ Item {
         PauseAnimation { duration: dot.trailDelay }
         NumberAnimation {
             duration: dot.trailDuration
-            easing.type: dot.trailEasing
-            easing.amplitude: 1
-            easing.period: 0.45
-            easing.bezierCurve: trailAnimation.curve
+            easing: dot.easingFor(dot.trailEasing, trailAnimation.curve)
         }
     }
     Mover on leadX {
