@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Pager Dots logo: five desktops, the current one in the accent colour. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="7.18" cy="32" r="4.40" fill="#B4B8B9"/>
+  <circle cx="19.59" cy="32" r="4.40" fill="#B4B8B9"/>
+  <circle cx="32.00" cy="32" r="4.40" fill="#1BB2A9"/>
+  <circle cx="44.41" cy="32" r="4.40" fill="#B4B8B9"/>
+  <circle cx="56.82" cy="32" r="4.40" fill="#B4B8B9"/>
+</svg>

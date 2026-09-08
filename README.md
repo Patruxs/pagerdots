@@ -1,13 +1,17 @@
-<div align="center">
+<p align="center">
+  <img src="assets/paperdots.jpeg" alt="Pager Dots" width="220">
+</p>
 
-# Pager Dots
+<h1 align="center">Pager Dots</h1>
 
-A minimal virtual desktop switcher for the KDE Plasma panel.
-A dot marks the current desktop, dimmed labels show the rest.
+<p align="center">
+  A minimal virtual desktop switcher for the KDE Plasma panel.<br>
+  A dot marks the current desktop, dimmed labels show the rest.
+</p>
 
-<img width="256" height="32" alt="Pager Dots in a panel" src="https://github.com/user-attachments/assets/a8e3dd85-ebff-48bb-bd03-a839d810ba80" />
-
-</div>
+<p align="center">
+  <img width="256" height="32" alt="Pager Dots in a panel" src="https://github.com/user-attachments/assets/a8e3dd85-ebff-48bb-bd03-a839d810ba80">
+</p>
 
 ## Demo
 

@@ -10,7 +10,7 @@
         "BugReportUrl": "https://github.com/Patruxs/pagerdots/issues",
         "Category": "Windows and Tasks",
         "Description": "Minimal virtual desktop switcher: a dot for the current desktop, numbers, letters or roman numerals for the rest",
-        "Icon": "user-desktop",
+        "Icon": "/icons/pagerdots.svg",
         "Id": "pat.pagerdots",
         "License": "GPL-2.0+",
         "Name": "Pager Dots",
