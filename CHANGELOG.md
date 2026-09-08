@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it crosses), arrow (sharpens into an arrowhead that shoots over and rounds off into a
   dot again), and train (breaks into a file of three beads that run across in line and
   merge again)
+- Four more dot animations: twinkle (collapses into a spinning four-point star that
+  shrinks away, while a star flares up on the new desktop and rounds off into a dot), hoop
+  (opens out into a hollow hoop, larger than itself, that rolls across and closes back into
+  a dot), billiards (slides across at a steady pace and stops dead on the new desktop,
+  knocking a second dot out ahead of it that flies on and fades), and recoil (pops up on
+  the new desktop at once, kicking the old dot back the other way, where it fades)
 
 ### Changed
 - The gliding animations (stretch, glide, ripple, glow and elastic) now ease

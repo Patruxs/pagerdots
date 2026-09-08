@@ -13,7 +13,7 @@ A dot marks the current desktop, dimmed numbers show the rest.
 
 - Every virtual desktop shown as a label, with a dot for the current one
 - Choice of label style: numbers, letters (A B C), roman numerals (I II III), Greek (α β γ), Cyrillic (а б в), Chinese (一 二 三), Heavenly Stems (甲 乙 丙), Hiragana (あ い う), Katakana (ア イ ウ), Hangul (ㄱ ㄴ ㄷ), Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, fill up to current (● ● ○ ○), or blank
-- Smooth dot animation between desktops, with a choice of style: stretch, glide, zip, elastic, spring, hop, swing, lift, glow, ripple, footprints, ring, sparks, pour, drop, pop, fade, beam, split, flash, wrap, steps, boomerang, topple, cartwheel, arrow, train, or none, and a speed slider
+- Smooth dot animation between desktops, with a choice of style: stretch, glide, zip, elastic, spring, hop, swing, lift, glow, ripple, footprints, ring, sparks, pour, drop, pop, fade, beam, split, flash, wrap, steps, boomerang, topple, cartwheel, arrow, train, twinkle, hoop, billiards, recoil, or none, and a speed slider
 - Dot in the text colour or the accent colour of your colour scheme
 - Adjustable spacing between desktops
 - Click a desktop to switch to it

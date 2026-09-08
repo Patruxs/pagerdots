@@ -188,6 +188,50 @@ KCM.SimpleKCM {
                     text: i18nc("animation speed as a percentage", "%1%", page.cfg_animationSpeed)
                 }
             }
+
+            // Dot colour and desktop spacing, kept up here with the preview so that their
+            // effect is visible while they are changed.
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: Kirigami.Units.largeSpacing
+
+                QQC2.ButtonGroup { id: colorGroup }
+
+                QQC2.Label {
+                    text: i18n("Dot colour:")
+                    enabled: preview.useDot
+                }
+                // The text colour blends in with the labels; the accent colour picks the
+                // current desktop out in the colour scheme's highlight.
+                QQC2.RadioButton {
+                    enabled: preview.useDot
+                    QQC2.ButtonGroup.group: colorGroup
+                    text: i18n("Text colour")
+                    checked: page.cfg_dotColor !== "accent"
+                    onToggled: if (checked) page.cfg_dotColor = "text"
+                }
+                QQC2.RadioButton {
+                    enabled: preview.useDot
+                    QQC2.ButtonGroup.group: colorGroup
+                    text: i18n("Accent colour")
+                    checked: page.cfg_dotColor === "accent"
+                    onToggled: if (checked) page.cfg_dotColor = "accent"
+                }
+
+                QQC2.Label {
+                    Layout.leftMargin: Kirigami.Units.gridUnit
+                    text: i18n("Space between desktops:")
+                }
+                QQC2.SpinBox {
+                    from: 0
+                    to: 40
+                    stepSize: 1
+                    value: page.cfg_spacing
+                    onValueModified: page.cfg_spacing = value
+                    textFromValue: (value, locale) => i18np("%1 pixel", "%1 pixels", value)
+                    valueFromText: (text, locale) => parseInt(text) || 0
+                }
+            }
         }
 
         Kirigami.Separator {
@@ -246,47 +290,6 @@ KCM.SimpleKCM {
                 text: i18n("Show as a dot instead of its label")
                 checked: page.cfg_dotForCurrent
                 onToggled: page.cfg_dotForCurrent = checked
-            }
-
-            QQC2.Label {
-                text: i18n("Dot colour:")
-                Layout.topMargin: Kirigami.Units.largeSpacing
-                Layout.bottomMargin: Kirigami.Units.smallSpacing
-            }
-            QQC2.ButtonGroup { id: colorGroup }
-            // The text colour blends in with the labels; the accent colour picks the
-            // current desktop out in the colour scheme's highlight.
-            RowLayout {
-                enabled: preview.useDot
-                spacing: Kirigami.Units.largeSpacing
-
-                QQC2.RadioButton {
-                    QQC2.ButtonGroup.group: colorGroup
-                    text: i18n("Text colour")
-                    checked: page.cfg_dotColor !== "accent"
-                    onToggled: if (checked) page.cfg_dotColor = "text"
-                }
-                QQC2.RadioButton {
-                    QQC2.ButtonGroup.group: colorGroup
-                    text: i18n("Accent colour")
-                    checked: page.cfg_dotColor === "accent"
-                    onToggled: if (checked) page.cfg_dotColor = "accent"
-                }
-            }
-
-            QQC2.Label {
-                text: i18n("Space between desktops:")
-                Layout.topMargin: Kirigami.Units.largeSpacing
-                Layout.bottomMargin: Kirigami.Units.smallSpacing
-            }
-            QQC2.SpinBox {
-                from: 0
-                to: 40
-                stepSize: 1
-                value: page.cfg_spacing
-                onValueModified: page.cfg_spacing = value
-                textFromValue: (value, locale) => i18np("%1 pixel", "%1 pixels", value)
-                valueFromText: (text, locale) => parseInt(text) || 0
             }
 
             QQC2.Label {

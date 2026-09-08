@@ -26,20 +26,21 @@ Item {
     property bool vertical: false
     property real hopSign: -1
 
-    // "pop", "fade", "drop", "sparks", "pour", "ring", "beam", "split" and "flash" swap
-    // the dot in place, as do "topple", "cartwheel", "arrow" and "train", which draw
-    // something else crossing over; "wrap", "steps" and "boomerang" move the dot along
-    // the row on a path of their own (see `shift`); everything else slides it across
-    // the panel.
+    // "pop", "fade", "drop", "sparks", "pour", "ring", "beam", "split", "flash", "twinkle"
+    // and "recoil" swap the dot in place, as do "topple", "cartwheel", "arrow", "train"
+    // and "hoop", which draw something else crossing over; "wrap", "steps", "boomerang"
+    // and "billiards" move the dot along the row on a path of their own (see `shift`);
+    // everything else slides it across the panel.
     readonly property bool swaps: animation === "pop" || animation === "fade"
                                   || animation === "drop" || animation === "sparks"
                                   || animation === "pour" || animation === "ring"
                                   || animation === "beam" || animation === "split"
                                   || animation === "flash" || animation === "topple"
                                   || animation === "cartwheel" || animation === "arrow"
-                                  || animation === "train"
+                                  || animation === "train" || animation === "twinkle"
+                                  || animation === "hoop" || animation === "recoil"
     readonly property bool shifts: animation === "wrap" || animation === "steps"
-                                   || animation === "boomerang"
+                                   || animation === "boomerang" || animation === "billiards"
     readonly property bool slides: !swaps && !shifts && animation !== "none"
     // "elastic" keeps the dot round and draws the gap between the two trackers (see
     // below) as a separate band rather than stretching the dot.
@@ -56,6 +57,10 @@ Item {
                                 : animation === "topple" ? unit * 1.4
                                 : animation === "cartwheel" ? unit * 1.8
                                 : animation === "arrow" ? unit * 1.3
+                                : animation === "twinkle" ? unit * 1.2
+                                : animation === "hoop" ? unit * 1.8
+                                : animation === "billiards" ? strikeTime
+                                : animation === "recoil" ? unit * 0.8
                                 : unit * 2
 
     // Centre of the target. Kept at its last value while there is no target, so the
@@ -466,12 +471,55 @@ Item {
             else if (!arrowAnim.running) arrowAnim.restart();
             break;
         }
+        case "twinkle": {
+            fromX = old.x + old.width / 2;
+            fromY = old.y + old.height / 2;
+            // Cutting in while a star is still flaring on the old cell: it carries on from
+            // there as the outgoing star, and whatever dot had formed under it shrinks away.
+            const mid = twinkleAnim.running;
+            starOut.reach = mid ? starIn.reach : 0;
+            starOut.turn = mid ? starIn.turn : 0;
+            twinkleGhostScale = mid ? pill.scale : 1;
+            placeGhost(old);
+            twinkleAnim.restart();
+            break;
+        }
+        case "hoop": {
+            // Cutting in mid-flight: the hoop rolls on from where it is.
+            const mid = hoopAnim.running || hoopRoll.running;
+            const ox = old.x + old.width / 2;
+            const oy = old.y + old.height / 2;
+            fromX = mid ? fromX + (ox - fromX) * hoop.e : ox;
+            fromY = mid ? fromY + (oy - fromY) * hoop.e : oy;
+            hoopT = 0;
+            if (hoopRoll.running) hoopRoll.restart();
+            else if (!hoopAnim.running) hoopAnim.restart();
+            break;
+        }
+        case "billiards": {
+            const c = centreOf(target);
+            const span = vertical ? target.height : target.width;
+            shift = centreOf(old) + along - c;
+            // The struck dot flies on a whole cell the way the dot was going.
+            kickTo = (shift < 0 ? 1 : -1) * span;
+            strikeTime = unit * Math.min(1.2, 0.4 + 0.4 * Math.abs(shift) / Math.max(1, span));
+            billiardsAnim.restart();
+            break;
+        }
+        case "recoil": {
+            placeGhost(old);
+            const span = vertical ? target.height : target.width;
+            recoilTo = (centreOf(target) > centreOf(old) ? -1 : 1) * span * 0.8;
+            recoilAnim.restart();
+            break;
+        }
         }
     }
     function placeGhost(cell) {
         ghost.baseX = cell.x + (cell.width - size) / 2;
         ghost.baseY = cell.y + (cell.height - size) / 2;
         ghost.fall = 0;
+        ghost.slide = 0;
     }
     // A mode change mid-animation must not leave the dot half faded, squashed or lifted.
     onAnimationChanged: {
@@ -500,7 +548,19 @@ Item {
         wheelRoll.stop();
         arrowAnim.stop();
         arrowFly.stop();
+        twinkleAnim.stop();
+        hoopAnim.stop();
+        hoopRoll.stop();
+        billiardsAnim.stop();
+        recoilAnim.stop();
         ghost.visible = false;
+        starOut.visible = false;
+        starIn.visible = false;
+        hoop.visible = false;
+        hoop.extent = size;
+        hoop.fill = 1;
+        hoopT = 0;
+        struck.visible = false;
         post.visible = false;
         post.opacity = 1;
         postLen = 0;
@@ -808,15 +868,17 @@ Item {
     }
 
     // Copy of the dot left on the old cell during a swap, animating out. `fall` moves
-    // it across the row, away from where "hop" jumps to (for "drop").
+    // it across the row, away from where "hop" jumps to (for "drop"), and `slide` along
+    // it (for "recoil").
     Rectangle {
         id: ghost
         objectName: "ghost"
         property real baseX: 0
         property real baseY: 0
         property real fall: 0
-        x: baseX + (dot.vertical ? -fall * dot.hopSign : 0)
-        y: baseY + (dot.vertical ? 0 : -fall * dot.hopSign)
+        property real slide: 0
+        x: baseX + (dot.vertical ? -fall * dot.hopSign : slide)
+        y: baseY + (dot.vertical ? slide : -fall * dot.hopSign)
         width: dot.size
         height: dot.size
         radius: dot.size / 2
@@ -1327,5 +1389,184 @@ Item {
             NumberAnimation { target: pill; property: "scale"; to: 1; duration: dot.unit * 0.4; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
         }
         PropertyAction { target: arrow; property: "visible"; value: false }
+    }
+
+    // "twinkle": the dot on the old cell collapses into a four-point star, two thin bars
+    // crossed, that spins as it flares and shrinks away, while a star flares up on the
+    // new cell, spins, and rounds off into the dot.
+    component Star: Item {
+        id: star
+        property real reach: 0      // length of each arm from the centre
+        property real turn: 0       // in degrees
+        property real turnTo: 0
+        readonly property real thick: Math.max(1.2, dot.size * 0.22)
+        rotation: star.turn
+        visible: false
+        Repeater {
+            model: 2
+            Rectangle {
+                id: arm
+                required property int index
+                x: -star.reach
+                y: -star.thick / 2
+                width: star.reach * 2
+                height: star.thick
+                radius: star.thick / 2
+                color: dot.color
+                rotation: arm.index * 90
+                antialiasing: true
+            }
+        }
+    }
+    Star {
+        id: starOut
+        objectName: "starOut"
+        x: dot.fromX
+        y: dot.fromY
+    }
+    Star {
+        id: starIn
+        objectName: "starIn"
+        x: dot.cx
+        y: dot.cy
+    }
+    property real twinkleGhostScale: 1
+    readonly property real starReach: hopLift + size / 4
+    ParallelAnimation {
+        id: twinkleAnim
+        // The outgoing star starts from whatever onTargetChanged set it to.
+        SequentialAnimation {
+            PropertyAction { target: ghost; property: "opacity"; value: 1 }
+            PropertyAction { target: ghost; property: "scale"; value: dot.twinkleGhostScale }
+            PropertyAction { target: ghost; property: "visible"; value: true }
+            PropertyAction { target: starOut; property: "visible"; value: true }
+            ScriptAction { script: starOut.turnTo = starOut.turn + 90 }
+            ParallelAnimation {
+                NumberAnimation { target: ghost; property: "scale"; to: 0; duration: dot.unit * 0.35; easing.type: Easing.InQuad }
+                NumberAnimation { target: starOut; property: "reach"; to: dot.starReach; duration: dot.unit * 0.35; easing.type: Easing.OutQuad }
+                NumberAnimation { target: starOut; property: "turn"; to: starOut.turnTo; duration: dot.unit * 0.85 }
+                SequentialAnimation {
+                    PauseAnimation { duration: dot.unit * 0.35 }
+                    NumberAnimation { target: starOut; property: "reach"; to: 0; duration: dot.unit * 0.5; easing.type: Easing.InQuad }
+                }
+            }
+            PropertyAction { target: ghost; property: "visible"; value: false }
+            PropertyAction { target: starOut; property: "visible"; value: false }
+        }
+        SequentialAnimation {
+            PropertyAction { target: pill; property: "scale"; value: 0 }
+            PropertyAction { target: starIn; property: "reach"; value: 0 }
+            PropertyAction { target: starIn; property: "turn"; value: 0 }
+            PropertyAction { target: starIn; property: "visible"; value: true }
+            PauseAnimation { duration: dot.unit * 0.35 }
+            ParallelAnimation {
+                NumberAnimation { target: starIn; property: "turn"; to: 90; duration: dot.unit * 0.85 }
+                SequentialAnimation {
+                    NumberAnimation { target: starIn; property: "reach"; to: dot.starReach; duration: dot.unit * 0.35; easing.type: Easing.OutQuad }
+                    ParallelAnimation {
+                        NumberAnimation { target: starIn; property: "reach"; to: 0; duration: dot.unit * 0.5; easing.type: Easing.InQuad }
+                        NumberAnimation { target: pill; property: "scale"; to: 1; duration: dot.unit * 0.5; easing.type: Easing.OutBack; easing.overshoot: 1.5 }
+                    }
+                }
+            }
+            PropertyAction { target: starIn; property: "visible"; value: false }
+        }
+    }
+
+    // "hoop": the dot opens out into a hollow hoop, larger than itself, that rolls across
+    // to the new cell and closes back into a dot. `hoopT` is its progress from the old
+    // cell and `fill` how solid its inside is: 1 for a dot, 0 for a bare hoop.
+    property real hoopT: 0
+    readonly property real hoopExtent: size * 1.9
+    Rectangle {
+        id: hoop
+        objectName: "hoop"
+        property real extent: dot.size
+        property real fill: 1
+        readonly property real e: dot.easeInOut(dot.hoopT)
+        x: dot.fromX + (dot.cx - dot.fromX) * hoop.e - hoop.extent / 2
+        y: dot.fromY + (dot.cy - dot.fromY) * hoop.e - hoop.extent / 2
+        width: hoop.extent
+        height: hoop.extent
+        radius: hoop.extent / 2
+        color: Qt.alpha(dot.color, hoop.fill)
+        border.color: dot.color
+        border.width: Math.max(1.2, dot.size * 0.25)
+        visible: false
+        antialiasing: true
+    }
+    SequentialAnimation {
+        id: hoopAnim
+        PropertyAction { target: pill; property: "opacity"; value: 0 }
+        PropertyAction { target: hoop; property: "visible"; value: true }
+        ParallelAnimation {
+            NumberAnimation { target: hoop; property: "extent"; to: dot.hoopExtent; duration: dot.unit * 0.35; easing.type: Easing.OutQuad }
+            NumberAnimation { target: hoop; property: "fill"; to: 0; duration: dot.unit * 0.35; easing.type: Easing.OutQuad }
+        }
+        ScriptAction { script: hoopRoll.restart() }
+    }
+    SequentialAnimation {
+        id: hoopRoll
+        ParallelAnimation {
+            NumberAnimation { target: dot; property: "hoopT"; to: 1; duration: dot.unit * 1.1 }
+            // Opens back out if cut in on while closing.
+            NumberAnimation { target: hoop; property: "extent"; to: dot.hoopExtent; duration: dot.unit * 0.2 }
+            NumberAnimation { target: hoop; property: "fill"; to: 0; duration: dot.unit * 0.2 }
+        }
+        ParallelAnimation {
+            NumberAnimation { target: hoop; property: "extent"; to: dot.size; duration: dot.unit * 0.35; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: hoop; property: "fill"; to: 1; duration: dot.unit * 0.35; easing.type: Easing.InQuad }
+        }
+        PropertyAction { target: pill; property: "opacity"; value: 1 }
+        PropertyAction { target: hoop; property: "visible"; value: false }
+    }
+
+    // "billiards": the dot slides across at a steady pace and stops dead on the new cell,
+    // knocking a second dot out ahead of it, which flies on a cell and fades.
+    property real kickTo: 0
+    property int strikeTime: unit
+    Rectangle {
+        id: struck
+        objectName: "struck"
+        property real kick: 0
+        x: dot.cx - dot.size / 2 + (dot.vertical ? 0 : struck.kick)
+        y: dot.cy - dot.size / 2 + (dot.vertical ? struck.kick : 0)
+        width: dot.size
+        height: dot.size
+        radius: dot.size / 2
+        color: dot.color
+        visible: false
+        antialiasing: true
+    }
+    SequentialAnimation {
+        id: billiardsAnim
+        PropertyAction { target: struck; property: "visible"; value: false }
+        NumberAnimation { target: dot; property: "shift"; to: 0; duration: dot.strikeTime; easing.type: Easing.Linear }
+        PropertyAction { target: struck; property: "kick"; value: 0 }
+        PropertyAction { target: struck; property: "opacity"; value: 1 }
+        PropertyAction { target: struck; property: "visible"; value: true }
+        ParallelAnimation {
+            NumberAnimation { target: struck; property: "kick"; to: dot.kickTo; duration: dot.unit; easing.type: Easing.OutCubic }
+            NumberAnimation { target: struck; property: "opacity"; to: 0; duration: dot.unit; easing.type: Easing.InQuad }
+        }
+        PropertyAction { target: struck; property: "visible"; value: false }
+    }
+
+    // "recoil": the dot pops up on the new cell at once, and the old one is kicked back
+    // along the row, away from it, fading as it goes.
+    property real recoilTo: 0
+    ParallelAnimation {
+        id: recoilAnim
+        SequentialAnimation {
+            PropertyAction { target: ghost; property: "opacity"; value: 1 }
+            PropertyAction { target: ghost; property: "scale"; value: 1 }
+            PropertyAction { target: ghost; property: "visible"; value: true }
+            ParallelAnimation {
+                NumberAnimation { target: ghost; property: "slide"; to: dot.recoilTo; duration: dot.unit * 0.9; easing.type: Easing.OutCubic }
+                NumberAnimation { target: ghost; property: "opacity"; to: 0; duration: dot.unit * 0.9; easing.type: Easing.InQuad }
+            }
+            PropertyAction { target: ghost; property: "visible"; value: false }
+        }
+        NumberAnimation { target: pill; property: "scale"; from: 0; to: 1; duration: dot.unit * 0.6; easing.type: Easing.OutBack; easing.overshoot: 2 }
     }
 }

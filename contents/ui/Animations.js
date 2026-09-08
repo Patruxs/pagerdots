@@ -34,5 +34,9 @@ const MODES = [
     { id: "cartwheel", name: "Cartwheel", description: "Flattens into a short bar that turns end over end as it crosses, and rounds off into a dot again" },
     { id: "arrow",   name: "Arrow",   description: "Sharpens into an arrowhead that shoots over to the new desktop and rounds off into a dot again" },
     { id: "train",   name: "Train",   description: "Breaks into a file of three beads that run across in line and merge again on the new desktop" },
+    { id: "twinkle", name: "Twinkle", description: "Collapses into a spinning four-point star that shrinks away on the old desktop, while a star flares up on the new one and rounds off into a dot" },
+    { id: "hoop",    name: "Hoop",    description: "Opens out into a hollow hoop, larger than itself, that rolls across to the new desktop and closes back into a dot" },
+    { id: "billiards", name: "Billiards", description: "Slides across at a steady pace and stops dead on the new desktop, knocking a second dot out ahead of it that flies on and fades" },
+    { id: "recoil",  name: "Recoil",  description: "Pops up on the new desktop at once, kicking the old dot back the other way, where it fades" },
     { id: "none",    name: "None",    description: "Jumps instantly" },
 ];
