@@ -69,12 +69,11 @@ KCM.SimpleKCM {
                     border.color: Qt.alpha(Kirigami.Theme.textColor, 0.15)
 
                     property int current: 0
-                    readonly property bool useDot: page.cfg_dotForCurrent || page.cfg_labelStyle === "blank"
+                    readonly property bool useDot: Labels.usesDot(page.cfg_labelStyle, page.cfg_dotForCurrent)
                     readonly property bool animated: page.cfg_dotAnimation !== "none"
                     readonly property color dotColor: page.cfg_dotColor === "accent"
                                                       ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
-                    readonly property int unit:
-                        Math.round(Kirigami.Units.longDuration * 100 / Math.max(25, page.cfg_animationSpeed))
+                    readonly property int unit: Animations.unitFor(Kirigami.Units.longDuration, page.cfg_animationSpeed)
                     property int cellsRevision: 0
                     readonly property Item currentCell: {
                         void cellsRevision;
@@ -88,7 +87,7 @@ KCM.SimpleKCM {
                         repeat: true
                         onTriggered: preview.current = (preview.current + 1) % previewCells.count
                     }
-                    FontMetrics { id: fm }
+                    FontMetrics { id: fm; font: Kirigami.Theme.defaultFont }
 
                     Row {
                         id: previewRow
@@ -106,35 +105,19 @@ KCM.SimpleKCM {
                                 required property int index
                                 readonly property bool isCurrent: index === preview.current
 
+                                // Sized like the widget's cells: the label plus breathing room.
                                 width: Math.max(Kirigami.Units.gridUnit * 1.4,
-                                                metrics.advanceWidth + Kirigami.Units.largeSpacing)
+                                                Math.ceil(fm.advanceWidth(label.text)) + Kirigami.Units.largeSpacing)
                                 height: Kirigami.Units.gridUnit * 1.4
 
-                                TextMetrics {
-                                    id: metrics
-                                    font: label.font
-                                    text: label.text
-                                }
-                                QQC2.Label {
+                                DesktopLabel {
                                     id: label
                                     anchors.fill: parent
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
                                     text: Labels.labelFor(page.cfg_labelStyle, cell.index + 1, preview.current + 1)
-                                    font.bold: cell.isCurrent && !preview.useDot
-                                    // Same timing as the widget: duck quickly under the arriving
-                                    // dot, come back only once it has left.
-                                    property real shown: cell.isCurrent && preview.useDot ? 0 : 1
-                                    opacity: shown * (cell.isCurrent ? 1 : 0.55)
-                                    scale: 0.6 + 0.4 * shown
-                                    Behavior on shown {
-                                        id: shownBehavior
-                                        enabled: preview.animated
-                                        NumberAnimation {
-                                            duration: shownBehavior.targetValue === 0 ? Kirigami.Units.longDuration : previewDot.travel
-                                            easing.type: shownBehavior.targetValue === 0 ? Easing.OutCubic : Easing.InCubic
-                                        }
-                                    }
+                                    current: cell.isCurrent
+                                    underDot: cell.isCurrent && preview.useDot
+                                    animated: preview.animated
+                                    travel: previewDot.travel
                                 }
                                 MouseArea {
                                     anchors.fill: parent

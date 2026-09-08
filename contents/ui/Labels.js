@@ -74,6 +74,12 @@ function arabicIndic(n) {
     return String(n).replace(/\d/g, c => String.fromCharCode(0x0660 + Number(c)));
 }
 
+// Whether the current desktop is marked by the dot (as opposed to its bold label).
+// The "blank" style has no label to show, so it always uses the dot.
+function usesDot(style, dotForCurrent) {
+    return dotForCurrent || style === "blank";
+}
+
 // Label for the 1-based desktop number `n` in the given style. `current` is the
 // 1-based number of the current desktop; only the "fill" style looks at it.
 // An empty string means "show nothing" (the current desktop still gets the dot).

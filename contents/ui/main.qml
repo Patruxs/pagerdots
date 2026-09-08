@@ -5,11 +5,11 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
-import org.kde.plasma.components as PC3
 import org.kde.kirigami as Kirigami
 import org.kde.taskmanager as TaskManager
 import org.kde.plasma.workspace.dbus as DBus
 import "Labels.js" as Labels
+import "Animations.js" as Animations
 
 // Pager Dots: a dot for the current virtual desktop, dimmed labels for the others.
 // Click a desktop to switch, mouse wheel to step. Label style and the animation
@@ -18,7 +18,6 @@ PlasmoidItem {
     id: root
 
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
-    readonly property real dimOpacity: 0.55            // opacity of the other desktops
     readonly property int currentIndex: vdi.desktopIds.indexOf(vdi.currentDesktop)
     readonly property string labelStyle: Plasmoid.configuration.labelStyle
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
@@ -28,13 +27,10 @@ PlasmoidItem {
     readonly property color dotColor: Plasmoid.configuration.dotColor === "accent"
                                       ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
     readonly property bool animated: dotAnimation !== "none"
-    // Base duration of the dot animations: Plasma's own, scaled by the speed setting
-    // (a percentage, so 50 plays at half speed and 200 at double).
     readonly property int animationUnit:
-        Math.round(Kirigami.Units.longDuration * 100 / Math.max(25, Plasmoid.configuration.animationSpeed))
+        Animations.unitFor(Kirigami.Units.longDuration, Plasmoid.configuration.animationSpeed)
     // Whether the current desktop is marked by the gliding dot (as opposed to its bold label).
-    // The "blank" style has no label to show, so it always uses the dot.
-    readonly property bool useDot: dotForCurrent || labelStyle === "blank"
+    readonly property bool useDot: Labels.usesDot(labelStyle, dotForCurrent)
 
     TaskManager.VirtualDesktopInfo { id: vdi }
 
@@ -129,32 +125,14 @@ PlasmoidItem {
                     Layout.minimumWidth: view.cellWidth
                     Layout.minimumHeight: Kirigami.Units.gridUnit * 1.4
 
-                    PC3.Label {
-                        id: label
+                    DesktopLabel {
                         anchors.fill: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
                         text: root.labelFor(cell.index)
-                        font.bold: cell.isCurrent && !root.useDot
-                        // 1 while the label is on show, 0 while the dot covers it.
-                        property real shown: cell.isCurrent && root.useDot ? 0 : 1
-                        property real emphasis: cell.isCurrent || mouse.containsMouse ? 1 : root.dimOpacity
-                        opacity: shown * emphasis
-                        scale: 0.6 + 0.4 * shown
-                        // The label ducks quickly under the arriving dot, and comes back
-                        // slowly enough that the dot has left before it shows again.
-                        Behavior on shown {
-                            id: shownBehavior
-                            enabled: root.animated
-                            NumberAnimation {
-                                duration: shownBehavior.targetValue === 0 ? Kirigami.Units.longDuration : dot.travel
-                                easing.type: shownBehavior.targetValue === 0 ? Easing.OutCubic : Easing.InCubic
-                            }
-                        }
-                        Behavior on emphasis {
-                            enabled: root.animated
-                            NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
-                        }
+                        current: cell.isCurrent
+                        underDot: cell.isCurrent && root.useDot
+                        hovered: mouse.containsMouse
+                        animated: root.animated
+                        travel: dot.travel
                     }
                     MouseArea {
                         id: mouse

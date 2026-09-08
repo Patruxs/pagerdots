@@ -2,6 +2,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 .pragma library
 
+// Base duration of the dot animations in ms: Plasma's own (`base`, usually
+// Kirigami.Units.longDuration) scaled by the speed setting, a percentage, so 50
+// plays at half speed and 200 at double.
+function unitFor(base, speedPercent) {
+    return Math.round(base * 100 / Math.max(25, speedPercent));
+}
+
 // Dot animations offered in the settings page, in display order.
 // `id` is what gets stored in the config and read by Dot.qml.
 // Each one has a silhouette of its own at panel size; variants that only differ in

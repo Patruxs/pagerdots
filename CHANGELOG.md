@@ -60,6 +60,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in on another sets off at speed instead of easing in again, so stepping quickly through
   desktops with the mouse wheel flows as one motion
 
+- Each dot animation now lives in its own file under `contents/ui/animations/`, on a shared
+  base that documents the hooks it can drive, and `tests/run` checks every one of them
+  without a Plasma session; the README explains how to add one
+
 ### Removed
 - The comet, jelly and bounce dot animations: at the size of a panel dot, comet and jelly
   looked the same as stretch, and bounce the same as spring. A saved choice of one of them
@@ -75,6 +79,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The label under the dot now fades back in only once the dot has actually left it, and
   ducks quickly under the dot as it arrives, so the two no longer overlap mid-move
 - Dot shapes are drawn antialiased, for smoother edges while moving
+- The topple and arrow animations briefly showed a stray dot in the wrong place as they set
+  off (wherever the last swap had left its copy of the dot); the old dot now shrinks away on
+  the desktop it leaves
 
 ## [1.1.0] - 2026-09-07
 

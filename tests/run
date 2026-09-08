@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Check the widget's QML without a Plasma session:
+#   - qmllint on the files that need only QtQuick (Dot.qml and the animations), which
+#     must come back with no warnings
+#   - tests/Smoke.qml, which drives Dot.qml through every animation and fails on any
+#     QML warning or runtime error
+#
+# Needs the qml and qmllint tools from Qt 6 (package qt6-qtdeclarative-devel on Fedora,
+# qt6-declarative-dev on Debian). Set QT_BIN if they are not on the PATH.
+set -euo pipefail
+cd "$(dirname "$(readlink -f "$0")")/.."
+
+bin="${QT_BIN:-$(dirname "$(command -v qml 2>/dev/null || echo /usr/lib64/qt6/bin/qml)")}"
+qmlimports="${QML_IMPORT_PATH:-/usr/lib64/qt6/qml}"
+status=0
+
+echo "qmllint"
+if ! "$bin/qmllint" -I "$qmlimports" contents/ui/Dot.qml contents/ui/animations/*.qml; then
+    status=1
+fi
+
+for layout in horizontal vertical; do
+    echo "smoke test ($layout)"
+    args=()
+    [ "$layout" = vertical ] && args=(-- vertical)
+    # Warnings go to journald on some distributions unless forced to stderr.
+    out=$(QT_QPA_PLATFORM=offscreen QT_FORCE_STDERR_LOGGING=1 \
+          timeout 120 "$bin/qml" tests/Smoke.qml "${args[@]}" 2>&1 || true)
+    echo "$out" | grep -v '^qml: smoke: ' | grep -v '^$' || true
+    if ! echo "$out" | grep -q '^qml: smoke: .*done$'; then
+        echo "FAIL: the smoke test did not finish"; status=1
+    elif echo "$out" | grep -qv '^qml: smoke: '; then
+        echo "FAIL: warnings above"; status=1
+    fi
+done
+
+[ "$status" = 0 ] && echo "all good"
+exit "$status"

@@ -3,83 +3,137 @@
 # Pager Dots
 
 A minimal virtual desktop switcher for the KDE Plasma panel.
-A dot marks the current desktop, dimmed numbers show the rest.
+A dot marks the current desktop, dimmed labels show the rest.
 
-<img width="256" height="32" alt="paperdots" src="https://github.com/user-attachments/assets/a8e3dd85-ebff-48bb-bd03-a839d810ba80" />
+<img width="256" height="32" alt="Pager Dots in a panel" src="https://github.com/user-attachments/assets/a8e3dd85-ebff-48bb-bd03-a839d810ba80" />
 
 </div>
 
-## Features
+## Demo
 
-- Every virtual desktop shown as a label, with a dot for the current one
-- Choice of label style: numbers, letters (A B C), roman numerals (I II III), Greek (α β γ), Cyrillic (а б в), Chinese (一 二 三), Heavenly Stems (甲 乙 丙), Hiragana (あ い う), Katakana (ア イ ウ), Hangul (ㄱ ㄴ ㄷ), Arabic-Indic digits (١ ٢ ٣), bars (▁ ▂ ▃), dots, fill up to current (● ● ○ ○), or blank
-- Smooth dot animation between desktops, with a choice of style: stretch, glide, zip, elastic, spring, hop, swing, lift, glow, ripple, footprints, ring, sparks, pour, drop, pop, fade, beam, split, flash, wrap, steps, boomerang, topple, cartwheel, arrow, train, twinkle, hoop, billiards, recoil, loop, volley, flip, burst, or none, and a speed slider
-- Dot in the text colour or the accent colour of your colour scheme
-- Adjustable spacing between desktops
-- Click a desktop to switch to it
-- Scroll the mouse wheel or swipe the touchpad over the widget to step through desktops (wraps around)
-- Hover to see the desktop name in a tooltip
-- Works in horizontal and vertical panels
-- Follows your Plasma colour scheme and font
+<!-- ─────────────────────────────────────────────────────────────
+     GIF 1 — drop the file in assets/ and uncomment the line below
+     suggested file: assets/demo-switching.gif
+     ───────────────────────────────────────────────────────────── -->
 
-## Requirements
+<!-- <img src="assets/demo-switching.gif" alt="Switching desktops" width="640"> -->
 
-- KDE Plasma 6.2 or newer (the widget uses the QML D-Bus module introduced in 6.2)
-- KWin as the window manager, on X11 or Wayland (desktops are switched through KWin's D-Bus interface)
+&nbsp;
 
-## Installation
+<!-- ─────────────────────────────────────────────────────────────
+     GIF 2 — drop the file in assets/ and uncomment the line below
+     suggested file: assets/demo-animations.gif
+     ───────────────────────────────────────────────────────────── -->
+
+<!-- <img src="assets/demo-animations.gif" alt="Dot animation styles" width="640"> -->
+
+&nbsp;
+
+<!-- ─────────────────────────────────────────────────────────────
+     GIF 3 — drop the file in assets/ and uncomment the line below
+     suggested file: assets/demo-labels.gif
+     ───────────────────────────────────────────────────────────── -->
+
+<!-- <img src="assets/demo-labels.gif" alt="Label styles" width="640"> -->
+
+&nbsp;
+
+## Install
 
 ### KDE Store (recommended)
 
-1. Right-click the panel or desktop and choose **Add Widgets…**
-2. Click **Get New Widgets…** → **Download New Plasma Widgets**
-3. Search for **Pager Dots** and click **Install**
+1. Right-click the panel or desktop → **Add Widgets…**
+2. **Get New Widgets…** → **Download New Plasma Widgets**
+3. Search for **Pager Dots** → **Install**
 
-### From a release archive
+### One command
 
-Download the `.plasmoid` file from the [releases page](https://github.com/Patruxs/pagerdots/releases), then run:
+Installs straight from source — safe to re-run, it upgrades an existing copy.
 
-```sh
-kpackagetool6 -t Plasma/Applet -i pat.pagerdots-1.1.0.plasmoid
-```
-
-### From source
+**Debian / Ubuntu**
 
 ```sh
-git clone https://github.com/Patruxs/pagerdots.git
-cd pagerdots
-./build --install
+sudo apt install -y git kpackagetool6
+rm -rf /tmp/pagerdots && git clone --depth 1 https://github.com/Patruxs/pagerdots.git /tmp/pagerdots &&
+kpackagetool6 -t Plasma/Applet -i /tmp/pagerdots 2>/dev/null || kpackagetool6 -t Plasma/Applet -u /tmp/pagerdots
 ```
 
-To update later, run `git pull && ./build --install`.
-To remove the widget, run `kpackagetool6 -t Plasma/Applet -r pat.pagerdots`.
-
-## Usage
-
-1. Right-click the panel and choose **Add Widgets…**
-2. Search for **Pager Dots** and drag it onto the panel
-3. Right-click the widget and choose **Configure Pager Dots…** to pick a label style, the dot animation and its speed; the preview at the top plays your choices live
-
-## Development
-
-The repository root is the plasmoid package itself (`metadata.json` plus `contents/`), so you can symlink it into place for live editing:
+**Fedora**
 
 ```sh
-ln -s "$PWD" ~/.local/share/plasma/plasmoids/pat.pagerdots
+sudo dnf install -y git kf6-kpackage
+rm -rf /tmp/pagerdots && git clone --depth 1 https://github.com/Patruxs/pagerdots.git /tmp/pagerdots &&
+kpackagetool6 -t Plasma/Applet -i /tmp/pagerdots 2>/dev/null || kpackagetool6 -t Plasma/Applet -u /tmp/pagerdots
 ```
 
-Restart Plasma to reload the widget after changes:
+**Arch**
+
+```sh
+sudo pacman -S --needed git kpackage
+rm -rf /tmp/pagerdots && git clone --depth 1 https://github.com/Patruxs/pagerdots.git /tmp/pagerdots &&
+kpackagetool6 -t Plasma/Applet -i /tmp/pagerdots 2>/dev/null || kpackagetool6 -t Plasma/Applet -u /tmp/pagerdots
+```
+
+Then right-click the panel → **Add Widgets…**, search for **Pager Dots** and drag it onto the panel.
+Run the same command again to update; restart Plasma afterwards to reload it:
 
 ```sh
 systemctl --user restart plasma-plasmashell.service
 ```
 
-Run `./build` to produce `dist/pat.pagerdots-<version>.plasmoid`, the file to upload to the [KDE Store](https://store.kde.org/).
+To remove the widget:
+
+```sh
+kpackagetool6 -t Plasma/Applet -r pat.pagerdots
+```
+
+## Requirements
+
+- KDE Plasma 6.2 or newer (Debian 13, Fedora 41+, Arch, Ubuntu 25.10+)
+- KWin on X11 or Wayland
+
+## Features
+
+- A dot for the current desktop, a label for every other one
+- 17 label styles: numbers, letters (A B C / a b c), roman numerals (I II III / i ii iii), Greek, Cyrillic, Chinese, Heavenly Stems, Hiragana, Katakana, Hangul, Arabic-Indic digits, bars (▁ ▂ ▃), dots, fill-up-to-current (● ● ○ ○), or blank
+- 35 dot animations — stretch, glide, zip, elastic, spring, hop, swing, lift, glow, ripple, footprints, ring, sparks, pour, drop, pop, fade, beam, split, flash, wrap, steps, boomerang, topple, cartwheel, arrow, train, twinkle, hoop, billiards, recoil, loop, volley, flip, burst — plus a speed slider, or none at all
+- Dot in your text or accent colour, with adjustable spacing
+- Click to switch, scroll or swipe to step through desktops (wraps around)
+- Hover for the desktop name
+- Horizontal and vertical panels, following your Plasma colour scheme and font
+
+Right-click the widget → **Configure Pager Dots…** to change any of it; the preview at the top plays your choices live.
+
+## Development
+
+The repository root *is* the plasmoid package (`metadata.json` plus `contents/`), so you can symlink it into place for live editing:
+
+```sh
+ln -s "$PWD" ~/.local/share/plasma/plasmoids/pat.pagerdots
+systemctl --user restart plasma-plasmashell.service   # reload after changes
+```
+
+Run `./build` to produce `dist/pat.pagerdots-<version>.plasmoid`, the file to upload to the [KDE Store](https://store.kde.org/). Prebuilt archives are also on the [releases page](https://github.com/Patruxs/pagerdots/releases).
+
+### Tests
+
+`tests/run` lints `Dot.qml` and the animations with `qmllint`, then drives every animation through a move, a cut-in and a mode change without a Plasma session, and fails on any QML warning. It needs the `qml` and `qmllint` tools from Qt 6 (`qt6-qtdeclarative-devel` on Fedora, `qt6-declarative-dev` on Debian and Ubuntu).
+
+### Adding an animation
+
+Each dot animation is one file in `contents/ui/animations/`; `Dot.qml` loads `animations/<Name>.qml` for the id `<name>` and calls its `start(old, target)` whenever the dot has to move. To add one:
+
+1. Copy the closest existing file under a new name, say `Bounce.qml`. `Pop.qml` is the simplest swap, `Hop.qml` the simplest slide with a flourish on top, and `Boomerang.qml` the simplest of those that move the dot along the row themselves.
+2. Set `kind` and, unless the default suits, `travel`; write `start()` to kick the animation off, and draw any shapes it needs as children. `animations/DotAnimation.qml` documents every hook and everything `dot` provides.
+3. Add `{ id: "bounce", name: "Bounce", description: "…" }` to `MODES` in `contents/ui/Animations.js`, which puts it on the settings page and in the tests.
+4. Run `tests/run`, then restart Plasma and try it in a panel, including switching desktops again while it is still in flight.
+
+`start()` is called again if the desktop changes mid-move. A fresh start sets everything up from scratch (`setFrom(old)` and `dot.placeGhost(old)` before restarting the animation); a cut-in should carry on from where the shapes are, as the existing files do.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on [GitHub](https://github.com/Patruxs/pagerdots/issues).
+Bug reports and pull requests are welcome on [GitHub](https://github.com/Patruxs/pagerdots/issues). New animations are the easiest contribution: see [Adding an animation](#adding-an-animation) above, and keep in mind that on a dot a few pixels across only a distinct silhouette or tempo reads as a different animation.
 
 ## License
 
-This project is licensed under the GNU General Public License, version 2 or later. See [LICENSE](LICENSE).
+GNU General Public License, version 2 or later. See [LICENSE](LICENSE).
