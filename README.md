@@ -40,31 +40,14 @@
 
 ### One command
 
-Installs straight from source — safe to re-run, it upgrades an existing copy.
-
-**Debian / Ubuntu**
+Grabs the latest release and installs it — safe to re-run, it upgrades an existing copy.
 
 ```sh
-sudo apt install -y git kpackagetool6
-rm -rf /tmp/pagerdots && git clone --depth 1 https://github.com/Patruxs/pagerdots.git /tmp/pagerdots &&
-kpackagetool6 -t Plasma/Applet -i /tmp/pagerdots 2>/dev/null || kpackagetool6 -t Plasma/Applet -u /tmp/pagerdots
+curl -fLo /tmp/pd.plasmoid "$(curl -s https://api.github.com/repos/Patruxs/pagerdots/releases/latest | grep -om1 'https[^"]*\.plasmoid')" &&
+kpackagetool6 -t Plasma/Applet -i /tmp/pd.plasmoid 2>/dev/null || kpackagetool6 -t Plasma/Applet -u /tmp/pd.plasmoid
 ```
 
-**Fedora**
-
-```sh
-sudo dnf install -y git kf6-kpackage
-rm -rf /tmp/pagerdots && git clone --depth 1 https://github.com/Patruxs/pagerdots.git /tmp/pagerdots &&
-kpackagetool6 -t Plasma/Applet -i /tmp/pagerdots 2>/dev/null || kpackagetool6 -t Plasma/Applet -u /tmp/pagerdots
-```
-
-**Arch**
-
-```sh
-sudo pacman -S --needed git kpackage
-rm -rf /tmp/pagerdots && git clone --depth 1 https://github.com/Patruxs/pagerdots.git /tmp/pagerdots &&
-kpackagetool6 -t Plasma/Applet -i /tmp/pagerdots 2>/dev/null || kpackagetool6 -t Plasma/Applet -u /tmp/pagerdots
-```
+Needs `curl` and `kpackagetool6` (`kf6-kpackage` on Fedora, `kpackage` on Arch), normally already installed.
 
 Then right-click the panel → **Add Widgets…**, search for **Pager Dots** and drag it onto the panel.
 Run the same command again to update; restart Plasma afterwards to reload it:
