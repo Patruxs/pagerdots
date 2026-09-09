@@ -30,6 +30,9 @@
 </p>
 &nbsp;
 
+<img width="2240" height="1400" alt="image" src="https://github.com/user-attachments/assets/7d846596-a757-4659-b8ba-3544c08b4795" />
+
+
 ## Install
 
 Two ways to get it, pick one. The KDE Store is the easiest; the one command always
