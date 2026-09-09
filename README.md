@@ -32,7 +32,10 @@
 
 ## Install
 
-### KDE Store (recommended)
+Two ways to get it, pick one. The KDE Store is the easiest; the one command always
+pulls the newest release.
+
+### Option 1 — Download from the KDE Store (recommended)
 
 1. Right-click the panel or desktop → **Add Widgets…**
 2. **Get New Widgets…** → **Download New Plasma Widgets**
@@ -40,7 +43,7 @@
 
 Or open the store page directly: [Pager Dots on store.kde.org](https://store.kde.org/p/2370913/)
 
-### One command
+### Option 2 — One command
 
 Grabs the latest release and installs it — safe to re-run, it upgrades an existing copy.
 
@@ -51,8 +54,11 @@ kpackagetool6 -t Plasma/Applet -i /tmp/pd.plasmoid 2>/dev/null || kpackagetool6 
 
 Needs `curl` and `kpackagetool6` (`kf6-kpackage` on Fedora, `kpackage` on Arch), normally already installed.
 
-Then right-click the panel → **Add Widgets…**, search for **Pager Dots** and drag it onto the panel.
-Run the same command again to update; restart Plasma afterwards to reload it:
+### After either option
+
+Right-click the panel → **Add Widgets…**, search for **Pager Dots** and drag it onto the panel.
+
+To update later, use the store dialog or run the command again, then restart Plasma to reload it:
 
 ```sh
 systemctl --user restart plasma-plasmashell.service
