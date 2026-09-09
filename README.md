@@ -107,10 +107,6 @@ systemctl --user restart plasma-plasmashell.service   # reload after changes
 
 Run `./build` to produce `dist/pat.pagerdots-<version>.plasmoid`, the file to upload to the [KDE Store](https://store.kde.org/). Prebuilt archives are also on the [releases page](https://github.com/Patruxs/pagerdots/releases).
 
-### Tests
-
-`tests/run` lints `Dot.qml` and the animations with `qmllint`, then drives every animation through a move, a cut-in and a mode change without a Plasma session, and fails on any QML warning. It needs the `qml` and `qmllint` tools from Qt 6 (`qt6-qtdeclarative-devel` on Fedora, `qt6-declarative-dev` on Debian and Ubuntu).
-
 ### Adding an animation
 
 Each dot animation is one file in `contents/ui/animations/`; `Dot.qml` loads `animations/<Name>.qml` for the id `<name>` and calls its `start(old, target)` whenever the dot has to move. To add one:
