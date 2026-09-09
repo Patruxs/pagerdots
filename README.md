@@ -38,6 +38,8 @@
 2. **Get New Widgets…** → **Download New Plasma Widgets**
 3. Search for **Pager Dots** → **Install**
 
+Or open the store page directly: [Pager Dots on store.kde.org](https://store.kde.org/p/2370913/)
+
 ### One command
 
 Grabs the latest release and installs it — safe to re-run, it upgrades an existing copy.
