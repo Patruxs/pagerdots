@@ -81,17 +81,6 @@ kpackagetool6 -t Plasma/Applet -r pat.pagerdots
 
 Right-click the widget → **Configure Pager Dots…** to change any of it; the preview at the top plays your choices live.
 
-## Development
-
-The repository root *is* the plasmoid package (`metadata.json` plus `contents/`), so you can symlink it into place for live editing:
-
-```sh
-ln -s "$PWD" ~/.local/share/plasma/plasmoids/pat.pagerdots
-systemctl --user restart plasma-plasmashell.service   # reload after changes
-```
-
-Run `./build` to produce `dist/pat.pagerdots-<version>.plasmoid`, the file to upload to the [KDE Store](https://store.kde.org/). Prebuilt archives are also on the [releases page](https://github.com/Patruxs/pagerdots/releases).
-
 ### Adding an animation
 
 Each dot animation is one file in `contents/ui/animations/`; `Dot.qml` loads `animations/<Name>.qml` for the id `<name>` and calls its `start(old, target)` whenever the dot has to move. To add one:
