@@ -107,6 +107,16 @@ Each dot animation is one file in `contents/ui/animations/`; `Dot.qml` loads `an
 
 Bug reports and pull requests are welcome on [GitHub](https://github.com/Patruxs/pagerdots/issues). New animations are the easiest contribution: see [Adding an animation](#adding-an-animation) above, and keep in mind that on a dot a few pixels across only a distinct silhouette or tempo reads as a different animation.
 
+## Support
+
+If Pager Dots is useful to you, you can support development:
+
+<p align="center">
+  <a href="https://github.com/sponsors/Patruxs"><img alt="Sponsor on GitHub Sponsors" src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge"></a>
+  &nbsp;
+  <a href="https://paypal.me/patrickzs"><img alt="Donate with PayPal" src="https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white&style=for-the-badge"></a>
+</p>
+
 ## License
 
 GNU General Public License, version 2 or later. See [LICENSE](LICENSE).
