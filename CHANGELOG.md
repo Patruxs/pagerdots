@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-10
+
 ### Added
 - A "Pill" label style: the desktops as small dots, with the current one a wide pill
   among them, in the proportions of GNOME's page indicator. The row makes room for the
@@ -158,7 +160,8 @@ Initial release.
 - Tooltip showing the desktop name
 - Horizontal and vertical panel layouts
 
-[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/Patruxs/pagerdots/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/Patruxs/pagerdots/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Patruxs/pagerdots/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Patruxs/pagerdots/compare/v1.0.0...v1.1.0
