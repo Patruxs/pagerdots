@@ -81,47 +81,53 @@ KCM.SimpleKCM {
         { value: "grid", text: i18n("Show the desktop grid") }
     ]
 
-    // A checkbox with an explanation on hover rather than under it, to keep the page short.
-    component Option: QQC2.CheckBox {
-        property string hint
-        QQC2.ToolTip.text: hint
-        QQC2.ToolTip.visible: hint !== "" && hovered
-        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+    // The widest the fields and explanations get, so the form stays a readable block.
+    readonly property real formWidth: Kirigami.Units.gridUnit * 24
+
+    // A dimmed line of small print under an option, set in to line up with its text.
+    component Hint: QQC2.Label {
+        Layout.fillWidth: true
+        Layout.maximumWidth: page.formWidth
+        leftPadding: scrollBox.leftPadding + scrollBox.indicator.width + scrollBox.spacing
+        font: Kirigami.Theme.smallFont
+        opacity: 0.7
+        wrapMode: Text.Wrap
     }
 
+    // Laid out as KDE's own settings pages are: a label on the left for each group,
+    // the group's options stacked beside it, and a separator between groups.
     Kirigami.FormLayout {
-        Item {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: i18n("Mouse")
-        }
-        Option {
-            text: i18n("Scroll to switch desktops")
+        QQC2.CheckBox {
+            id: scrollBox
+            Kirigami.FormData.label: i18n("Mouse wheel:")
+            text: i18n("Switch desktops")
             checked: page.cfg_wheelSwitches
             onToggled: page.cfg_wheelSwitches = checked
         }
-        Option {
-            text: i18n("Wrap around")
-            hint: i18n("Scrolling past the last desktop goes to the first, and the other way round.")
+        QQC2.CheckBox {
+            text: i18n("Wrap around at the first and last desktop")
             enabled: page.cfg_wheelSwitches
             checked: page.cfg_wheelWrap
             onToggled: page.cfg_wheelWrap = checked
         }
-        Option {
+        QQC2.CheckBox {
             text: i18n("Invert the direction")
             enabled: page.cfg_wheelSwitches
             checked: page.cfg_wheelInvert
             onToggled: page.cfg_wheelInvert = checked
         }
+
+        Item { Kirigami.FormData.isSection: true }
+
         QQC2.ComboBox {
             id: clickCombo
-            Kirigami.FormData.label: i18n("Click current desktop:")
+            Kirigami.FormData.label: i18n("Click on the current desktop:")
+            Layout.fillWidth: true
+            Layout.maximumWidth: page.formWidth
             model: page.clickActions
             textRole: "text"
             valueRole: "value"
             onActivated: page.cfg_currentDesktopClick = currentValue
-            QQC2.ToolTip.text: i18n("What a click on the current desktop does. A click on any other desktop switches to it.")
-            QQC2.ToolTip.visible: hovered
-            QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
             // Picking an entry writes currentIndex directly, which would drop a binding
             // on it; the setting is followed by hand instead (for the "Defaults" button).
             function follow() { currentIndex = Math.max(0, indexOfValue(page.cfg_currentDesktopClick)); }
@@ -131,67 +137,69 @@ KCM.SimpleKCM {
                 function onCfg_currentDesktopClickChanged() { clickCombo.follow(); }
             }
         }
-        Option {
+        QQC2.CheckBox {
+            id: anywhereBox
             text: i18n("Also from the space around the desktops")
             enabled: page.cfg_currentDesktopClick !== "nothing"
             checked: page.cfg_currentDesktopClickAnywhere
             onToggled: page.cfg_currentDesktopClickAnywhere = checked
         }
-
-        Item {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: i18n("Tooltip")
+        Hint {
+            leftPadding: 0
+            text: i18n("A click on any other desktop switches to it.")
         }
-        Option {
-            text: i18n("Desktop name")
+
+        Item { Kirigami.FormData.isSection: true }
+
+        QQC2.CheckBox {
+            Kirigami.FormData.label: i18n("Tooltip:")
+            text: i18n("Show the desktop name")
             checked: page.cfg_tooltips
             onToggled: page.cfg_tooltips = checked
         }
-        Option {
-            text: i18n("Open windows")
+        QQC2.CheckBox {
+            text: i18n("List its open windows")
             enabled: page.cfg_tooltips
             checked: page.cfg_tooltipWindows
             onToggled: page.cfg_tooltipWindows = checked
         }
 
-        Item {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: i18n("Desktops")
-        }
+        Item { Kirigami.FormData.isSection: true }
+
         // Adding and removing by hand is pointless while the desktops are managed
         // automatically (an added desktop would be removed again at once).
-        Option {
-            text: i18n("Add and remove from the right-click menu")
+        QQC2.CheckBox {
+            Kirigami.FormData.label: i18n("Right-click menu:")
+            text: i18n("Add and remove desktops")
             enabled: !page.cfg_autoDesktops
             checked: page.cfg_manageDesktops
             onToggled: page.cfg_manageDesktops = checked
         }
-        Option {
-            text: i18n("Rename from the right-click menu")
+        QQC2.CheckBox {
+            text: i18n("Rename the current desktop")
             checked: page.cfg_renameDesktop
             onToggled: page.cfg_renameDesktop = checked
         }
-        Option {
+        QQC2.CheckBox {
+            Kirigami.FormData.label: i18n("Desktops:")
             text: i18n("Add and remove automatically (GNOME-style)")
             checked: page.cfg_autoDesktops
             onToggled: page.cfg_autoDesktops = checked
         }
-        // Spelled out under the option, since what it does is not obvious from its name.
-        QQC2.Label {
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 26
-            font: Kirigami.Theme.smallFont
-            opacity: 0.7
-            wrapMode: Text.Wrap
+        Hint {
             text: i18n("Keeps one empty desktop after the last one with windows: a window on the last desktop adds a new one, and empty desktops are removed once you leave them.")
         }
         QQC2.TextField {
             Kirigami.FormData.label: i18n("New desktop name:")
+            Layout.fillWidth: true
+            Layout.maximumWidth: page.formWidth
             placeholderText: i18n("Desktop")
             text: page.cfg_newDesktopName
             onTextEdited: page.cfg_newDesktopName = text
-            QQC2.ToolTip.text: i18n("New desktops are numbered after it, as in “Desktop 3”. Leave it empty for KWin's default.")
-            QQC2.ToolTip.visible: hovered
-            QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+        }
+        Hint {
+            leftPadding: 0
+            text: i18n("Numbered, as in “Desktop 3”. Leave it empty for KWin's default.")
         }
     }
 }
