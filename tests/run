@@ -19,10 +19,10 @@ if ! "$bin/qmllint" -I "$qmlimports" contents/ui/Dot.qml contents/ui/animations/
     status=1
 fi
 
-for layout in horizontal vertical; do
+for layout in horizontal vertical pill; do
     echo "smoke test ($layout)"
     args=()
-    [ "$layout" = vertical ] && args=(-- vertical)
+    [ "$layout" = horizontal ] || args=(-- "$layout")
     # Warnings go to journald on some distributions unless forced to stderr.
     out=$(QT_QPA_PLATFORM=offscreen QT_FORCE_STDERR_LOGGING=1 \
           timeout 120 "$bin/qml" tests/Smoke.qml "${args[@]}" 2>&1 || true)

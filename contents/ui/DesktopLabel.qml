@@ -16,6 +16,9 @@ QQC2.Label {
     // Whether the dot marks this desktop right now, in which case the label hides under it.
     property bool underDot: false
     property bool hovered: false
+    // Diameter of a plain dot drawn in place of the text (for the "pill" style), or 0
+    // to show the text.
+    property real dotSize: 0
     // Whether to animate at all, and how long the dot takes to reach its new cell
     // (Dot.travel), which is how long the label waits before coming back.
     property bool animated: true
@@ -46,5 +49,17 @@ QQC2.Label {
     Behavior on emphasis {
         enabled: label.animated
         NumberAnimation { duration: Kirigami.Units.longDuration; easing.type: Easing.OutCubic }
+    }
+
+    // The dot of the "pill" style, drawn in the text colour so it dims and brightens
+    // with the label.
+    Rectangle {
+        anchors.centerIn: parent
+        width: label.dotSize
+        height: label.dotSize
+        radius: label.dotSize / 2
+        color: label.color
+        visible: label.dotSize > 0
+        antialiasing: true
     }
 }

@@ -26,6 +26,16 @@
     <entry name="dotAnimation" type="String">
       <default>stretch</default>
     </entry>
+    <!-- Whether the "pill" label style uses dotAnimation rather than the GNOME-style
+         animation it comes with (PILL_ANIMATION in Animations.js). -->
+    <entry name="pillCustomAnimation" type="Bool">
+      <default>false</default>
+    </entry>
+    <!-- Whether the "pill" label style uses `spacing` rather than the GNOME-style gap
+         between its dots (PILL_GAP in Labels.js). -->
+    <entry name="pillCustomSpacing" type="Bool">
+      <default>false</default>
+    </entry>
     <!-- Speed of the dot animation as a percentage of normal: 50 is half speed, 200 double. -->
     <entry name="animationSpeed" type="Int">
       <default>100</default>

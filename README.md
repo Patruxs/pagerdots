@@ -81,7 +81,7 @@ kpackagetool6 -t Plasma/Applet -r pat.pagerdots
 ## Features
 
 - A dot for the current desktop, a label for every other one
-- 17 label styles: numbers, letters (A B C / a b c), roman numerals (I II III / i ii iii), Greek, Cyrillic, Chinese, Heavenly Stems, Hiragana, Katakana, Hangul, Arabic-Indic digits, bars (▁ ▂ ▃), dots, fill-up-to-current (● ● ○ ○), or blank
+- 18 label styles: numbers, letters (A B C / a b c), roman numerals (I II III / i ii iii), Greek, Cyrillic, Chinese, Heavenly Stems, Hiragana, Katakana, Hangul, Arabic-Indic digits, bars (▁ ▂ ▃), dots, fill-up-to-current (● ● ○ ○), pill (GNOME's page indicator: small dots, with the current desktop a pill, and its own animation), or blank
 - 34 dot animations — stretch, glide, elastic, spring, hop, swing, lift, glow, ripple, footprints, ring, sparks, pour, drop, pop, fade, beam, split, flash, wrap, steps, boomerang, topple, cartwheel, arrow, train, twinkle, hoop, billiards, recoil, loop, volley, flip, burst — plus a speed slider, or none at all
 - Dot in your text or accent colour, with adjustable spacing
 - Click to switch, scroll or swipe to step through desktops (wraps around)

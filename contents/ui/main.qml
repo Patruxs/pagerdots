@@ -22,7 +22,13 @@ PlasmoidItem {
     readonly property string labelStyle: Plasmoid.configuration.labelStyle
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
     readonly property int spacing: Plasmoid.configuration.spacing
-    readonly property string dotAnimation: Animations.normalize(Plasmoid.configuration.dotAnimation)
+    // Whether the other desktops are drawn as dots, with the current one a pill (the
+    // "pill" style), rather than labelled.
+    readonly property bool dotStyle: Labels.drawsDots(labelStyle)
+    // The pill style keeps its own animation unless customised.
+    readonly property string dotAnimation:
+        dotStyle && !Plasmoid.configuration.pillCustomAnimation ? Animations.PILL_ANIMATION
+                                                                : Animations.normalize(Plasmoid.configuration.dotAnimation)
     // The dot is drawn in the text colour, or the accent colour if so configured.
     readonly property color dotColor: Plasmoid.configuration.dotColor === "accent"
                                       ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
@@ -69,10 +75,11 @@ PlasmoidItem {
             while (wheelDelta >= 120) { wheelDelta -= 120; root.step(-1); }
             while (wheelDelta <= -120) { wheelDelta += 120; root.step(1); }
         }
-        implicitWidth: grid.implicitWidth
-        implicitHeight: grid.implicitHeight
-        Layout.minimumWidth: root.vertical ? 0 : grid.implicitWidth
-        Layout.minimumHeight: root.vertical ? grid.implicitHeight : 0
+        // The row, plus the room the pill takes up in the pill style.
+        implicitWidth: grid.implicitWidth + (root.vertical ? 0 : elongation)
+        implicitHeight: grid.implicitHeight + (root.vertical ? elongation : 0)
+        Layout.minimumWidth: root.vertical ? 0 : implicitWidth
+        Layout.minimumHeight: root.vertical ? implicitHeight : 0
         Layout.preferredWidth: Layout.minimumWidth
         Layout.preferredHeight: Layout.minimumHeight
 
@@ -86,6 +93,19 @@ PlasmoidItem {
 
         FontMetrics { id: fm; font: Kirigami.Theme.defaultFont }
 
+        // The dot is a little under half the text height, so it sits well among the
+        // labels; the dots of the pill style, which stand on their own, are bigger.
+        readonly property real dotSize:
+            Math.max(4, Math.round(fm.height * (root.dotStyle ? Labels.PILL_DOT : 0.45)))
+        // How much longer than it is thick the dot is at rest: the pill of the pill
+        // style, or nothing. The row is that much longer than its cells, and what each
+        // cell shows slides along to make room for the pill wherever it is (see `slide`
+        // below), the way a page indicator does.
+        readonly property real elongation: root.dotStyle ? Math.round(dotSize * (Labels.PILL_LENGTH - 1)) : 0
+        // The gap between cells: the pill style's own unless customised, else the setting.
+        readonly property int gap: root.dotStyle && !Plasmoid.configuration.pillCustomSpacing
+                                   ? Math.round(dotSize * Labels.PILL_GAP) : root.spacing
+
         // All cells share one width: the widest label of the current style (e.g. "VIII")
         // plus breathing room, so the row stays evenly spaced whatever the labels are.
         // Measured through the method rather than a TextMetrics property, which would
@@ -97,14 +117,20 @@ PlasmoidItem {
             }
             return Math.max(Kirigami.Units.gridUnit * 1.4, Math.ceil(widest) + Kirigami.Units.largeSpacing);
         }
+        // The size of a cell along the row: that width, or the standard height when the
+        // row runs down the panel. The dots of the pill style sit closer together.
+        readonly property real cellLength: root.dotStyle ? Math.round(dotSize * Labels.DOT_CELL)
+                                         : root.vertical ? Kirigami.Units.gridUnit * 1.4 : cellWidth
 
         GridLayout {
             id: grid
             anchors.fill: parent
+            anchors.rightMargin: root.vertical ? 0 : view.elongation
+            anchors.bottomMargin: root.vertical ? view.elongation : 0
             rows: root.vertical ? -1 : 1
             columns: root.vertical ? 1 : -1
-            rowSpacing: root.vertical ? root.spacing : 0
-            columnSpacing: root.vertical ? 0 : root.spacing
+            rowSpacing: root.vertical ? view.gap : 0
+            columnSpacing: root.vertical ? 0 : view.gap
 
             Repeater {
                 id: cells
@@ -112,46 +138,76 @@ PlasmoidItem {
                 onItemAdded: view.cellsRevision++
                 onItemRemoved: view.cellsRevision++
 
-                // Plasma tooltip with the desktop name; `location` keeps it outside the panel.
-                delegate: PlasmaCore.ToolTipArea {
+                // The cell itself only takes up space; the dot is laid over it. What it
+                // shows is in `body`, which slides along the row in the pill style.
+                delegate: Item {
                     id: cell
-                    location: Plasmoid.location
-                    mainText: vdi.desktopNames[index] ?? ""
                     required property int index
                     readonly property bool isCurrent: index === root.currentIndex
 
                     Layout.fillHeight: !root.vertical
                     Layout.fillWidth: root.vertical
-                    Layout.minimumWidth: view.cellWidth
-                    Layout.minimumHeight: Kirigami.Units.gridUnit * 1.4
+                    Layout.minimumWidth: root.vertical ? view.cellWidth : view.cellLength
+                    Layout.minimumHeight: root.vertical ? view.cellLength : Kirigami.Units.gridUnit * 1.4
 
-                    DesktopLabel {
-                        anchors.fill: parent
-                        text: root.labelFor(cell.index)
-                        current: cell.isCurrent
-                        underDot: cell.isCurrent && root.useDot
-                        hovered: mouse.containsMouse
-                        animated: root.animated
-                        travel: dot.travel
-                    }
-                    MouseArea {
-                        id: mouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        onClicked: root.switchTo(cell.index)
+                    // How far along the row the cell's contents sit past the cell: the
+                    // room the pill takes up. Cells before the current desktop stay put,
+                    // the ones after it move over by the pill's extra length, and the
+                    // current one by half of it (the pill, offset the same way, then
+                    // starts where its dot would have been).
+                    readonly property real slide: index < root.currentIndex ? 0
+                                                : index === root.currentIndex ? view.elongation / 2
+                                                : view.elongation
+
+                    // Plasma tooltip with the desktop name; `location` keeps it outside the panel.
+                    PlasmaCore.ToolTipArea {
+                        id: body
+                        location: Plasmoid.location
+                        mainText: vdi.desktopNames[cell.index] ?? ""
+                        x: root.vertical ? 0 : cell.slide
+                        y: root.vertical ? cell.slide : 0
+                        width: cell.width
+                        height: cell.height
+                        // Moves over in step with the dot arriving.
+                        Behavior on x { enabled: root.animated; NumberAnimation { duration: dot.travel; easing.type: Easing.OutCubic } }
+                        Behavior on y { enabled: root.animated; NumberAnimation { duration: dot.travel; easing.type: Easing.OutCubic } }
+
+                        DesktopLabel {
+                            anchors.fill: parent
+                            text: root.labelFor(cell.index)
+                            dotSize: root.dotStyle ? view.dotSize : 0
+                            current: cell.isCurrent
+                            underDot: cell.isCurrent && root.useDot
+                            hovered: mouse.containsMouse
+                            animated: root.animated
+                            travel: dot.travel
+                        }
+                        MouseArea {
+                            id: mouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: root.switchTo(cell.index)
+                        }
                     }
                 }
             }
         }
 
         // The current-desktop dot. One item for the whole widget, laid over the
-        // current cell, so a desktop change animates instead of jumping.
+        // current cell, so a desktop change animates instead of jumping. In the pill
+        // style it is shifted along the row by half the pill's extra length, like the
+        // current cell's contents, so the pill starts where its dot would have been.
         Dot {
             id: dot
             anchors.fill: parent
+            anchors.leftMargin: root.vertical ? 0 : view.elongation / 2
+            anchors.rightMargin: -anchors.leftMargin
+            anchors.topMargin: root.vertical ? view.elongation / 2 : 0
+            anchors.bottomMargin: -anchors.topMargin
             target: view.currentCell
             animation: root.dotAnimation
-            size: Math.max(4, Math.round(fm.height * 0.45))
+            size: view.dotSize
+            elongation: view.elongation
             color: root.dotColor
             unit: root.animationUnit
             vertical: root.vertical

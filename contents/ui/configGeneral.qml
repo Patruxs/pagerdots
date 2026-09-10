@@ -17,9 +17,17 @@ KCM.SimpleKCM {
     property string cfg_dotColor
     property int cfg_spacing
     property string cfg_dotAnimation
-    // The animation to show and mark as selected: the configured one, or the default
-    // one if the configured one is no longer offered.
-    readonly property string dotAnimation: Animations.normalize(cfg_dotAnimation)
+    property bool cfg_pillCustomAnimation
+    property bool cfg_pillCustomSpacing
+    // The pill style comes with the animation and the spacing of GNOME's page indicator
+    // and keeps them, with those options locked, until the user chooses to customise
+    // them (each on its own, after a warning).
+    readonly property bool animationLocked: Labels.drawsDots(cfg_labelStyle) && !cfg_pillCustomAnimation
+    readonly property bool spacingLocked: Labels.drawsDots(cfg_labelStyle) && !cfg_pillCustomSpacing
+    // The animation to show and mark as selected: the pill style's own while locked,
+    // otherwise the configured one, or the default one if that is no longer offered.
+    readonly property string dotAnimation: animationLocked ? Animations.PILL_ANIMATION
+                                                           : Animations.normalize(cfg_dotAnimation)
     property int cfg_animationSpeed
 
     // The animations in alphabetical order, arranged so that the two-column grid below
@@ -42,7 +50,40 @@ KCM.SimpleKCM {
     property var cfg_dotColorDefault
     property var cfg_spacingDefault
     property var cfg_dotAnimationDefault
+    property var cfg_pillCustomAnimationDefault
+    property var cfg_pillCustomSpacingDefault
     property var cfg_animationSpeedDefault
+
+    // Asked before the pill style's animation or spacing is unlocked for customising.
+    // `what` is which of the two; open it through ask().
+    Kirigami.PromptDialog {
+        id: customiseDialog
+        property string what: "animation"
+        function ask(what) {
+            customiseDialog.what = what;
+            open();
+        }
+        title: what === "spacing" ? i18n("Customize spacing?") : i18n("Customize animations?")
+        subtitle: what === "spacing"
+                  ? i18n("This spacing is part of the intended GNOME design. Modifying it will likely make the interface look worse. Proceed with caution.")
+                  : i18n("This animation is part of the intended GNOME design. Modifying it will likely make the interface look worse. Proceed with caution.")
+        standardButtons: Kirigami.Dialog.NoButton
+        customFooterActions: [
+            Kirigami.Action {
+                text: i18n("Keep GNOME Style")
+                onTriggered: customiseDialog.close()
+            },
+            Kirigami.Action {
+                text: i18n("Customize Anyway")
+                icon.name: "dialog-warning"
+                onTriggered: {
+                    if (customiseDialog.what === "spacing") page.cfg_pillCustomSpacing = true;
+                    else page.cfg_pillCustomAnimation = true;
+                    customiseDialog.close();
+                }
+            }
+        ]
+    }
 
     // The preview lives in the page header rather than in the form, so it stays in
     // view while the options below are scrolled through.
@@ -64,7 +105,7 @@ KCM.SimpleKCM {
                 // choice below can be seen in action before it is applied.
                 Rectangle {
                     id: preview
-                    implicitWidth: previewRow.implicitWidth + Kirigami.Units.largeSpacing * 2
+                    implicitWidth: previewRow.implicitWidth + elongation + Kirigami.Units.largeSpacing * 2
                     implicitHeight: previewRow.implicitHeight + Kirigami.Units.largeSpacing * 2
                     radius: Kirigami.Units.smallSpacing
                     color: Kirigami.Theme.alternateBackgroundColor
@@ -73,6 +114,13 @@ KCM.SimpleKCM {
 
                     property int current: 0
                     readonly property bool useDot: Labels.usesDot(page.cfg_labelStyle, page.cfg_dotForCurrent)
+                    readonly property bool dotStyle: Labels.drawsDots(page.cfg_labelStyle)
+                    // Sized like the widget's dot (see main.qml), with the pill style's
+                    // bigger dots and the pill's extra length, which the row makes room for.
+                    readonly property real dotSize:
+                        Math.max(4, Math.round(fm.height * (dotStyle ? Labels.PILL_DOT : 0.45)))
+                    readonly property real elongation: dotStyle ? Math.round(dotSize * (Labels.PILL_LENGTH - 1)) : 0
+                    readonly property int gap: page.spacingLocked ? Math.round(dotSize * Labels.PILL_GAP) : page.cfg_spacing
                     readonly property bool animated: page.dotAnimation !== "none"
                     readonly property color dotColor: page.cfg_dotColor === "accent"
                                                       ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
@@ -95,7 +143,8 @@ KCM.SimpleKCM {
                     Row {
                         id: previewRow
                         anchors.centerIn: parent
-                        spacing: page.cfg_spacing
+                        anchors.horizontalCenterOffset: -preview.elongation / 2
+                        spacing: preview.gap
 
                         Repeater {
                             id: previewCells
@@ -108,23 +157,37 @@ KCM.SimpleKCM {
                                 required property int index
                                 readonly property bool isCurrent: index === preview.current
 
-                                // Sized like the widget's cells: the label plus breathing room.
-                                width: Math.max(Kirigami.Units.gridUnit * 1.4,
+                                // Sized like the widget's cells: the label plus breathing room,
+                                // or a couple of dots' worth in the pill style.
+                                width: preview.dotStyle ? Math.round(preview.dotSize * Labels.DOT_CELL)
+                                     : Math.max(Kirigami.Units.gridUnit * 1.4,
                                                 Math.ceil(fm.advanceWidth(label.text)) + Kirigami.Units.largeSpacing)
                                 height: Kirigami.Units.gridUnit * 1.4
 
-                                DesktopLabel {
-                                    id: label
-                                    anchors.fill: parent
-                                    text: Labels.labelFor(page.cfg_labelStyle, cell.index + 1, preview.current + 1)
-                                    current: cell.isCurrent
-                                    underDot: cell.isCurrent && preview.useDot
-                                    animated: preview.animated
-                                    travel: previewDot.travel
-                                }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: preview.current = cell.index
+                                // What the cell shows slides along to make room for the pill,
+                                // as in the widget.
+                                Item {
+                                    x: cell.index < preview.current ? 0
+                                     : cell.index === preview.current ? preview.elongation / 2
+                                     : preview.elongation
+                                    width: cell.width
+                                    height: cell.height
+                                    Behavior on x { enabled: preview.animated; NumberAnimation { duration: previewDot.travel; easing.type: Easing.OutCubic } }
+
+                                    DesktopLabel {
+                                        id: label
+                                        anchors.fill: parent
+                                        text: Labels.labelFor(page.cfg_labelStyle, cell.index + 1, preview.current + 1)
+                                        dotSize: preview.dotStyle ? preview.dotSize : 0
+                                        current: cell.isCurrent
+                                        underDot: cell.isCurrent && preview.useDot
+                                        animated: preview.animated
+                                        travel: previewDot.travel
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: preview.current = cell.index
+                                    }
                                 }
                             }
                         }
@@ -132,9 +195,12 @@ KCM.SimpleKCM {
                     Dot {
                         id: previewDot
                         anchors.fill: previewRow
+                        anchors.leftMargin: preview.elongation / 2
+                        anchors.rightMargin: -anchors.leftMargin
                         target: preview.currentCell
                         animation: page.dotAnimation
-                        size: Math.max(4, Math.round(fm.height * 0.45))
+                        size: preview.dotSize
+                        elongation: preview.elongation
                         color: preview.dotColor
                         unit: preview.unit
                         visible: preview.useDot
@@ -146,7 +212,7 @@ KCM.SimpleKCM {
             // preview so it is the first thing seen and stays in view while scrolling.
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
-                enabled: preview.useDot && preview.animated
+                enabled: preview.useDot && preview.animated && !page.animationLocked
                 spacing: Kirigami.Units.largeSpacing
 
                 QQC2.Label { text: i18n("Animation speed:") }
@@ -208,14 +274,32 @@ KCM.SimpleKCM {
                     Layout.leftMargin: Kirigami.Units.gridUnit
                     text: i18n("Space between desktops:")
                 }
+                // Shows the pill style's own gap while that is locked, and the setting
+                // otherwise.
                 QQC2.SpinBox {
+                    enabled: !page.spacingLocked
                     from: 0
                     to: 40
                     stepSize: 1
-                    value: page.cfg_spacing
+                    value: page.spacingLocked ? preview.gap : page.cfg_spacing
                     onValueModified: page.cfg_spacing = value
                     textFromValue: (value, locale) => i18np("%1 pixel", "%1 pixels", value)
                     valueFromText: (text, locale) => parseInt(text) || 0
+                }
+                // Unlocks the spacing for the pill style (after a warning), or puts its
+                // own spacing back once it has been customised.
+                QQC2.ToolButton {
+                    visible: Labels.drawsDots(page.cfg_labelStyle)
+                    icon.name: page.spacingLocked ? "lock" : "edit-undo"
+                    text: page.spacingLocked ? i18n("Customize…") : i18n("Use GNOME-style spacing")
+                    display: page.spacingLocked ? QQC2.AbstractButton.IconOnly : QQC2.AbstractButton.TextBesideIcon
+                    QQC2.ToolTip.text: page.spacingLocked ? i18n("Customize the space between desktops") : text
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                    onClicked: {
+                        if (page.spacingLocked) customiseDialog.ask("spacing");
+                        else page.cfg_pillCustomSpacing = false;
+                    }
                 }
             }
         }
@@ -289,9 +373,23 @@ KCM.SimpleKCM {
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 20
                 Layout.bottomMargin: Kirigami.Units.smallSpacing
                 enabled: preview.useDot
-                text: i18n(Animations.MODES.find(m => m.id === page.dotAnimation)?.description ?? "")
+                text: page.animationLocked
+                      ? i18n("The Pill style comes with the animation of GNOME's page indicator: the pill shrinks back into a dot as the new one grows.")
+                      : i18n(Animations.MODES.find(m => m.id === page.dotAnimation)?.description ?? "")
                 wrapMode: Text.Wrap
                 opacity: 0.6
+            }
+            // Unlocks the options below for the pill style (after a warning), or puts
+            // its own animation back once they have been customised.
+            QQC2.Button {
+                visible: Labels.drawsDots(page.cfg_labelStyle)
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
+                text: page.animationLocked ? i18n("Customize animation…") : i18n("Use GNOME-style animation")
+                icon.name: page.animationLocked ? "lock" : "edit-undo"
+                onClicked: {
+                    if (page.animationLocked) customiseDialog.ask("animation");
+                    else page.cfg_pillCustomAnimation = false;
+                }
             }
 
             QQC2.ButtonGroup { id: animationGroup }
@@ -299,7 +397,7 @@ KCM.SimpleKCM {
             // The dot animations as a two-column grid of radio buttons. Hovering one shows
             // its description; the preview above plays whichever is selected.
             GridLayout {
-                enabled: preview.useDot
+                enabled: preview.useDot && !page.animationLocked
                 columns: 2
                 columnSpacing: Kirigami.Units.largeSpacing
                 rowSpacing: 0

@@ -11,7 +11,8 @@ import "../contents/ui"
 // still in flight, and then a change to the next mode while *that* is still in
 // flight. Any QML warning (a missing file, an unknown property, a binding loop, an
 // exception in start()) is printed by the qml tool; `tests/run` fails on it. Pass
-// `-- vertical` to lay the cells out top to bottom.
+// `-- vertical` to lay the cells out top to bottom, and `-- pill` to rest the dot as
+// a pill, as the "pill" label style does.
 Window {
     id: win
     width: 160
@@ -19,6 +20,7 @@ Window {
     visible: true
 
     readonly property bool vertical: Qt.application.arguments.includes("vertical")
+    readonly property bool pill: Qt.application.arguments.includes("pill")
     readonly property var modes: Animations.MODES.map(m => m.id)
     property int mode: 0
     property int current: 0
@@ -45,6 +47,7 @@ Window {
         target: { void win.cellsRevision; return cells.itemAt(win.current); }
         animation: win.modes[Math.min(win.mode, win.modes.length - 1)]
         size: 7
+        elongation: win.pill ? 14 : 0
         color: "white"
         unit: 100
         vertical: win.vertical
@@ -72,7 +75,8 @@ Window {
             case 3: win.check("mid cut-in"); break;
             case 4:                                      // change mode mid-flight
                 if (++win.mode >= win.modes.length) {
-                    console.warn("smoke: " + win.modes.length + " modes" + (win.vertical ? ", vertical" : "") + ", done");
+                    console.warn("smoke: " + win.modes.length + " modes" + (win.vertical ? ", vertical" : "")
+                                 + (win.pill ? ", pill" : "") + ", done");
                     Qt.quit();
                 }
                 win.stage = 0;

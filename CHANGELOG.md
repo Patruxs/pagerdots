@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- A "Pill" label style: the desktops as small dots, with the current one a wide pill
+  among them, in the proportions of GNOME's page indicator. The row makes room for the
+  pill wherever it goes. The style comes with that indicator's animation too: the old
+  pill shrinks back into a dot as a dot grows into the new pill, and that indicator's
+  spacing. The animation options and the spacing are locked while it is in use; a
+  "Customize animation…" button and a lock button beside the spacing unlock them, each
+  after a warning. The other animations then stretch, squash and carry the pill just as
+  they do the dot ("Fade" is the GNOME-style one).
+
 ## [1.2.1] - 2026-09-08
 
 ### Fixed

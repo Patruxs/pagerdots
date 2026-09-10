@@ -61,6 +61,12 @@ Item {
     property real lift: 1       // uniform scale
     property real flatten: 1    // scale across the row only
     property real fade: 1       // opacity
+    // How much of its resting length the pill has (see Dot.elongation; nothing to a
+    // round dot), and which end of it stays put as it grows or shrinks: -1 the end
+    // nearer the start of the row, 0 the middle, +1 the far end. The ghost has the
+    // same two properties of its own.
+    property real extent: 1
+    property real keep: 0
 
     // Centre of the old cell, for animations that draw something between the two cells.
     property real fromX: 0

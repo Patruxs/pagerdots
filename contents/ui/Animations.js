@@ -9,6 +9,12 @@ function unitFor(base, speedPercent) {
     return Math.round(base * 100 / Math.max(25, speedPercent));
 }
 
+// The animation the "pill" label style comes with, the one of GNOME's page indicator:
+// the old pill shrinks back into a dot as the new one grows out of one, which is what
+// "fade" does when the dot rests as a pill. The style keeps it, whatever animation is
+// configured, unless the user has chosen to customise it (pillCustomAnimation).
+const PILL_ANIMATION = "fade";
+
 // Dot animations offered in the settings page, in display order.
 // `id` is what gets stored in the config and read by Dot.qml.
 // Each one has a silhouette of its own at panel size; variants that only differ in
@@ -29,7 +35,7 @@ const MODES = [
     { id: "pour",    name: "Pour",    description: "Drains from the old desktop into the new one down a thin stream, shrinking on one as it grows on the other" },
     { id: "drop",    name: "Drop",    description: "Falls away from the old desktop while a new dot drops onto the new one" },
     { id: "pop",     name: "Pop",     description: "Shrinks away and pops up at the new desktop" },
-    { id: "fade",    name: "Fade",    description: "Cross-fades from the old desktop to the new one" },
+    { id: "fade",    name: "Fade",    description: "Cross-fades from the old desktop to the new one; a pill shrinks back into a dot as the new one grows" },
     { id: "beam",    name: "Beam",    description: "Stretches into a tall thin beam that fades from the old desktop, while a beam appears on the new one and collapses into a dot" },
     { id: "split",   name: "Split",   description: "Splits into two half dots that swing out to either side, cross over, and merge again on the new desktop" },
     { id: "flash",   name: "Flash",   description: "Appears on the new desktop at once and blinks twice" },

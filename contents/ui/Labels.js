@@ -21,6 +21,7 @@ const STYLES = [
     { id: "bars",         name: "Bars",                preview: "▁ ▂ ▃ ▄" },
     { id: "dots",         name: "Dots",                preview: "○ ○ ○ ○" },
     { id: "fill",         name: "Fill up to current",  preview: "● ● ○ ○" },
+    { id: "pill",         name: "Pill",                preview: "▬ ● ● ●" },
     { id: "blank",        name: "Blank",               preview: "" },
 ];
 
@@ -74,10 +75,29 @@ function arabicIndic(n) {
     return String(n).replace(/\d/g, c => String.fromCharCode(0x0660 + Number(c)));
 }
 
+// The "pill" style draws the other desktops as dots the size of the marker, rather
+// than as glyphs, and the marker rests among them as a pill, the way GNOME's page
+// indicator does. Its proportions, taken from that: the dots are this fraction of the
+// font height (the same as the usual marker), the pill is this many dots long, and
+// each cell is this many dots wide, so that the dots sit one spacing apart. The row
+// makes room for the pill, so it is one pill length wider than the dots alone. The
+// style keeps GNOME's gap between the dots (PILL_GAP, in dots) in place of the spacing
+// setting, unless the user has chosen to customise it (pillCustomSpacing).
+const PILL_DOT = 0.45;
+const PILL_LENGTH = 3.7;
+const DOT_CELL = 1;
+const PILL_GAP = 0.6;
+
+// Whether the style shows the other desktops as drawn dots instead of a label.
+function drawsDots(style) {
+    return style === "pill";
+}
+
 // Whether the current desktop is marked by the dot (as opposed to its bold label).
-// The "blank" style has no label to show, so it always uses the dot.
+// The "blank" style has no label to show, and the "pill" style is the dot resting as
+// a pill, so both always use the dot.
 function usesDot(style, dotForCurrent) {
-    return dotForCurrent || style === "blank";
+    return dotForCurrent || style === "blank" || drawsDots(style);
 }
 
 // Label for the 1-based desktop number `n` in the given style. `current` is the
@@ -101,6 +121,7 @@ function labelFor(style, n, current) {
     case "dots":         return "○";
     case "fill":         return n <= current ? "●" : "○";
     case "blank":        return "";
+    case "pill":         return "";
     default:             return String(n);
     }
 }

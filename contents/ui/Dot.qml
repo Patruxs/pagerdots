@@ -26,6 +26,10 @@ Item {
     property string animation: "stretch"
     property real size: 6
     property color color: "black"
+    // How much longer than it is thick the dot is at rest, in pixels: 0 for a circle,
+    // more for a pill lying along the row (the "pill" label style). The animations
+    // stretch, squash and move the pill just as they do the circle.
+    property real elongation: 0
     // Base duration in ms; every animation is a multiple of it. Pass Kirigami's
     // longDuration (scaled by the speed setting) so the widget follows the global
     // animation speed setting.
@@ -56,6 +60,8 @@ Item {
     readonly property real lift: anim?.lift ?? 1
     readonly property real flatten: anim?.flatten ?? 1
     readonly property real fade: anim?.fade ?? 1
+    readonly property real extent: anim?.extent ?? 1
+    readonly property real keep: anim?.keep ?? 0
 
     // The dot itself and the ghost, for the animations to drive.
     readonly property Rectangle pill: pillItem
@@ -236,7 +242,8 @@ Item {
 
     // Copy of the dot left on the old cell during a swap, for the animation to fade,
     // shrink or knock away. `fall` moves it across the row, against hopSign (for
-    // "drop"), and `slide` along it (for "recoil").
+    // "drop"), and `slide` along it (for "recoil"). `extent` and `keep` are as in
+    // DotAnimation: how much of the elongation it has, and which end holds still.
     Rectangle {
         id: ghostItem
         objectName: "ghost"
@@ -244,10 +251,13 @@ Item {
         property real baseY: 0
         property real fall: 0
         property real slide: 0
-        x: baseX + (dot.vertical ? -fall * dot.hopSign : slide)
-        y: baseY + (dot.vertical ? slide : -fall * dot.hopSign)
-        width: dot.size
-        height: dot.size
+        property real extent: 1
+        property real keep: 0
+        readonly property real shift: dot.elongation * (1 - extent) * (keep + 1) / 2
+        x: baseX + (dot.vertical ? -fall * dot.hopSign : slide + shift)
+        y: baseY + (dot.vertical ? slide + shift : -fall * dot.hopSign)
+        width: dot.size + (dot.vertical ? 0 : dot.elongation * extent)
+        height: dot.size + (dot.vertical ? dot.elongation * extent : 0)
         radius: dot.size / 2
         color: dot.color
         visible: false
@@ -256,8 +266,10 @@ Item {
     }
     // Show the ghost, whole and at rest, on `cell`.
     function placeGhost(cell, scale = 1) {
-        ghostItem.baseX = cell.x + (cell.width - size) / 2;
-        ghostItem.baseY = cell.y + (cell.height - size) / 2;
+        ghostItem.extent = 1;
+        ghostItem.keep = 0;
+        ghostItem.baseX = cell.x + (cell.width - ghostItem.width) / 2;
+        ghostItem.baseY = cell.y + (cell.height - ghostItem.height) / 2;
         ghostItem.fall = 0;
         ghostItem.slide = 0;
         ghostItem.opacity = 1;
@@ -265,12 +277,15 @@ Item {
         ghostItem.visible = true;
     }
 
-    // The dot itself. A capsule while stretched, a circle otherwise.
+    // The dot itself. A capsule while stretched (or when elongated at rest), a circle
+    // otherwise.
     Rectangle {
         id: pillItem
         objectName: "pill"
-        readonly property real length: dot.tethered ? 0 : dot.gap
-        readonly property real start: dot.tethered ? (dot.vertical ? dot.leadY : dot.leadX) : dot.gapStart
+        readonly property real length: (dot.tethered ? 0 : dot.gap) + dot.elongation * dot.extent
+        readonly property real start: (dot.tethered ? (dot.vertical ? dot.leadY : dot.leadX) : dot.gapStart)
+                                      - dot.elongation * dot.extent / 2
+                                      + dot.elongation * (1 - dot.extent) * dot.keep / 2
         x: (dot.vertical ? dot.leadX : start) - dot.thickness / 2
            + (dot.vertical ? dot.across * dot.hopSign : dot.along)
         y: (dot.vertical ? start : dot.leadY) - dot.thickness / 2
