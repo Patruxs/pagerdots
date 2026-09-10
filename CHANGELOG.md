@@ -15,7 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   spacing. The animation options and the spacing are locked while it is in use; a
   "Customize animation…" button and a lock button beside the spacing unlock them, each
   after a warning. The other animations then stretch, squash and carry the pill just as
-  they do the dot ("Fade" is the GNOME-style one).
+  they do the dot ("Fade" is the GNOME-style one). While the mouse is over the widget
+  a rounded background shows behind the dots, as in GNOME.
+
+### Fixed
+- In a panel thinner than about 25 pixels the row sat a couple of pixels below the
+  panel's centre: the cells asked for a minimum height the panel could not give, and
+  the row overflowed it. They now take the panel's height.
 
 ## [1.2.1] - 2026-09-08
 
