@@ -53,6 +53,30 @@ KCM.SimpleKCM {
     property var cfg_pillCustomAnimationDefault
     property var cfg_pillCustomSpacingDefault
     property var cfg_animationSpeedDefault
+    // The Behavior page's keys: every page is handed every key, and warns if one has
+    // nowhere to go.
+    property bool cfg_wheelSwitches
+    property bool cfg_wheelWrap
+    property bool cfg_wheelInvert
+    property string cfg_currentDesktopClick
+    property bool cfg_currentDesktopClickAnywhere
+    property bool cfg_tooltips
+    property bool cfg_tooltipWindows
+    property bool cfg_manageDesktops
+    property bool cfg_renameDesktop
+    property bool cfg_autoDesktops
+    property string cfg_newDesktopName
+    property var cfg_wheelSwitchesDefault
+    property var cfg_wheelWrapDefault
+    property var cfg_wheelInvertDefault
+    property var cfg_currentDesktopClickDefault
+    property var cfg_currentDesktopClickAnywhereDefault
+    property var cfg_tooltipsDefault
+    property var cfg_tooltipWindowsDefault
+    property var cfg_manageDesktopsDefault
+    property var cfg_renameDesktopDefault
+    property var cfg_autoDesktopsDefault
+    property var cfg_newDesktopNameDefault
 
     // Asked before the pill style's animation or spacing is unlocked for customising.
     // `what` is which of the two; open it through ask().
@@ -210,9 +234,10 @@ KCM.SimpleKCM {
 
             // Speed as a percentage of Plasma's default animation speed. Up here with the
             // preview so it is the first thing seen and stays in view while scrolling.
+            // Not locked with the pill style's animation: its speed is the user's to set.
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
-                enabled: preview.useDot && preview.animated && !page.animationLocked
+                enabled: preview.useDot && preview.animated
                 spacing: Kirigami.Units.largeSpacing
 
                 QQC2.Label { text: i18n("Animation speed:") }

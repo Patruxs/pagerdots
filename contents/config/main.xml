@@ -43,4 +43,53 @@
       <max>400</max>
     </entry>
   </group>
+
+  <group name="Behavior">
+    <!-- Whether the mouse wheel over the widget steps through the desktops. -->
+    <entry name="wheelSwitches" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Whether stepping past the last desktop comes round to the first, and vice versa. -->
+    <entry name="wheelWrap" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Whether scrolling down goes to the previous desktop rather than the next. -->
+    <entry name="wheelInvert" type="Bool">
+      <default>false</default>
+    </entry>
+    <!-- What a click on the current desktop does: "nothing", "showDesktop", "overview"
+         or "grid" (the last three through KWin's shortcuts of those names). -->
+    <entry name="currentDesktopClick" type="String">
+      <default>nothing</default>
+    </entry>
+    <!-- Whether that also happens on a click anywhere else on the widget. -->
+    <entry name="currentDesktopClickAnywhere" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Whether hovering a desktop shows a tooltip with its name. -->
+    <entry name="tooltips" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Whether that tooltip lists the windows on the desktop. -->
+    <entry name="tooltipWindows" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Whether the context menu offers to add a desktop and remove the last one. -->
+    <entry name="manageDesktops" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Whether the context menu offers to rename the current desktop. -->
+    <entry name="renameDesktop" type="Bool">
+      <default>true</default>
+    </entry>
+    <!-- Whether desktops are added and removed on their own, as in GNOME: one empty
+         desktop at the end, always. -->
+    <entry name="autoDesktops" type="Bool">
+      <default>false</default>
+    </entry>
+    <!-- What a new desktop is called, numbered ("Work 3"); empty for KWin's default. -->
+    <entry name="newDesktopName" type="String">
+      <default></default>
+    </entry>
+  </group>
 </kcfg>

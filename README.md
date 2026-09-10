@@ -84,11 +84,12 @@ kpackagetool6 -t Plasma/Applet -r pat.pagerdots
 - 18 label styles: numbers, letters (A B C / a b c), roman numerals (I II III / i ii iii), Greek, Cyrillic, Chinese, Heavenly Stems, Hiragana, Katakana, Hangul, Arabic-Indic digits, bars (▁ ▂ ▃), dots, fill-up-to-current (● ● ○ ○), pill (GNOME's page indicator: small dots, with the current desktop a pill, and its own animation), or blank
 - 34 dot animations — stretch, glide, elastic, spring, hop, swing, lift, glow, ripple, footprints, ring, sparks, pour, drop, pop, fade, beam, split, flash, wrap, steps, boomerang, topple, cartwheel, arrow, train, twinkle, hoop, billiards, recoil, loop, volley, flip, burst — plus a speed slider, or none at all
 - Dot in your text or accent colour, with adjustable spacing
-- Click to switch, scroll or swipe to step through desktops (wraps around)
-- Hover for the desktop name
+- Click to switch, scroll or swipe to step through desktops (wrapping around, inverted, or not at all, as you like); click the current desktop to show the desktop, the Overview or the desktop grid
+- Hover for the desktop name and the windows on it
+- Right-click to add a desktop, remove the last one, rename the current one, or open the Virtual Desktops settings; or let the widget add and remove desktops for you, GNOME-style (one empty desktop at the end, always)
 - Horizontal and vertical panels, following your Plasma colour scheme and font
 
-Right-click the widget → **Configure Pager Dots…** to change any of it; the preview at the top plays your choices live.
+Right-click the widget → **Configure Pager Dots…** to change any of it: **Appearance** for the labels and the dot, with a preview at the top that plays your choices live, **Behavior** for the mouse, tooltips and desktop management.
 
 ### Adding an animation
 

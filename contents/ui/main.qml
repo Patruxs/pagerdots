@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 import QtQuick
+import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
+import org.kde.kcmutils as KCM
 import org.kde.taskmanager as TaskManager
 import org.kde.plasma.workspace.dbus as DBus
 import "Labels.js" as Labels
 import "Animations.js" as Animations
+import "Desktops.js" as Desktops
 
 // Pager Dots: a dot for the current virtual desktop, dimmed labels for the others.
 // Click a desktop to switch, mouse wheel to step. Label style and the animation
-// the dot makes between desktops are configurable.
+// the dot makes between desktops are configurable, as is what the mouse does and
+// what the context menu offers for managing the desktops.
 PlasmoidItem {
     id: root
 
@@ -38,10 +42,64 @@ PlasmoidItem {
     // Whether the current desktop is marked by the gliding dot (as opposed to its bold label).
     readonly property bool useDot: Labels.usesDot(labelStyle, dotForCurrent)
 
+    // Behaviour (see the Behavior settings page).
+    readonly property bool wheelSwitches: Plasmoid.configuration.wheelSwitches
+    readonly property bool wheelWrap: Plasmoid.configuration.wheelWrap
+    readonly property bool wheelInvert: Plasmoid.configuration.wheelInvert
+    readonly property string currentDesktopClick: Plasmoid.configuration.currentDesktopClick
+    readonly property bool clickAnywhere: currentDesktopClick !== "nothing"
+                                          && Plasmoid.configuration.currentDesktopClickAnywhere
+    readonly property bool tooltips: Plasmoid.configuration.tooltips
+    readonly property bool tooltipWindows: Plasmoid.configuration.tooltipWindows
+    readonly property bool manageDesktops: Plasmoid.configuration.manageDesktops
+    readonly property bool renameDesktop: Plasmoid.configuration.renameDesktop
+    readonly property bool autoDesktops: Plasmoid.configuration.autoDesktops
+
     TaskManager.VirtualDesktopInfo { id: vdi }
+
+    // The windows on each desktop, for the tooltip's window list and the automatic
+    // desktops; loaded only while one of those is in use.
+    Loader {
+        id: windows
+        active: root.tooltipWindows || root.autoDesktops
+        sourceComponent: DesktopWindows {}
+        readonly property var titles: item?.titles ?? ({})
+    }
+
+    // Everything the GNOME-style rule looks at, so that a change to any of it (a window
+    // opening or closing, a desktop coming or going, a switch) runs it again, a moment
+    // later so that a burst of changes is handled once.
+    readonly property var desktopState: [windows.titles, vdi.desktopIds, currentIndex, autoDesktops]
+    onDesktopStateChanged: if (autoDesktops) autoTidy.restart()
+    Timer {
+        id: autoTidy
+        interval: 500
+        onTriggered: root.tidyDesktops()
+    }
 
     function labelFor(index) {
         return Labels.labelFor(labelStyle, index + 1, currentIndex + 1);
+    }
+
+    // Keeps the desktops the way GNOME does (see Desktops.js): there is always exactly
+    // one empty desktop at the end. Nothing is done until the window list has had time
+    // to fill in (see DesktopWindows.qml), when every desktop would look empty.
+    function tidyDesktops() {
+        if (!autoDesktops || !windows.item?.settled) return;
+        const todo = Desktops.plan(vdi.desktopIds, windows.titles, currentIndex);
+        if (todo.create) createDesktop();
+        todo.remove.forEach(removeDesktop);
+    }
+
+    // The tooltip's list of the windows on a desktop, a handful at most.
+    function windowsOn(id) {
+        const titles = windows.titles[id] ?? [];
+        if (titles.length === 0) return i18n("No windows");
+        const shown = titles.slice(0, 6);
+        if (titles.length > shown.length) {
+            shown.push(i18np("and one more", "and %1 more", titles.length - shown.length));
+        }
+        return shown.join("\n");
     }
 
     function switchTo(index) {
@@ -52,10 +110,119 @@ PlasmoidItem {
             member: "setCurrentDesktop", arguments: [new DBus.int32(index + 1)]
         });
     }
+    // Moves `delta` desktops along, round the ends if so configured.
     function step(delta) {
         const n = vdi.numberOfDesktops;
         if (n < 1) return;
-        switchTo((currentIndex + delta + n) % n);
+        const next = currentIndex + delta;
+        if (wheelWrap) switchTo((next % n + n) % n);
+        else if (next >= 0 && next < n) switchTo(next);
+    }
+
+    // Desktop management, through KWin's virtual desktop manager. A new desktop goes
+    // at the end, and is named after the configured base name and its number, or by
+    // KWin ("Desktop 3") if there is none.
+    function desktopCall(member, args) {
+        DBus.SessionBus.asyncCall({
+            service: "org.kde.KWin", path: "/VirtualDesktopManager",
+            iface: "org.kde.KWin.VirtualDesktopManager", member: member, arguments: args
+        });
+    }
+    function createDesktop() {
+        const n = vdi.numberOfDesktops;
+        const base = Plasmoid.configuration.newDesktopName.trim();
+        desktopCall("createDesktop", [new DBus.uint32(n), base === "" ? "" : base + " " + (n + 1)]);
+    }
+    function removeDesktop(id) {
+        desktopCall("removeDesktop", [id]);
+    }
+    function setDesktopName(id, name) {
+        desktopCall("setDesktopName", [id, name]);
+    }
+
+    // What a click on the current desktop does: one of KWin's shortcuts, by name, or
+    // nothing.
+    function clickCurrent() {
+        const names = { showDesktop: "Show Desktop", overview: "Overview", grid: "Grid View" };
+        const name = names[currentDesktopClick];
+        if (!name) return;
+        DBus.SessionBus.asyncCall({
+            service: "org.kde.kglobalaccel", path: "/component/kwin",
+            iface: "org.kde.kglobalaccel.Component", member: "invokeShortcut", arguments: [name]
+        });
+    }
+
+    Plasmoid.contextualActions: [
+        PlasmaCore.Action {
+            text: i18n("Add Desktop")
+            icon.name: "list-add"
+            visible: root.manageDesktops && !root.autoDesktops
+            onTriggered: root.createDesktop()
+        },
+        PlasmaCore.Action {
+            text: i18n("Remove Last Desktop")
+            icon.name: "edit-delete-remove"
+            visible: root.manageDesktops && !root.autoDesktops
+            enabled: vdi.numberOfDesktops > 1
+            onTriggered: root.removeDesktop(vdi.desktopIds[vdi.desktopIds.length - 1])
+        },
+        PlasmaCore.Action {
+            text: i18n("Rename Current Desktop…")
+            icon.name: "edit-rename"
+            visible: root.renameDesktop
+            enabled: root.currentIndex >= 0
+            onTriggered: renameDialog.open()
+        },
+        PlasmaCore.Action {
+            text: i18n("Configure Virtual Desktops…")
+            icon.name: "virtual-desktops"
+            onTriggered: KCM.KCMLauncher.openSystemSettings("kcm_kwin_virtualdesktops")
+        }
+    ]
+
+    // A small popup by the widget with the current desktop's name to edit. Enter or
+    // the button renames it; Escape, or clicking elsewhere, leaves it alone.
+    PlasmaCore.Dialog {
+        id: renameDialog
+        visualParent: root
+        location: Plasmoid.location
+        type: PlasmaCore.Dialog.AppletPopup
+        hideOnWindowDeactivate: true
+
+        function open() {
+            nameField.text = vdi.desktopNames[root.currentIndex] ?? "";
+            visible = true;
+            nameField.forceActiveFocus();
+            nameField.selectAll();
+        }
+        function apply() {
+            const name = nameField.text.trim();
+            if (name !== "" && root.currentIndex >= 0) root.setDesktopName(vdi.currentDesktop, name);
+            visible = false;
+        }
+
+        mainItem: ColumnLayout {
+            spacing: Kirigami.Units.smallSpacing
+            Keys.onEscapePressed: renameDialog.visible = false
+
+            QQC2.Label {
+                text: i18n("Rename desktop %1:", root.currentIndex + 1)
+            }
+            RowLayout {
+                spacing: Kirigami.Units.smallSpacing
+                QQC2.TextField {
+                    id: nameField
+                    Layout.preferredWidth: Kirigami.Units.gridUnit * 12
+                    onAccepted: renameDialog.apply()
+                }
+                QQC2.Button {
+                    text: i18n("Rename")
+                    icon.name: "edit-rename"
+                    enabled: nameField.text.trim() !== ""
+                    onClicked: renameDialog.apply()
+                }
+            }
+        }
     }
 
     preferredRepresentation: fullRepresentation
@@ -68,12 +235,15 @@ PlasmoidItem {
         // stepped per full notch, rather than several per swipe.
         property int wheelDelta: 0
         onWheel: wheel => {
+            if (!root.wheelSwitches) { wheel.accepted = false; return; }
             const delta = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.angleDelta.x;
             // A change of direction starts afresh, so the first notch back is not swallowed.
             if (delta * wheelDelta < 0) wheelDelta = 0;
             wheelDelta += delta;
-            while (wheelDelta >= 120) { wheelDelta -= 120; root.step(-1); }
-            while (wheelDelta <= -120) { wheelDelta += 120; root.step(1); }
+            // Scrolling up goes back a desktop, unless inverted.
+            const dir = root.wheelInvert ? 1 : -1;
+            while (wheelDelta >= 120) { wheelDelta -= 120; root.step(dir); }
+            while (wheelDelta <= -120) { wheelDelta += 120; root.step(-dir); }
         }
         // The row, plus the room the pill takes up in the pill style, and the padding
         // at either end.
@@ -141,6 +311,17 @@ PlasmoidItem {
             // for the widget's context menu.
             HoverHandler { id: hover }
 
+            // A click on the space around the desktops does what one on the current
+            // desktop does, if so configured. Only the left button, so that right clicks
+            // still reach Plasma for the context menu. Under the cells, which take
+            // their own clicks first.
+            MouseArea {
+                anchors.fill: parent
+                enabled: root.clickAnywhere
+                acceptedButtons: Qt.LeftButton
+                onClicked: root.clickCurrent()
+            }
+
             // The background while the mouse is over the widget, a pill as in GNOME: as
             // tall (or, down a panel, as wide) as the cells with a little extra, and as
             // long as the row with its padding.
@@ -199,11 +380,14 @@ PlasmoidItem {
                                                     : index === root.currentIndex ? view.elongation / 2
                                                     : view.elongation
 
-                        // Plasma tooltip with the desktop name; `location` keeps it outside the panel.
+                        // Plasma tooltip with the desktop name and, if so configured, the
+                        // windows on it; `location` keeps it outside the panel.
                         PlasmaCore.ToolTipArea {
                             id: body
+                            active: root.tooltips
                             location: Plasmoid.location
                             mainText: vdi.desktopNames[cell.index] ?? ""
+                            subText: root.tooltipWindows ? root.windowsOn(vdi.desktopIds[cell.index]) : ""
                             x: root.vertical ? 0 : cell.slide
                             y: root.vertical ? cell.slide : 0
                             width: cell.width
@@ -226,7 +410,8 @@ PlasmoidItem {
                                 id: mouse
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                onClicked: root.switchTo(cell.index)
+                                // The current desktop's own click does the configured action.
+                                onClicked: cell.isCurrent ? root.clickCurrent() : root.switchTo(cell.index)
                             }
                         }
                     }

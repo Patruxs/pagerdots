@@ -15,9 +15,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   spacing. The animation options and the spacing are locked while it is in use; a
   "Customize animation…" button and a lock button beside the spacing unlock them, each
   after a warning. The other animations then stretch, squash and carry the pill just as
-  they do the dot ("Fade" is the GNOME-style one).
+  they do the dot ("Fade" is the GNOME-style one). The speed slider stays available.
 - A rounded background behind the desktops while the mouse is over the widget, as in
   GNOME, with every label style.
+- A "Behavior" settings page, after the old one, now "Appearance". Mouse: whether the
+  wheel switches desktops, whether it wraps around at the ends, whether it is inverted,
+  and what a click on the current desktop does (nothing, show the desktop, the Overview
+  or the desktop grid), from the current desktop alone or from anywhere on the widget.
+  Tooltips: whether hovering shows the desktop's name, and whether it lists the windows
+  on it. Desktop management: which of the new context menu entries to offer.
+- Context menu entries to add a desktop, remove the last one, rename the current one
+  (in a small popup by the widget) and open the Virtual Desktops settings. A base name
+  for new desktops can be set; they are numbered after it ("Work 3").
+- Optionally, desktops are added and removed on their own, GNOME-style: there is
+  always exactly one empty desktop after the last one with windows, and empty desktops
+  are removed once left.
 
 ### Fixed
 - In a panel thinner than about 25 pixels the row sat a couple of pixels below the
