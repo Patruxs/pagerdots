@@ -78,6 +78,23 @@ KCM.SimpleKCM {
     property var cfg_autoDesktopsDefault
     property var cfg_newDesktopNameDefault
 
+    // The page's own settings, for the "Defaults" button in its header.
+    readonly property var ownKeys: ["labelStyle", "dotForCurrent", "dotColor", "spacing", "dotAnimation",
+                                     "pillCustomAnimation", "pillCustomSpacing", "animationSpeed"]
+    function restoreDefaults() {
+        for (const key of ownKeys) {
+            const value = page["cfg_" + key + "Default"];
+            if (value !== undefined) page["cfg_" + key] = value;
+        }
+    }
+    actions: [
+        Kirigami.Action {
+            text: i18n("Defaults")
+            icon.name: "edit-undo"
+            onTriggered: page.restoreDefaults()
+        }
+    ]
+
     // Asked before the pill style's animation or spacing is unlocked for customising.
     // `what` is which of the two; open it through ask().
     Kirigami.PromptDialog {

@@ -55,6 +55,23 @@ KCM.SimpleKCM {
     property var cfg_pillCustomSpacingDefault
     property var cfg_animationSpeedDefault
 
+    // The page's own settings, for the "Defaults" button in its header.
+    readonly property var ownKeys: ["wheelSwitches", "wheelWrap", "wheelInvert", "currentDesktopClick", "currentDesktopClickAnywhere",
+                                     "tooltips", "tooltipWindows", "manageDesktops", "renameDesktop", "autoDesktops", "newDesktopName"]
+    function restoreDefaults() {
+        for (const key of ownKeys) {
+            const value = page["cfg_" + key + "Default"];
+            if (value !== undefined) page["cfg_" + key] = value;
+        }
+    }
+    actions: [
+        Kirigami.Action {
+            text: i18n("Defaults")
+            icon.name: "edit-undo"
+            onTriggered: page.restoreDefaults()
+        }
+    ]
+
     // What a click on the current desktop can do; the last three are KWin's own
     // shortcuts, invoked by name (see clickCurrent() in main.qml).
     readonly property var clickActions: [
@@ -156,9 +173,16 @@ KCM.SimpleKCM {
         }
         Option {
             text: i18n("Add and remove automatically (GNOME-style)")
-            hint: i18n("Keeps one empty desktop after the last one with windows: a window on the last desktop adds a new one, and empty desktops are removed once you leave them.")
             checked: page.cfg_autoDesktops
             onToggled: page.cfg_autoDesktops = checked
+        }
+        // Spelled out under the option, since what it does is not obvious from its name.
+        QQC2.Label {
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 26
+            font: Kirigami.Theme.smallFont
+            opacity: 0.7
+            wrapMode: Text.Wrap
+            text: i18n("Keeps one empty desktop after the last one with windows: a window on the last desktop adds a new one, and empty desktops are removed once you leave them.")
         }
         QQC2.TextField {
             Kirigami.FormData.label: i18n("New desktop name:")
