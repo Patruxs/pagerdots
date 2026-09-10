@@ -113,7 +113,6 @@ If Pager Dots is useful to you, you can support development:
 <p align="center">
   <a href="https://github.com/sponsors/Patruxs"><img alt="Sponsor on GitHub Sponsors" src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-EA4AAA?logo=githubsponsors&logoColor=white&style=for-the-badge"></a>
   &nbsp;
-  <a href="https://paypal.me/patrickzs"><img alt="Donate with PayPal" src="https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white&style=for-the-badge"></a>
 </p>
 
 ## License
