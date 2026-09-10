@@ -75,8 +75,8 @@ PlasmoidItem {
             while (wheelDelta >= 120) { wheelDelta -= 120; root.step(-1); }
             while (wheelDelta <= -120) { wheelDelta += 120; root.step(1); }
         }
-        // The row, plus the room the pill takes up in the pill style, and that style's
-        // padding at either end.
+        // The row, plus the room the pill takes up in the pill style, and the padding
+        // at either end.
         implicitWidth: grid.implicitWidth + (root.vertical ? 0 : elongation + padding * 2)
         implicitHeight: grid.implicitHeight + (root.vertical ? elongation + padding * 2 : 0)
         Layout.minimumWidth: root.vertical ? 0 : implicitWidth
@@ -103,10 +103,9 @@ PlasmoidItem {
         // cell shows slides along to make room for the pill wherever it is (see `slide`
         // below), the way a page indicator does.
         readonly property real elongation: root.dotStyle ? Math.round(dotSize * (Labels.PILL_LENGTH - 1)) : 0
-        // Room at either end of the row in the pill style, so that the background shown
-        // while the mouse is over the widget clears the dots: a snug fit, as GNOME's is.
-        readonly property real padding: root.dotStyle ? Math.round(dotSize * 0.8) : 0
-        HoverHandler { id: hover }
+        // Room at either end of the row, so that the background shown while the mouse
+        // is over the widget clears the labels: a snug fit, as GNOME's is.
+        readonly property real padding: Math.round(dotSize * 0.8)
 
         // The gap between cells: the pill style's own unless customised, else the setting.
         readonly property int gap: root.dotStyle && !Plasmoid.configuration.pillCustomSpacing
@@ -136,9 +135,15 @@ PlasmoidItem {
             width: root.vertical ? view.width : view.implicitWidth
             height: root.vertical ? view.implicitHeight : view.height
 
-            // The background of the pill style while the mouse is over the widget, a pill
-            // itself as in GNOME: as tall (or, down a panel, as wide) as the cells with a
-            // little extra, and as long as the row with its padding.
+            // Whether the mouse is over the widget. On this plain item rather than on
+            // the MouseArea above: a pointer handler makes its item accept every mouse
+            // button, and a MouseArea then swallows the right clicks that Plasma needs
+            // for the widget's context menu.
+            HoverHandler { id: hover }
+
+            // The background while the mouse is over the widget, a pill as in GNOME: as
+            // tall (or, down a panel, as wide) as the cells with a little extra, and as
+            // long as the row with its padding.
             Rectangle {
                 readonly property real thickness:
                     Math.min(root.vertical ? view.width : view.height,
@@ -148,7 +153,7 @@ PlasmoidItem {
                 height: root.vertical ? content.height : thickness
                 radius: thickness / 2
                 color: Qt.alpha(Kirigami.Theme.textColor, 0.1)
-                opacity: root.dotStyle && hover.hovered ? 1 : 0
+                opacity: hover.hovered ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: Kirigami.Units.shortDuration } }
             }
 

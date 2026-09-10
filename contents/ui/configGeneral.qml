@@ -340,9 +340,31 @@ KCM.SimpleKCM {
                         checked: page.cfg_labelStyle === modelData.id
                         onToggled: if (checked) page.cfg_labelStyle = modelData.id
                     }
+                    // The pill style is drawn, since no glyph looks like its pill.
                     QQC2.Label {
+                        visible: !Labels.drawsDots(modelData.id)
                         text: modelData.preview
                         opacity: 0.6
+                    }
+                    Row {
+                        id: pillPreview
+                        visible: Labels.drawsDots(modelData.id)
+                        readonly property real dot: Math.max(4, Math.round(fm.height * Labels.PILL_DOT))
+                        spacing: Math.round(dot * Labels.PILL_GAP)
+                        opacity: 0.6
+
+                        Repeater {
+                            model: 4
+                            Rectangle {
+                                required property int index
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: index === 0 ? Math.round(pillPreview.dot * Labels.PILL_LENGTH) : pillPreview.dot
+                                height: pillPreview.dot
+                                radius: pillPreview.dot / 2
+                                color: Kirigami.Theme.textColor
+                                antialiasing: true
+                            }
+                        }
                     }
                 }
             }

@@ -21,7 +21,7 @@ const STYLES = [
     { id: "bars",         name: "Bars",                preview: "▁ ▂ ▃ ▄" },
     { id: "dots",         name: "Dots",                preview: "○ ○ ○ ○" },
     { id: "fill",         name: "Fill up to current",  preview: "● ● ○ ○" },
-    { id: "pill",         name: "Pill",                preview: "▬ ● ● ●" },
+    { id: "pill",         name: "Pill",                preview: "" },   // drawn on the settings page
     { id: "blank",        name: "Blank",               preview: "" },
 ];
 
