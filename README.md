@@ -18,7 +18,7 @@
 </p>
 &nbsp;
 <p align="center">
-  <img width="256" height="32" alt="pagerdot-4" src="https://github.com/user-attachments/assets/36cbf06a-fa23-4edb-8c53-892ea137c415" />
+ <img width="256" height="40" alt="pagerdot-7" src="https://github.com/user-attachments/assets/f910cd84-3aa5-4ad4-8837-617c64425fff" />
 </p>
 &nbsp;
 <p align="center">
