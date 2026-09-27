@@ -16,6 +16,7 @@ KCM.SimpleKCM {
     property bool cfg_dotForCurrent
     property string cfg_dotColor
     property int cfg_spacing
+    property bool cfg_markOccupied
     property string cfg_dotAnimation
     property bool cfg_pillCustomAnimation
     property bool cfg_pillCustomSpacing
@@ -49,6 +50,7 @@ KCM.SimpleKCM {
     property var cfg_dotForCurrentDefault
     property var cfg_dotColorDefault
     property var cfg_spacingDefault
+    property var cfg_markOccupiedDefault
     property var cfg_dotAnimationDefault
     property var cfg_pillCustomAnimationDefault
     property var cfg_pillCustomSpacingDefault
@@ -79,8 +81,8 @@ KCM.SimpleKCM {
     property var cfg_newDesktopNameDefault
 
     // The page's own settings, for the "Defaults" button in its header.
-    readonly property var ownKeys: ["labelStyle", "dotForCurrent", "dotColor", "spacing", "dotAnimation",
-                                     "pillCustomAnimation", "pillCustomSpacing", "animationSpeed"]
+    readonly property var ownKeys: ["labelStyle", "dotForCurrent", "dotColor", "spacing", "markOccupied",
+                                     "dotAnimation", "pillCustomAnimation", "pillCustomSpacing", "animationSpeed"]
     function restoreDefaults() {
         for (const key of ownKeys) {
             const value = page["cfg_" + key + "Default"];
@@ -222,6 +224,8 @@ KCM.SimpleKCM {
                                         dotSize: preview.dotStyle ? preview.dotSize : 0
                                         current: cell.isCurrent
                                         underDot: cell.isCurrent && preview.useDot
+                                        // The last two stand for empty desktops, when those are marked.
+                                        occupied: !page.cfg_markOccupied || cell.index < 2
                                         animated: preview.animated
                                         travel: previewDot.travel
                                     }
@@ -409,6 +413,20 @@ KCM.SimpleKCM {
                         }
                     }
                 }
+            }
+
+            QQC2.CheckBox {
+                Layout.topMargin: Kirigami.Units.largeSpacing
+                text: i18n("Mark desktops that have windows")
+                checked: page.cfg_markOccupied
+                onToggled: page.cfg_markOccupied = checked
+            }
+            QQC2.Label {
+                Layout.fillWidth: true
+                Layout.maximumWidth: Kirigami.Units.gridUnit * 20
+                text: i18n("Desktops with no windows are drawn fainter, so the ones in use stand out. Windows shown on all desktops don't count.")
+                wrapMode: Text.Wrap
+                opacity: 0.6
             }
         }
 

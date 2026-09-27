@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- "Mark desktops that have windows" on the Appearance page: desktops with no windows
+  are drawn fainter than those in use, so the busy ones stand out (#1). Off by
+  default. Windows shown on all desktops don't count, and the preview shows the last
+  two desktops as empty while it is on.
+
 ## [1.3.0] - 2026-09-10
 
 ### Added

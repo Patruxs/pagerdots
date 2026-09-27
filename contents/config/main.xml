@@ -36,6 +36,11 @@
     <entry name="pillCustomSpacing" type="Bool">
       <default>false</default>
     </entry>
+    <!-- Whether desktops with no windows are drawn fainter than those with some, so the
+         ones in use stand out. Windows on every desktop don't count. -->
+    <entry name="markOccupied" type="Bool">
+      <default>false</default>
+    </entry>
     <!-- Speed of the dot animation as a percentage of normal: 50 is half speed, 200 double. -->
     <entry name="animationSpeed" type="Int">
       <default>100</default>

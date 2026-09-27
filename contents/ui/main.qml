@@ -26,6 +26,8 @@ PlasmoidItem {
     readonly property string labelStyle: Plasmoid.configuration.labelStyle
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
     readonly property int spacing: Plasmoid.configuration.spacing
+    // Whether desktops with no windows are drawn fainter than the ones in use.
+    readonly property bool markOccupied: Plasmoid.configuration.markOccupied
     // Whether the other desktops are drawn as dots, with the current one a pill (the
     // "pill" style), rather than labelled.
     readonly property bool dotStyle: Labels.drawsDots(labelStyle)
@@ -57,11 +59,11 @@ PlasmoidItem {
 
     TaskManager.VirtualDesktopInfo { id: vdi }
 
-    // The windows on each desktop, for the tooltip's window list and the automatic
-    // desktops; loaded only while one of those is in use.
+    // The windows on each desktop, for the tooltip's window list, the automatic
+    // desktops and marking the desktops in use; loaded only while one of those is on.
     Loader {
         id: windows
-        active: root.tooltipWindows || root.autoDesktops
+        active: root.tooltipWindows || root.autoDesktops || root.markOccupied
         sourceComponent: DesktopWindows {}
         readonly property var titles: item?.titles ?? ({})
     }
@@ -75,6 +77,14 @@ PlasmoidItem {
         id: autoTidy
         interval: 500
         onTriggered: root.tidyDesktops()
+    }
+
+    // Whether a desktop has windows, as far as the labels are concerned: every desktop
+    // does unless the ones in use are marked, and until the window list has filled in,
+    // so that nothing flickers faint while the widget starts.
+    function isOccupied(index) {
+        if (!markOccupied || !windows.item?.settled) return true;
+        return (windows.titles[vdi.desktopIds[index]] ?? []).length > 0;
     }
 
     function labelFor(index) {
@@ -403,6 +413,7 @@ PlasmoidItem {
                                 current: cell.isCurrent
                                 underDot: cell.isCurrent && root.useDot
                                 hovered: mouse.containsMouse
+                                occupied: root.isOccupied(cell.index)
                                 animated: root.animated
                                 travel: dot.travel
                             }

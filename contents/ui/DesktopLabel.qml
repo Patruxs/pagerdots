@@ -5,9 +5,9 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 
-// The label of one desktop: dimmed unless it is the current desktop or hovered, bold
-// when it marks the current desktop itself, and ducked out of sight while the dot
-// sits on it. Used by the widget and, so that the two never drift apart, by the
+// The label of one desktop: dimmed unless it is the current desktop or hovered (and
+// dimmed further if it has no windows, when desktops in use are marked), bold when it
+// marks the current desktop itself, and ducked out of sight while the dot sits on it. Used by the widget and, so that the two never drift apart, by the
 // preview on the settings page.
 QQC2.Label {
     id: label
@@ -16,6 +16,9 @@ QQC2.Label {
     // Whether the dot marks this desktop right now, in which case the label hides under it.
     property bool underDot: false
     property bool hovered: false
+    // Whether the desktop has windows on it. Only told apart when the widget marks the
+    // desktops in use; otherwise every desktop counts as occupied, and looks as it did.
+    property bool occupied: true
     // Diameter of a plain dot drawn in place of the text (for the "pill" style), or 0
     // to show the text.
     property real dotSize: 0
@@ -24,6 +27,7 @@ QQC2.Label {
     property bool animated: true
     property int travel: 0
     readonly property real dimOpacity: 0.55     // opacity of the other desktops
+    readonly property real emptyOpacity: 0.25   // ...and of those with no windows, if marked
 
     horizontalAlignment: Text.AlignHCenter
     verticalAlignment: Text.AlignVCenter
@@ -32,7 +36,7 @@ QQC2.Label {
 
     // 1 while the label is on show, 0 while the dot covers it.
     property real shown: underDot ? 0 : 1
-    property real emphasis: current || hovered ? 1 : dimOpacity
+    property real emphasis: current || hovered ? 1 : occupied ? dimOpacity : emptyOpacity
     opacity: shown * emphasis
     scale: 0.6 + 0.4 * shown
 
