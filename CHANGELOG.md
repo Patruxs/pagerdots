@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-28
+
 ### Added
 - A "Pac-Man" dot animation: the dot turns into Pac-Man and chomps across the row,
   eating a pellet on every desktop on the way to the new one, where it rounds off into
@@ -173,7 +175,8 @@ Initial release.
 - Tooltip showing the desktop name
 - Horizontal and vertical panel layouts
 
-[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/Patruxs/pagerdots/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Patruxs/pagerdots/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/Patruxs/pagerdots/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Patruxs/pagerdots/compare/v1.1.0...v1.2.0
