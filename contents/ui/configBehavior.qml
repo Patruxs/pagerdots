@@ -42,7 +42,8 @@ KCM.SimpleKCM {
     property bool cfg_dotForCurrent
     property string cfg_dotColor
     property int cfg_spacing
-    property bool cfg_markOccupied
+    property int cfg_dimOpacity
+    property int cfg_emptyOpacity
     property string cfg_dotAnimation
     property bool cfg_pillCustomAnimation
     property bool cfg_pillCustomSpacing
@@ -51,7 +52,8 @@ KCM.SimpleKCM {
     property var cfg_dotForCurrentDefault
     property var cfg_dotColorDefault
     property var cfg_spacingDefault
-    property var cfg_markOccupiedDefault
+    property var cfg_dimOpacityDefault
+    property var cfg_emptyOpacityDefault
     property var cfg_dotAnimationDefault
     property var cfg_pillCustomAnimationDefault
     property var cfg_pillCustomSpacingDefault

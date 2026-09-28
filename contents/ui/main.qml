@@ -26,8 +26,10 @@ PlasmoidItem {
     readonly property string labelStyle: Plasmoid.configuration.labelStyle
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
     readonly property int spacing: Plasmoid.configuration.spacing
+    readonly property real dimOpacity: (Plasmoid.configuration.dimOpacity || 100) / 100
+    readonly property real emptyOpacity: (Plasmoid.configuration.emptyOpacity || 100) / 100
     // Whether desktops with no windows are drawn fainter than the ones in use.
-    readonly property bool markOccupied: Plasmoid.configuration.markOccupied
+    readonly property bool markOccupied: emptyOpacity < dimOpacity
     // Whether the other desktops are drawn as dots, with the current one a pill (the
     // "pill" style), rather than labelled.
     readonly property bool dotStyle: Labels.drawsDots(labelStyle)
@@ -83,7 +85,7 @@ PlasmoidItem {
     // does unless the ones in use are marked, and until the window list has filled in,
     // so that nothing flickers faint while the widget starts.
     function isOccupied(index) {
-        if (!markOccupied || !windows.item?.settled) return true;
+        if (!markOccupied || !windows.item?.populated) return true;
         return (windows.titles[vdi.desktopIds[index]] ?? []).length > 0;
     }
 
@@ -414,6 +416,8 @@ PlasmoidItem {
                                 underDot: cell.isCurrent && root.useDot
                                 hovered: mouse.containsMouse
                                 occupied: root.isOccupied(cell.index)
+                                dimOpacity: root.dimOpacity
+                                emptyOpacity: root.emptyOpacity
                                 animated: root.animated
                                 travel: dot.travel
                             }

@@ -36,10 +36,19 @@
     <entry name="pillCustomSpacing" type="Bool">
       <default>false</default>
     </entry>
-    <!-- Whether desktops with no windows are drawn fainter than those with some, so the
-         ones in use stand out. Windows on every desktop don't count. -->
-    <entry name="markOccupied" type="Bool">
-      <default>false</default>
+    <!-- Opacity of the desktops other than the current one, as a percentage. -->
+    <entry name="dimOpacity" type="Int">
+      <default>100</default>
+      <min>20</min>
+      <max>100</max>
+    </entry>
+    <!-- Opacity of the desktops with no windows, as a percentage, so the ones in use
+         stand out. Windows on every desktop don't count. Same as dimOpacity or above
+         for no distinction. -->
+    <entry name="emptyOpacity" type="Int">
+      <default>100</default>
+      <min>5</min>
+      <max>100</max>
     </entry>
     <!-- Speed of the dot animation as a percentage of normal: 50 is half speed, 200 double. -->
     <entry name="animationSpeed" type="Int">

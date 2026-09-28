@@ -16,7 +16,8 @@ KCM.SimpleKCM {
     property bool cfg_dotForCurrent
     property string cfg_dotColor
     property int cfg_spacing
-    property bool cfg_markOccupied
+    property int cfg_dimOpacity
+    property int cfg_emptyOpacity
     property string cfg_dotAnimation
     property bool cfg_pillCustomAnimation
     property bool cfg_pillCustomSpacing
@@ -50,7 +51,8 @@ KCM.SimpleKCM {
     property var cfg_dotForCurrentDefault
     property var cfg_dotColorDefault
     property var cfg_spacingDefault
-    property var cfg_markOccupiedDefault
+    property var cfg_dimOpacityDefault
+    property var cfg_emptyOpacityDefault
     property var cfg_dotAnimationDefault
     property var cfg_pillCustomAnimationDefault
     property var cfg_pillCustomSpacingDefault
@@ -81,8 +83,8 @@ KCM.SimpleKCM {
     property var cfg_newDesktopNameDefault
 
     // The page's own settings, for the "Defaults" button in its header.
-    readonly property var ownKeys: ["labelStyle", "dotForCurrent", "dotColor", "spacing", "markOccupied",
-                                     "dotAnimation", "pillCustomAnimation", "pillCustomSpacing", "animationSpeed"]
+    readonly property var ownKeys: ["labelStyle", "dotForCurrent", "dotColor", "spacing",
+                                     "dimOpacity", "emptyOpacity", "dotAnimation", "pillCustomAnimation", "pillCustomSpacing", "animationSpeed"]
     function restoreDefaults() {
         for (const key of ownKeys) {
             const value = page["cfg_" + key + "Default"];
@@ -138,214 +140,308 @@ KCM.SimpleKCM {
             anchors.centerIn: parent
             spacing: Kirigami.Units.largeSpacing
 
-            RowLayout {
+            ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter
-                spacing: Kirigami.Units.largeSpacing
+                spacing: Kirigami.Units.largeSpacing * 2
 
-                QQC2.Label { text: i18n("Preview:") }
+                RowLayout {
+                    Layout.alignment: Qt.AlignLeft
+                    spacing: Kirigami.Units.largeSpacing
 
-                // A miniature pager that cycles through four desktops on its own, so every
-                // choice below can be seen in action before it is applied.
-                Rectangle {
-                    id: preview
-                    implicitWidth: previewRow.implicitWidth + elongation + Kirigami.Units.largeSpacing * 2
-                    implicitHeight: previewRow.implicitHeight + Kirigami.Units.largeSpacing * 2
-                    radius: Kirigami.Units.smallSpacing
-                    color: Kirigami.Theme.alternateBackgroundColor
-                    border.width: 1
-                    border.color: Qt.alpha(Kirigami.Theme.textColor, 0.15)
+                    QQC2.Label { text: i18n("Preview:") }
 
-                    property int current: 0
-                    readonly property bool useDot: Labels.usesDot(page.cfg_labelStyle, page.cfg_dotForCurrent)
-                    readonly property bool dotStyle: Labels.drawsDots(page.cfg_labelStyle)
-                    // Sized like the widget's dot (see main.qml), with the pill style's
-                    // bigger dots and the pill's extra length, which the row makes room for.
-                    readonly property real dotSize:
-                        Math.max(4, Math.round(fm.height * (dotStyle ? Labels.PILL_DOT : 0.45)))
-                    readonly property real elongation: dotStyle ? Math.round(dotSize * (Labels.PILL_LENGTH - 1)) : 0
-                    readonly property int gap: page.spacingLocked ? Math.round(dotSize * Labels.PILL_GAP) : page.cfg_spacing
-                    readonly property bool animated: page.dotAnimation !== "none"
-                    readonly property color dotColor: page.cfg_dotColor === "accent"
-                                                      ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
-                    readonly property int unit: Animations.unitFor(Kirigami.Units.longDuration, page.cfg_animationSpeed)
-                    property int cellsRevision: 0
-                    readonly property Item currentCell: {
-                        void cellsRevision;
-                        return previewCells.itemAt(current);
-                    }
+                    // A miniature pager that cycles through six desktops on its own, so every
+                    // choice below can be seen in action before it is applied.
+                    Rectangle {
+                        id: preview
+                        implicitWidth: previewRow.implicitWidth + elongation + Kirigami.Units.largeSpacing * 2
+                        implicitHeight: previewRow.implicitHeight + Kirigami.Units.largeSpacing * 2
+                        radius: Kirigami.Units.smallSpacing
+                        color: Kirigami.Theme.alternateBackgroundColor
+                        border.width: 1
+                        border.color: Qt.alpha(Kirigami.Theme.textColor, 0.15)
 
-                    // Long enough for the slowest animation to finish and rest a moment.
-                    Timer {
-                        interval: Math.max(1400, previewDot.travel * 2 + 600)
-                        running: preview.visible
-                        repeat: true
-                        onTriggered: preview.current = (preview.current + 1) % previewCells.count
-                    }
-                    FontMetrics { id: fm; font: Kirigami.Theme.defaultFont }
+                        property int current: 0
+                        readonly property bool useDot: Labels.usesDot(page.cfg_labelStyle, page.cfg_dotForCurrent)
+                        readonly property bool dotStyle: Labels.drawsDots(page.cfg_labelStyle)
+                        // Sized like the widget's dot (see main.qml), with the pill style's
+                        // bigger dots and the pill's extra length, which the row makes room for.
+                        readonly property real dotSize:
+                            Math.max(4, Math.round(fm.height * (dotStyle ? Labels.PILL_DOT : 0.45)))
+                        readonly property real elongation: dotStyle ? Math.round(dotSize * (Labels.PILL_LENGTH - 1)) : 0
+                        readonly property int gap: page.spacingLocked ? Math.round(dotSize * Labels.PILL_GAP) : page.cfg_spacing
+                        readonly property bool animated: page.dotAnimation !== "none"
+                        readonly property color dotColor: page.cfg_dotColor === "accent"
+                                                          ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
+                        readonly property int unit: Animations.unitFor(Kirigami.Units.longDuration, page.cfg_animationSpeed)
+                        property int cellsRevision: 0
+                        readonly property Item currentCell: {
+                            void cellsRevision;
+                            return previewCells.itemAt(current);
+                        }
 
-                    Row {
-                        id: previewRow
-                        anchors.centerIn: parent
-                        anchors.horizontalCenterOffset: -preview.elongation / 2
-                        spacing: preview.gap
+                        // Long enough for the slowest animation to finish and rest a moment.
+                        Timer {
+                            interval: Math.max(1400, previewDot.travel * 2 + 600)
+                            running: preview.visible
+                            repeat: true
+                            onTriggered: preview.current = (preview.current + 1) % previewCells.count
+                        }
+                        FontMetrics { id: fm; font: Kirigami.Theme.defaultFont }
 
-                        Repeater {
-                            id: previewCells
-                            model: 4
-                            onItemAdded: preview.cellsRevision++
-                            onItemRemoved: preview.cellsRevision++
+                        Row {
+                            id: previewRow
+                            anchors.centerIn: parent
+                            anchors.horizontalCenterOffset: -preview.elongation / 2
+                            spacing: preview.gap
 
-                            Item {
-                                id: cell
-                                required property int index
-                                readonly property bool isCurrent: index === preview.current
+                            Repeater {
+                                id: previewCells
+                                model: 6
+                                onItemAdded: preview.cellsRevision++
+                                onItemRemoved: preview.cellsRevision++
 
-                                // Sized like the widget's cells: the label plus breathing room,
-                                // or a couple of dots' worth in the pill style.
-                                width: preview.dotStyle ? Math.round(preview.dotSize * Labels.DOT_CELL)
-                                     : Math.max(Kirigami.Units.gridUnit * 1.4,
-                                                Math.ceil(fm.advanceWidth(label.text)) + Kirigami.Units.largeSpacing)
-                                height: Kirigami.Units.gridUnit * 1.4
-
-                                // What the cell shows slides along to make room for the pill,
-                                // as in the widget.
                                 Item {
-                                    x: cell.index < preview.current ? 0
-                                     : cell.index === preview.current ? preview.elongation / 2
-                                     : preview.elongation
-                                    width: cell.width
-                                    height: cell.height
-                                    Behavior on x { enabled: preview.animated; NumberAnimation { duration: previewDot.travel; easing.type: Easing.OutCubic } }
+                                    id: cell
+                                    required property int index
+                                    readonly property bool isCurrent: index === preview.current
 
-                                    DesktopLabel {
-                                        id: label
-                                        anchors.fill: parent
-                                        text: Labels.labelFor(page.cfg_labelStyle, cell.index + 1, preview.current + 1)
-                                        dotSize: preview.dotStyle ? preview.dotSize : 0
-                                        current: cell.isCurrent
-                                        underDot: cell.isCurrent && preview.useDot
-                                        // The last two stand for empty desktops, when those are marked.
-                                        occupied: !page.cfg_markOccupied || cell.index < 2
-                                        animated: preview.animated
-                                        travel: previewDot.travel
-                                    }
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        onClicked: preview.current = cell.index
+                                    // Sized like the widget's cells: the label plus breathing room,
+                                    // or a couple of dots' worth in the pill style.
+                                    width: preview.dotStyle ? Math.round(preview.dotSize * Labels.DOT_CELL)
+                                         : Math.max(Kirigami.Units.gridUnit * 1.4,
+                                                    Math.ceil(fm.advanceWidth(label.text)) + Kirigami.Units.largeSpacing)
+                                    height: Kirigami.Units.gridUnit * 1.4
+
+                                    // What the cell shows slides along to make room for the pill,
+                                    // as in the widget.
+                                    Item {
+                                        x: cell.index < preview.current ? 0
+                                         : cell.index === preview.current ? preview.elongation / 2
+                                         : preview.elongation
+                                        width: cell.width
+                                        height: cell.height
+                                        Behavior on x { enabled: preview.animated; NumberAnimation { duration: previewDot.travel; easing.type: Easing.OutCubic } }
+
+                                        DesktopLabel {
+                                            id: label
+                                            anchors.fill: parent
+                                            text: Labels.labelFor(page.cfg_labelStyle, cell.index + 1, preview.current + 1)
+                                            dotSize: preview.dotStyle ? preview.dotSize : 0
+                                            current: cell.isCurrent
+                                            underDot: cell.isCurrent && preview.useDot
+                                            // The last two stand for empty desktops, when those are marked.
+                                            occupied: cell.index < 4
+                                            dimOpacity: (page.cfg_dimOpacity || 100) / 100
+                                            emptyOpacity: (page.cfg_emptyOpacity || 100) / 100
+                                            animated: preview.animated
+                                            travel: previewDot.travel
+                                        }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            onClicked: preview.current = cell.index
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    Dot {
-                        id: previewDot
-                        anchors.fill: previewRow
-                        anchors.leftMargin: preview.elongation / 2
-                        anchors.rightMargin: -anchors.leftMargin
-                        target: preview.currentCell
-                        animation: page.dotAnimation
-                        size: preview.dotSize
-                        elongation: preview.elongation
-                        color: preview.dotColor
-                        unit: preview.unit
-                        visible: preview.useDot
+                        Dot {
+                            id: previewDot
+                            anchors.fill: previewRow
+                            anchors.leftMargin: preview.elongation / 2
+                            anchors.rightMargin: -anchors.leftMargin
+                            target: preview.currentCell
+                            animation: page.dotAnimation
+                            size: preview.dotSize
+                            elongation: preview.elongation
+                            color: preview.dotColor
+                            unit: preview.unit
+                            visible: preview.useDot
+                        }
                     }
                 }
-            }
 
-            // Speed as a percentage of Plasma's default animation speed. Up here with the
-            // preview so it is the first thing seen and stays in view while scrolling.
-            // Not locked with the pill style's animation: its speed is the user's to set.
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                enabled: preview.useDot && preview.animated
-                spacing: Kirigami.Units.largeSpacing
 
-                QQC2.Label { text: i18n("Animation speed:") }
+                RowLayout {
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.minimumHeight: Kirigami.Units.gridUnit * 1.6
+                    spacing: Kirigami.Units.largeSpacing
+
+                    QQC2.Label {
+                        text: i18n("Space between desktops:")
+                    }
+                    // Shows the pill style's own gap while that is locked, and the setting
+                    // otherwise.
+                    QQC2.SpinBox {
+                        enabled: !page.spacingLocked
+                        from: 0
+                        to: 40
+                        stepSize: 1
+                        value: page.spacingLocked ? preview.gap : page.cfg_spacing
+                        onValueModified: page.cfg_spacing = value
+                        textFromValue: (value, locale) => i18np("%1 pixel", "%1 pixels", value)
+                        valueFromText: (text, locale) => parseInt(text) || 0
+                    }
+                    // Unlocks the spacing for the pill style (after a warning), or puts its
+                    // own spacing back once it has been customised.
+                    QQC2.ToolButton {
+                        visible: Labels.drawsDots(page.cfg_labelStyle)
+                        icon.name: page.spacingLocked ? "lock" : "edit-undo"
+                        text: page.spacingLocked ? i18n("Customize…") : i18n("Use GNOME-style spacing")
+                        display: page.spacingLocked ? QQC2.AbstractButton.IconOnly : QQC2.AbstractButton.TextBesideIcon
+                        QQC2.ToolTip.text: page.spacingLocked ? i18n("Customize the space between desktops") : text
+                        QQC2.ToolTip.visible: hovered
+                        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                        onClicked: {
+                            if (page.spacingLocked) customiseDialog.ask("spacing");
+                            else page.cfg_pillCustomSpacing = false;
+                        }
+                    }
+                }
+
+                // Dot colour and desktop spacing, kept up here with the preview so that their
+                // effect is visible while they are changed.
+                RowLayout {
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.minimumHeight: Kirigami.Units.gridUnit * 1.6
+                    spacing: Kirigami.Units.largeSpacing
+
+                    QQC2.ButtonGroup { id: colorGroup }
+
+                    QQC2.Label {
+                        text: i18n("Dot colour:")
+                        enabled: preview.useDot
+                    }
+                    // The text colour blends in with the labels; the accent colour picks the
+                    // current desktop out in the colour scheme's highlight.
+                    QQC2.RadioButton {
+                        enabled: preview.useDot
+                        QQC2.ButtonGroup.group: colorGroup
+                        text: i18n("Text colour")
+                        checked: page.cfg_dotColor !== "accent"
+                        onToggled: if (checked) page.cfg_dotColor = "text"
+                    }
+                    QQC2.RadioButton {
+                        enabled: preview.useDot
+                        QQC2.ButtonGroup.group: colorGroup
+                        text: i18n("Accent colour")
+                        checked: page.cfg_dotColor === "accent"
+                        onToggled: if (checked) page.cfg_dotColor = "accent"
+                    }
+                }
+
+                // Speed as a percentage of Plasma's default animation speed. Up here with the
+                // preview so it is the first thing seen and stays in view while scrolling.
+                // Not locked with the pill style's animation: its speed is the user's to set.
+                RowLayout {
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.minimumHeight: Kirigami.Units.gridUnit * 1.6
+                    enabled: preview.useDot && preview.animated
+                    spacing: Kirigami.Units.largeSpacing
+
+                    QQC2.Label { text: i18n("Animation speed:") }
+                    QQC2.Label {
+                        text: i18n("Slower")
+                        opacity: 0.6
+                    }
+                    QQC2.Slider {
+                        id: speedSlider
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 10
+                        from: 50
+                        to: 200
+                        stepSize: 25
+                        snapMode: QQC2.Slider.SnapAlways
+                        value: page.cfg_animationSpeed
+                        onMoved: page.cfg_animationSpeed = value
+                    }
+                    QQC2.Label {
+                        text: i18n("Faster")
+                        opacity: 0.6
+                    }
+                    QQC2.Label {
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 3
+                        horizontalAlignment: Text.AlignRight
+                        text: i18nc("animation speed as a percentage", "%1%", page.cfg_animationSpeed)
+                    }
+                }
+
+                RowLayout {
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.minimumHeight: Kirigami.Units.gridUnit * 1.6
+                    enabled: page.cfg_labelStyle !== "blank"
+                    spacing: Kirigami.Units.largeSpacing
+
+                    QQC2.Label { text: i18n("Other desktops opacity:") }
+                    QQC2.Slider {
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 10
+                        from: 20
+                        to: 100
+                        stepSize: 1
+                        value: page.cfg_dimOpacity || 100
+                        onMoved: page.cfg_dimOpacity = value
+                    }
+                    QQC2.SpinBox {
+                        from: 20
+                        to: 100
+                        stepSize: 1
+                        editable: true
+                        value: page.cfg_dimOpacity || 100
+                        onValueModified: page.cfg_dimOpacity = value
+                        textFromValue: (value, locale) => i18nc("opacity as a percentage", "%1%", value)
+                        valueFromText: (text, locale) => parseInt(text) || 0
+                    }
+                }
                 QQC2.Label {
-                    text: i18n("Slower")
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.topMargin: -Kirigami.Units.largeSpacing
+                    enabled: page.cfg_labelStyle !== "blank"
+                    text: i18n("How faint every desktop but the current one is drawn. Lower is fainter.")
+                    wrapMode: Text.Wrap
                     opacity: 0.6
                 }
-                QQC2.Slider {
-                    id: speedSlider
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 10
-                    from: 50
-                    to: 200
-                    stepSize: 25
-                    snapMode: QQC2.Slider.SnapAlways
-                    value: page.cfg_animationSpeed
-                    onMoved: page.cfg_animationSpeed = value
-                }
-                QQC2.Label {
-                    text: i18n("Faster")
-                    opacity: 0.6
-                }
-                QQC2.Label {
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 3
-                    horizontalAlignment: Text.AlignRight
-                    text: i18nc("animation speed as a percentage", "%1%", page.cfg_animationSpeed)
-                }
-            }
 
-            // Dot colour and desktop spacing, kept up here with the preview so that their
-            // effect is visible while they are changed.
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                spacing: Kirigami.Units.largeSpacing
+                RowLayout {
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.minimumHeight: Kirigami.Units.gridUnit * 1.6
+                    enabled: page.cfg_labelStyle !== "blank"
+                    spacing: Kirigami.Units.largeSpacing
 
-                QQC2.ButtonGroup { id: colorGroup }
-
-                QQC2.Label {
-                    text: i18n("Dot colour:")
-                    enabled: preview.useDot
-                }
-                // The text colour blends in with the labels; the accent colour picks the
-                // current desktop out in the colour scheme's highlight.
-                QQC2.RadioButton {
-                    enabled: preview.useDot
-                    QQC2.ButtonGroup.group: colorGroup
-                    text: i18n("Text colour")
-                    checked: page.cfg_dotColor !== "accent"
-                    onToggled: if (checked) page.cfg_dotColor = "text"
-                }
-                QQC2.RadioButton {
-                    enabled: preview.useDot
-                    QQC2.ButtonGroup.group: colorGroup
-                    text: i18n("Accent colour")
-                    checked: page.cfg_dotColor === "accent"
-                    onToggled: if (checked) page.cfg_dotColor = "accent"
-                }
-
-                QQC2.Label {
-                    Layout.leftMargin: Kirigami.Units.gridUnit
-                    text: i18n("Space between desktops:")
-                }
-                // Shows the pill style's own gap while that is locked, and the setting
-                // otherwise.
-                QQC2.SpinBox {
-                    enabled: !page.spacingLocked
-                    from: 0
-                    to: 40
-                    stepSize: 1
-                    value: page.spacingLocked ? preview.gap : page.cfg_spacing
-                    onValueModified: page.cfg_spacing = value
-                    textFromValue: (value, locale) => i18np("%1 pixel", "%1 pixels", value)
-                    valueFromText: (text, locale) => parseInt(text) || 0
-                }
-                // Unlocks the spacing for the pill style (after a warning), or puts its
-                // own spacing back once it has been customised.
-                QQC2.ToolButton {
-                    visible: Labels.drawsDots(page.cfg_labelStyle)
-                    icon.name: page.spacingLocked ? "lock" : "edit-undo"
-                    text: page.spacingLocked ? i18n("Customize…") : i18n("Use GNOME-style spacing")
-                    display: page.spacingLocked ? QQC2.AbstractButton.IconOnly : QQC2.AbstractButton.TextBesideIcon
-                    QQC2.ToolTip.text: page.spacingLocked ? i18n("Customize the space between desktops") : text
-                    QQC2.ToolTip.visible: hovered
-                    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-                    onClicked: {
-                        if (page.spacingLocked) customiseDialog.ask("spacing");
-                        else page.cfg_pillCustomSpacing = false;
+                    QQC2.Label {
+                        text: i18n("Empty desktop opacity:")
+                        QQC2.ToolTip.text: i18n("Fade desktops that have no windows to the chosen opacity. The current desktop and the one under the mouse always show in full. Windows pinned to all desktops don't count as being on any of them.")
+                        QQC2.ToolTip.visible: hover.hovered
+                        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                        HoverHandler { id: hover }
                     }
+                    QQC2.Slider {
+                        Layout.preferredWidth: Kirigami.Units.gridUnit * 10
+                        from: 5
+                        to: 100
+                        stepSize: 1
+                        value: page.cfg_emptyOpacity || 100
+                        onMoved: page.cfg_emptyOpacity = value
+                    }
+                    QQC2.SpinBox {
+                        from: 5
+                        to: 100
+                        stepSize: 1
+                        editable: true
+                        value: page.cfg_emptyOpacity || 100
+                        onValueModified: page.cfg_emptyOpacity = value
+                        textFromValue: (value, locale) => i18nc("opacity as a percentage", "%1%", value)
+                        valueFromText: (text, locale) => parseInt(text) || 0
+                    }
+                }
+                QQC2.Label {
+                    Layout.alignment: Qt.AlignLeft
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    enabled: page.cfg_labelStyle !== "blank"
+                    text: i18n("Desktops with no windows fade to this opacity, so the ones in use stand out. Lower is fainter; set it no lower than the other desktops for no distinction.")
+                    wrapMode: Text.Wrap
+                    opacity: 0.6
                 }
             }
         }
@@ -413,20 +509,6 @@ KCM.SimpleKCM {
                         }
                     }
                 }
-            }
-
-            QQC2.CheckBox {
-                Layout.topMargin: Kirigami.Units.largeSpacing
-                text: i18n("Mark desktops that have windows")
-                checked: page.cfg_markOccupied
-                onToggled: page.cfg_markOccupied = checked
-            }
-            QQC2.Label {
-                Layout.fillWidth: true
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 20
-                text: i18n("Desktops with no windows are drawn fainter, so the ones in use stand out. Windows shown on all desktops don't count.")
-                wrapMode: Text.Wrap
-                opacity: 0.6
             }
         }
 

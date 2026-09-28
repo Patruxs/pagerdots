@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Check the widget's QML without a Plasma session:
-#   - qmllint on the files that need only QtQuick (Dot.qml and the animations), which
-#     must come back with no warnings
+#   - qmllint on the files that need only QtQuick, Controls and Kirigami (Dot.qml, the
+#     animations and DesktopLabel.qml), which must come back with no warnings
 #   - tests/Smoke.qml, which drives Dot.qml through every animation and fails on any
 #     QML warning or runtime error
 #
@@ -15,7 +15,7 @@ qmlimports="${QML_IMPORT_PATH:-/usr/lib64/qt6/qml}"
 status=0
 
 echo "qmllint"
-if ! "$bin/qmllint" -I "$qmlimports" contents/ui/Dot.qml contents/ui/animations/*.qml; then
+if ! "$bin/qmllint" -I "$qmlimports" contents/ui/Dot.qml contents/ui/animations/*.qml contents/ui/DesktopLabel.qml; then
     status=1
 fi
 

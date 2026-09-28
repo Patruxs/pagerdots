@@ -7,8 +7,8 @@ import org.kde.taskmanager as TaskManager
 // Which windows are on which virtual desktop, from the task manager's model:
 // `titles` maps a desktop id to the titles of the windows on it. Windows on every
 // desktop are left out, so a desktop with only those counts as empty. Used for the
-// window list in the tooltip and for the automatic desktops, and loaded only while
-// one of those is in use, since the model is not free.
+// window list in the tooltip, for the automatic desktops and for marking the desktops
+// in use, and loaded only while one of those is on, since the model is not free.
 Item {
     id: windows
     visible: false
@@ -17,6 +17,10 @@ Item {
     // Whether the model has had time to fill in. Right after loading it may still be
     // empty, and anything acting on that (removing every desktop, say) must wait.
     property bool settled: false
+    // Whether the map can be trusted to show what is in use: once it lists a window, or
+    // once the model has settled with none. Enough for marking desktops, which risks
+    // nothing worse than a label briefly faint.
+    readonly property bool populated: settled || Object.keys(titles).length > 0
 
     Timer { interval: 3000; running: true; onTriggered: windows.settled = true }
 

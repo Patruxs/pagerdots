@@ -7,8 +7,9 @@ import org.kde.kirigami as Kirigami
 
 // The label of one desktop: dimmed unless it is the current desktop or hovered (and
 // dimmed further if it has no windows, when desktops in use are marked), bold when it
-// marks the current desktop itself, and ducked out of sight while the dot sits on it. Used by the widget and, so that the two never drift apart, by the
-// preview on the settings page.
+// marks the current desktop itself, and ducked out of sight while the dot sits on it.
+// Used by the widget and, so that the two never drift apart, by the preview on the
+// settings page.
 QQC2.Label {
     id: label
 
@@ -26,8 +27,10 @@ QQC2.Label {
     // (Dot.travel), which is how long the label waits before coming back.
     property bool animated: true
     property int travel: 0
-    readonly property real dimOpacity: 0.55     // opacity of the other desktops
-    readonly property real emptyOpacity: 0.25   // ...and of those with no windows, if marked
+    // Opacity of the other desktops, and of those with no windows, if marked; both set
+    // from the widget's configuration.
+    property real dimOpacity: 1
+    property real emptyOpacity: 1
 
     horizontalAlignment: Text.AlignHCenter
     verticalAlignment: Text.AlignVCenter

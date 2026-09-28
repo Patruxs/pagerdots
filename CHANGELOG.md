@@ -8,10 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- "Mark desktops that have windows" on the Appearance page: desktops with no windows
-  are drawn fainter than those in use, so the busy ones stand out (#1). Off by
-  default. Windows shown on all desktops don't count, and the preview shows the last
-  two desktops as empty while it is on.
+- "Other desktops opacity" on the Appearance page, under the preview: how faint the
+  desktops other than the current one are drawn. Full opacity by default, as is
+  "Empty desktop opacity" below it.
+- "Empty desktop opacity" on the Appearance page, under the preview: desktops with no
+  windows are drawn fainter than those in use, so the busy ones stand out (#1), and
+  the slider sets how faint; set it no lower than the other desktops for no
+  distinction. Windows shown on all desktops don't count, and the preview shows its
+  last two desktops as empty.
 
 ## [1.3.0] - 2026-09-10
 
