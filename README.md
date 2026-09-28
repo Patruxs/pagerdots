@@ -89,6 +89,7 @@ kpackagetool6 -t Plasma/Applet -r pat.pagerdots
 - Hover for the desktop name and the windows on it
 - Right-click to add a desktop, remove the last one, rename the current one, or open the Virtual Desktops settings; or let the widget add and remove desktops for you, GNOME-style (one empty desktop at the end, always)
 - Horizontal and vertical panels, following your Plasma colour scheme and font
+- With desktops switched independently for each screen (Plasma 6.7 on Wayland), each widget shows and switches the desktop of its own screen
 
 Right-click the widget → **Configure Pager Dots…** to change any of it: **Appearance** for the labels and the dot, with a preview at the top that plays your choices live, **Behavior** for the mouse, tooltips and desktop management.
 

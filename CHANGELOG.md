@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Desktops switched independently for each screen (Plasma 6.7 or newer, on Wayland,
+  with "Switch desktops independently for each screen" turned on in System Settings →
+  Virtual Desktops): each widget now shows the desktop of the screen it is on rather
+  than the screen with the mouse or the focus, and its clicks and wheel steps switch
+  that screen only (#3). With desktops switched together on all screens, or on X11,
+  nothing changes.
+
 ## [1.4.0] - 2026-09-28
 
 ### Added

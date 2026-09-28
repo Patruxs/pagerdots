@@ -18,7 +18,9 @@ PlasmoidItem {
     id: root
 
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
-    readonly property int currentIndex: vdi.desktopIds.indexOf(vdi.currentDesktop)
+    readonly property bool screenAware: typeof vdi.currentDesktopByScreenGeometry === "function"
+    property var currentDesktop: vdi.currentDesktop
+    readonly property int currentIndex: vdi.desktopIds.indexOf(currentDesktop)
     readonly property string labelStyle: Plasmoid.configuration.labelStyle
     readonly property bool dotForCurrent: Plasmoid.configuration.dotForCurrent
     readonly property int spacing: Plasmoid.configuration.spacing
@@ -48,7 +50,19 @@ PlasmoidItem {
     readonly property bool renameDesktop: Plasmoid.configuration.renameDesktop
     readonly property bool autoDesktops: Plasmoid.configuration.autoDesktops
 
-    TaskManager.VirtualDesktopInfo { id: vdi }
+    TaskManager.VirtualDesktopInfo {
+        id: vdi
+        onCurrentDesktopChanged: root.refreshCurrentDesktop()
+        onCurrentDesktopForScreenChanged: root.refreshCurrentDesktop()
+        onDesktopIdsChanged: root.refreshCurrentDesktop()
+    }
+
+    onScreenGeometryChanged: refreshCurrentDesktop()
+    Component.onCompleted: refreshCurrentDesktop()
+
+    function refreshCurrentDesktop() {
+        currentDesktop = screenAware ? vdi.currentDesktopByScreenGeometry(screenGeometry) : vdi.currentDesktop;
+    }
 
     Loader {
         id: windows
@@ -177,7 +191,7 @@ PlasmoidItem {
         }
         function apply() {
             const name = nameField.text.trim();
-            if (name !== "" && root.currentIndex >= 0) root.setDesktopName(vdi.currentDesktop, name);
+            if (name !== "" && root.currentIndex >= 0) root.setDesktopName(root.currentDesktop, name);
             visible = false;
         }
 
