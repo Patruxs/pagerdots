@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 .pragma library
 
-// Label styles offered in the settings page, in display order.
-// `id` is what gets stored in the config; `preview` is shown in the picker.
+
 const STYLES = [
     { id: "numbers",      name: "Numbers",             preview: "1 2 3 4" },
     { id: "letters",      name: "Letters",             preview: "A B C D" },
@@ -21,11 +20,11 @@ const STYLES = [
     { id: "bars",         name: "Bars",                preview: "▁ ▂ ▃ ▄" },
     { id: "dots",         name: "Dots",                preview: "○ ○ ○ ○" },
     { id: "fill",         name: "Fill up to current",  preview: "● ● ○ ○" },
-    { id: "pill",         name: "Pill",                preview: "" },   // drawn on the settings page
+    { id: "pill",         name: "Pill",                preview: "" },   
     { id: "blank",        name: "Blank",               preview: "" },
 ];
 
-// Excel-style column letters: A..Z, AA, AB, ...
+
 function letters(n) {
     let s = "";
     while (n > 0) {
@@ -46,22 +45,18 @@ function roman(n) {
     return s;
 }
 
-// Pick the n-th glyph of an alphabet; past its end fall back to the plain number.
+
 function fromAlphabet(alphabet, n) {
     return n >= 1 && n <= alphabet.length ? alphabet[n - 1] : String(n);
 }
 const GREEK    = "αβγδεζηθικλμνξοπρστυφχψω";
-// Russian letters in the order used for numbered lists, which skips ё, й, ъ, ы and ь.
 const CYRILLIC = "абвгдежзиклмнопрстуфхцчшщэюя";
-// The ten Heavenly Stems, the traditional East Asian ordinal sequence.
 const STEMS    = "甲乙丙丁戊己庚辛壬癸";
-// Japanese kana in gojūon order.
 const HIRAGANA = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん";
 const KATAKANA = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
 const HANGUL   = "ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ";
 const BARS     = "▁▂▃▄▅▆▇█";
 
-// Chinese numerals 一 .. 九十九; larger numbers fall back to digits.
 function chinese(n) {
     const d = "零一二三四五六七八九";
     if (n < 1 || n > 99) return String(n);
@@ -70,39 +65,25 @@ function chinese(n) {
     return (tens > 1 ? d[tens] : "") + "十" + (ones ? d[ones] : "");
 }
 
-// Replace each ASCII digit with its Arabic-Indic equivalent (٠..٩).
 function arabicIndic(n) {
     return String(n).replace(/\d/g, c => String.fromCharCode(0x0660 + Number(c)));
 }
 
-// The "pill" style draws the other desktops as dots the size of the marker, rather
-// than as glyphs, and the marker rests among them as a pill, the way GNOME's page
-// indicator does. Its proportions, taken from that: the dots are this fraction of the
-// font height (the same as the usual marker), the pill is this many dots long, and
-// each cell is this many dots wide, so that the dots sit one spacing apart. The row
-// makes room for the pill, so it is one pill length wider than the dots alone. The
-// style keeps GNOME's gap between the dots (PILL_GAP, in dots) in place of the spacing
-// setting, unless the user has chosen to customise it (pillCustomSpacing).
+
 const PILL_DOT = 0.45;
 const PILL_LENGTH = 3.7;
 const DOT_CELL = 1;
 const PILL_GAP = 0.6;
 
-// Whether the style shows the other desktops as drawn dots instead of a label.
 function drawsDots(style) {
     return style === "pill";
 }
 
-// Whether the current desktop is marked by the dot (as opposed to its bold label).
-// The "blank" style has no label to show, and the "pill" style is the dot resting as
-// a pill, so both always use the dot.
+
 function usesDot(style, dotForCurrent) {
     return dotForCurrent || style === "blank" || drawsDots(style);
 }
 
-// Label for the 1-based desktop number `n` in the given style. `current` is the
-// 1-based number of the current desktop; only the "fill" style looks at it.
-// An empty string means "show nothing" (the current desktop still gets the dot).
 function labelFor(style, n, current) {
     switch (style) {
     case "letters":      return letters(n);

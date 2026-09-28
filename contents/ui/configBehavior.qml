@@ -7,8 +7,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
 
-// The "Behavior" settings page: what the mouse does over the widget, what the tooltips
-// show, and what the context menu offers for managing the desktops.
+
 KCM.SimpleKCM {
     id: page
 
@@ -24,8 +23,7 @@ KCM.SimpleKCM {
     property bool cfg_autoDesktops
     property string cfg_newDesktopName
 
-    // Plasma also hands the page the defaults from main.xml (for its "Defaults" button),
-    // and warns if there is nowhere to put them.
+   
     property var cfg_wheelSwitchesDefault
     property var cfg_wheelWrapDefault
     property var cfg_wheelInvertDefault
@@ -37,7 +35,7 @@ KCM.SimpleKCM {
     property var cfg_renameDesktopDefault
     property var cfg_autoDesktopsDefault
     property var cfg_newDesktopNameDefault
-    // The Appearance page's keys, for the same reason.
+   
     property string cfg_labelStyle
     property bool cfg_dotForCurrent
     property string cfg_dotColor
@@ -59,7 +57,7 @@ KCM.SimpleKCM {
     property var cfg_pillCustomSpacingDefault
     property var cfg_animationSpeedDefault
 
-    // The page's own settings, for the "Defaults" button in its header.
+   
     readonly property var ownKeys: ["wheelSwitches", "wheelWrap", "wheelInvert", "currentDesktopClick", "currentDesktopClickAnywhere",
                                      "tooltips", "tooltipWindows", "manageDesktops", "renameDesktop", "autoDesktops", "newDesktopName"]
     function restoreDefaults() {
@@ -76,8 +74,7 @@ KCM.SimpleKCM {
         }
     ]
 
-    // What a click on the current desktop can do; the last three are KWin's own
-    // shortcuts, invoked by name (see clickCurrent() in main.qml).
+    
     readonly property var clickActions: [
         { value: "nothing", text: i18n("Nothing") },
         { value: "showDesktop", text: i18n("Show the desktop") },
@@ -85,10 +82,10 @@ KCM.SimpleKCM {
         { value: "grid", text: i18n("Show the desktop grid") }
     ]
 
-    // The widest the fields and explanations get, so the form stays a readable block.
+    
     readonly property real formWidth: Kirigami.Units.gridUnit * 24
 
-    // A dimmed line of small print under an option, set in to line up with its text.
+    
     component Hint: QQC2.Label {
         Layout.fillWidth: true
         Layout.maximumWidth: page.formWidth
@@ -98,8 +95,7 @@ KCM.SimpleKCM {
         wrapMode: Text.Wrap
     }
 
-    // Laid out as KDE's own settings pages are: a label on the left for each group,
-    // the group's options stacked beside it, and a separator between groups.
+    
     Kirigami.FormLayout {
         QQC2.CheckBox {
             id: scrollBox
@@ -132,8 +128,7 @@ KCM.SimpleKCM {
             textRole: "text"
             valueRole: "value"
             onActivated: page.cfg_currentDesktopClick = currentValue
-            // Picking an entry writes currentIndex directly, which would drop a binding
-            // on it; the setting is followed by hand instead (for the "Defaults" button).
+            
             function follow() { currentIndex = Math.max(0, indexOfValue(page.cfg_currentDesktopClick)); }
             Component.onCompleted: follow()
             Connections {
@@ -170,8 +165,7 @@ KCM.SimpleKCM {
 
         Item { Kirigami.FormData.isSection: true }
 
-        // Adding and removing by hand is pointless while the desktops are managed
-        // automatically (an added desktop would be removed again at once).
+        
         QQC2.CheckBox {
             Kirigami.FormData.label: i18n("Right-click menu:")
             text: i18n("Add and remove desktops")

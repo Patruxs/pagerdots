@@ -6,47 +6,30 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "animations" as Animations
 
-// The current-desktop marker: a single dot that moves from cell to cell with one of
-// the animations in animations/ (listed in Animations.js). Fill the parent of the
-// cells with it, so that it shares their coordinate space, and point `target` at the
-// current cell.
-//
-// This file holds what every animation shares: the two trackers that carry the dot
-// across (with momentum matching when a move cuts in on one still in flight), the
-// pill that is the dot itself, the ghost that a swap leaves behind on the old cell,
-// and the loading of the current animation. Each animation is a DotAnimation, loaded
-// from animations/<Name>.qml, that drives these through the hooks described in
-// animations/DotAnimation.qml.
+
 Item {
     id: dot
 
-    // The cell to mark, or null when there is none (its centre is where the dot goes).
+   
     property Item target: null
-    // One of the ids in Animations.MODES.
+   
     property string animation: "stretch"
     property real size: 6
     property color color: "black"
-    // How much longer than it is thick the dot is at rest, in pixels: 0 for a circle,
-    // more for a pill lying along the row (the "pill" label style). The animations
-    // stretch, squash and move the pill just as they do the circle.
+   
     property real elongation: 0
-    // Base duration in ms; every animation is a multiple of it. Pass Kirigami's
-    // longDuration (scaled by the speed setting) so the widget follows the global
-    // animation speed setting.
+   
     property int unit: 200
-    // Whether the cells run top to bottom rather than left to right, and which way
-    // across the row is "up" for the animations: the way "hop" jumps and "drop" falls
-    // in from (-1 for up/left, +1 for down/right).
+  
     property bool vertical: false
     property real hopSign: -1
 
-    // The animation in charge, or null for "none".
+   
     readonly property Animations.DotAnimation anim: loader.item as Animations.DotAnimation
     readonly property bool slides: anim?.kind === "slide"
-    // How long the dot takes to leave the old cell and settle on the new one, so that
-    // whatever is underneath can time its own fade to it.
+    
     readonly property int travel: anim?.travel ?? 0
-    // What the animation asks of the shared pieces; see DotAnimation.qml for each.
+  
     readonly property int leadDuration: anim?.leadDuration ?? unit * 2
     readonly property int leadEasing: anim?.leadEasing ?? Easing.BezierSpline
     readonly property int trailDelay: anim?.trailDelay ?? 0
@@ -63,12 +46,11 @@ Item {
     readonly property real extent: anim?.extent ?? 1
     readonly property real keep: anim?.keep ?? 0
 
-    // The dot itself and the ghost, for the animations to drive.
+   
     readonly property Rectangle pill: pillItem
     readonly property Rectangle ghost: ghostItem
 
-    // Centre of the target. Kept at its last value while there is no target, so the
-    // dot does not fly in from the corner when the cells are rebuilt.
+   
     property real cx: 0
     property real cy: 0
     Binding on cx {
@@ -81,16 +63,13 @@ Item {
         value: dot.target ? dot.target.y + dot.target.height / 2 : 0
         restoreMode: Binding.RestoreNone
     }
-    // Room across the row: how far the dot can go across it (or a shape reach out)
-    // without leaving the cell. Capped at about the dot's size, which is what a cell of
-    // the usual height (1.4 gridUnits, as on the settings page) allows, so the hops and
-    // arcs look the same in a thick panel as they do in the preview.
+   
     readonly property real room: {
         if (!target) return size;
         const extent = vertical ? target.width : target.height;
         return Math.max(size * 0.8, Math.min(size * 1.05, (extent - size) / 2));
     }
-    // Position of a cell's centre along the row.
+    
     function centreOf(cell) {
         return vertical ? cell.y + cell.height / 2 : cell.x + cell.width / 2;
     }
@@ -101,36 +80,24 @@ Item {
         return p < 0.5 ? 2 * p * p : 1 - Math.pow(2 - 2 * p, 2) / 2;
     }
 
-    // Two trackers per axis follow the target centre, and the pill spans the gap between
-    // them. With equal timing they coincide and the dot simply slides; in "stretch" the
-    // lead tracker races ahead while the trail one lags, so the dot elongates into a
-    // pill towards the new desktop and then contracts onto it.
+   
     property real leadX: cx
     property real leadY: cy
     property real trailX: cx
     property real trailY: cy
-    // The distance between the trackers along the row, and where that stretch starts.
+    
     readonly property real gap: vertical ? Math.abs(leadY - trailY) : Math.abs(leadX - trailX)
     readonly property real gapStart: vertical ? Math.min(leadY, trailY) : Math.min(leadX, trailX)
 
-    // The default curve: a brief ease-in so the dot never jerks off the mark, then a
-    // long, gentle deceleration onto the new cell (the "standard" curve of most
-    // motion guidelines).
+   
     readonly property var smoothCurve: [0.2, 0, 0, 1, 1, 1]
-    // The same curve for a move that cuts in on one still in flight: it sets off at the
-    // speed the dot already has (`s`, normalised to the new move's distance and duration)
-    // and decelerates from there, so quick switching flows as one motion. Cutting in
-    // on a move the other way gives a negative slope, so the dot carries on a little
-    // before turning back, as its momentum would have it.
-    // The control points are placed so the speed then rises only a little before the
-    // long deceleration, rather than peaking mid-move like a fresh start does.
+   
     function matchedCurve(s) {
         s = isFinite(s) ? Math.max(-1, Math.min(2.8, s)) : 0;
         return [0.35, 0.35 * s, 0.4, 1, 1, 1];
     }
 
-    // Animations are enabled only once the first target has been laid out, so the dot
-    // does not glide in from the corner when the widget loads.
+   
     property bool ready: false
     Timer {
         id: settle
@@ -138,11 +105,7 @@ Item {
         onTriggered: dot.ready = true
     }
 
-    // A Behavior that knows whether the move it is starting cuts in on one still in
-    // flight, and how fast the property is moving at that moment, so the animation it
-    // runs can carry that speed over (see matchedCurve()). `current` must be bound to
-    // the property it drives and `span` to the duration its animation will run for.
-    // The speed is measured frame by frame, but only while a move is in flight.
+   
     component Mover: Behavior {
         id: mover
         property real current: 0
@@ -173,13 +136,7 @@ Item {
             moving = true;
         }
     }
-    // The whole easing is built in one go rather than bound piece by piece: setting
-    // `easing.bezierCurve` on its own replaces the type with BezierSpline whatever
-    // `easing.type` says, and changing `easing.type` resets the amplitude and period to
-    // Qt's defaults, so with separate bindings the outcome depended on which of them
-    // happened to run last (and so on whether the mode was chosen before or after the
-    // widget loaded). The amplitude and period only apply to OutElastic, and the curve
-    // only to BezierSpline.
+   
     function easingFor(type, curve) {
         return type === Easing.BezierSpline ? { type: type, bezierCurve: curve }
                                             : { type: type, amplitude: 1, period: 0.45 };
@@ -227,8 +184,7 @@ Item {
         TrailAnimation { curve: trailMoverY.curve }
     }
 
-    // The cell currently marked, remembered so the animation knows where the move
-    // starts from.
+   
     property Item shown: null
     onTargetChanged: {
         const old = shown;
@@ -240,10 +196,7 @@ Item {
         if (old && target && old !== target && anim) anim.start(old, target);
     }
 
-    // Copy of the dot left on the old cell during a swap, for the animation to fade,
-    // shrink or knock away. `fall` moves it across the row, against hopSign (for
-    // "drop"), and `slide` along it (for "recoil"). `extent` and `keep` are as in
-    // DotAnimation: how much of the elongation it has, and which end holds still.
+   
     Rectangle {
         id: ghostItem
         objectName: "ghost"
@@ -264,7 +217,7 @@ Item {
         transformOrigin: Item.Center
         antialiasing: true
     }
-    // Show the ghost, whole and at rest, on `cell`.
+   
     function placeGhost(cell, scale = 1) {
         ghostItem.extent = 1;
         ghostItem.keep = 0;
@@ -277,8 +230,7 @@ Item {
         ghostItem.visible = true;
     }
 
-    // The dot itself. A capsule while stretched (or when elongated at rest), a circle
-    // otherwise.
+   
     Rectangle {
         id: pillItem
         objectName: "pill"
@@ -305,20 +257,18 @@ Item {
         }
     }
 
-    // The current animation, drawn over the pill and the ghost. Everything is one
-    // colour, so the order makes no visible difference.
+   
     Loader {
         id: loader
         anchors.fill: parent
     }
-    // Loading another animation takes the old one's shapes and running animations with
-    // it; whatever it may have left half faded or shrunk is put back here.
+    
     function load() {
         loader.source = "";
         pillItem.opacity = 1;
         pillItem.scale = 1;
         ghostItem.visible = false;
-        // The id is empty on the settings page until Plasma has handed it the config.
+      
         if (animation === "none" || animation === "") return;
         const name = animation.charAt(0).toUpperCase() + animation.slice(1);
         loader.setSource("animations/" + name + ".qml", { dot: dot });

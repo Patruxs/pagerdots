@@ -21,20 +21,15 @@ KCM.SimpleKCM {
     property string cfg_dotAnimation
     property bool cfg_pillCustomAnimation
     property bool cfg_pillCustomSpacing
-    // The pill style comes with the animation and the spacing of GNOME's page indicator
-    // and keeps them, with those options locked, until the user chooses to customise
-    // them (each on its own, after a warning).
+   
     readonly property bool animationLocked: Labels.drawsDots(cfg_labelStyle) && !cfg_pillCustomAnimation
     readonly property bool spacingLocked: Labels.drawsDots(cfg_labelStyle) && !cfg_pillCustomSpacing
-    // The animation to show and mark as selected: the pill style's own while locked,
-    // otherwise the configured one, or the default one if that is no longer offered.
+   
     readonly property string dotAnimation: animationLocked ? Animations.PILL_ANIMATION
                                                            : Animations.normalize(cfg_dotAnimation)
     property int cfg_animationSpeed
 
-    // The animations in alphabetical order, arranged so that the two-column grid below
-    // reads top to bottom: the first half of the list fills the left column, the rest
-    // the right one. (The grid itself fills row by row.)
+    
     readonly property var animationModes: {
         const sorted = [...Animations.MODES].sort((a, b) => i18n(a.name).localeCompare(i18n(b.name)));
         const rows = Math.ceil(sorted.length / 2);
@@ -45,8 +40,7 @@ KCM.SimpleKCM {
         }
         return ordered;
     }
-    // Plasma also hands the page the defaults from main.xml (for its "Defaults" button),
-    // and warns if there is nowhere to put them.
+   
     property var cfg_labelStyleDefault
     property var cfg_dotForCurrentDefault
     property var cfg_dotColorDefault
@@ -57,8 +51,7 @@ KCM.SimpleKCM {
     property var cfg_pillCustomAnimationDefault
     property var cfg_pillCustomSpacingDefault
     property var cfg_animationSpeedDefault
-    // The Behavior page's keys: every page is handed every key, and warns if one has
-    // nowhere to go.
+   
     property bool cfg_wheelSwitches
     property bool cfg_wheelWrap
     property bool cfg_wheelInvert
@@ -82,7 +75,7 @@ KCM.SimpleKCM {
     property var cfg_autoDesktopsDefault
     property var cfg_newDesktopNameDefault
 
-    // The page's own settings, for the "Defaults" button in its header.
+    
     readonly property var ownKeys: ["labelStyle", "dotForCurrent", "dotColor", "spacing",
                                      "dimOpacity", "emptyOpacity", "dotAnimation", "pillCustomAnimation", "pillCustomSpacing", "animationSpeed"]
     function restoreDefaults() {
@@ -99,8 +92,7 @@ KCM.SimpleKCM {
         }
     ]
 
-    // Asked before the pill style's animation or spacing is unlocked for customising.
-    // `what` is which of the two; open it through ask().
+    
     Kirigami.PromptDialog {
         id: customiseDialog
         property string what: "animation"
@@ -130,8 +122,7 @@ KCM.SimpleKCM {
         ]
     }
 
-    // The preview lives in the page header rather than in the form, so it stays in
-    // view while the options below are scrolled through.
+   
     header: Item {
         implicitHeight: headerColumn.implicitHeight + Kirigami.Units.largeSpacing * 2
 
@@ -150,8 +141,7 @@ KCM.SimpleKCM {
 
                     QQC2.Label { text: i18n("Preview:") }
 
-                    // A miniature pager that cycles through six desktops on its own, so every
-                    // choice below can be seen in action before it is applied.
+                   
                     Rectangle {
                         id: preview
                         implicitWidth: previewRow.implicitWidth + elongation + Kirigami.Units.largeSpacing * 2
@@ -164,8 +154,7 @@ KCM.SimpleKCM {
                         property int current: 0
                         readonly property bool useDot: Labels.usesDot(page.cfg_labelStyle, page.cfg_dotForCurrent)
                         readonly property bool dotStyle: Labels.drawsDots(page.cfg_labelStyle)
-                        // Sized like the widget's dot (see main.qml), with the pill style's
-                        // bigger dots and the pill's extra length, which the row makes room for.
+                       
                         readonly property real dotSize:
                             Math.max(4, Math.round(fm.height * (dotStyle ? Labels.PILL_DOT : 0.45)))
                         readonly property real elongation: dotStyle ? Math.round(dotSize * (Labels.PILL_LENGTH - 1)) : 0
@@ -180,7 +169,7 @@ KCM.SimpleKCM {
                             return previewCells.itemAt(current);
                         }
 
-                        // Long enough for the slowest animation to finish and rest a moment.
+                       
                         Timer {
                             interval: Math.max(1400, previewDot.travel * 2 + 600)
                             running: preview.visible
@@ -206,15 +195,13 @@ KCM.SimpleKCM {
                                     required property int index
                                     readonly property bool isCurrent: index === preview.current
 
-                                    // Sized like the widget's cells: the label plus breathing room,
-                                    // or a couple of dots' worth in the pill style.
+                                  
                                     width: preview.dotStyle ? Math.round(preview.dotSize * Labels.DOT_CELL)
                                          : Math.max(Kirigami.Units.gridUnit * 1.4,
                                                     Math.ceil(fm.advanceWidth(label.text)) + Kirigami.Units.largeSpacing)
                                     height: Kirigami.Units.gridUnit * 1.4
 
-                                    // What the cell shows slides along to make room for the pill,
-                                    // as in the widget.
+                                   
                                     Item {
                                         x: cell.index < preview.current ? 0
                                          : cell.index === preview.current ? preview.elongation / 2
@@ -230,7 +217,7 @@ KCM.SimpleKCM {
                                             dotSize: preview.dotStyle ? preview.dotSize : 0
                                             current: cell.isCurrent
                                             underDot: cell.isCurrent && preview.useDot
-                                            // The last two stand for empty desktops, when those are marked.
+                                           
                                             occupied: cell.index < 4
                                             dimOpacity: (page.cfg_dimOpacity || 100) / 100
                                             emptyOpacity: (page.cfg_emptyOpacity || 100) / 100
@@ -270,8 +257,8 @@ KCM.SimpleKCM {
                     QQC2.Label {
                         text: i18n("Space between desktops:")
                     }
-                    // Shows the pill style's own gap while that is locked, and the setting
-                    // otherwise.
+                  
+                   
                     QQC2.SpinBox {
                         enabled: !page.spacingLocked
                         from: 0
@@ -282,8 +269,7 @@ KCM.SimpleKCM {
                         textFromValue: (value, locale) => i18np("%1 pixel", "%1 pixels", value)
                         valueFromText: (text, locale) => parseInt(text) || 0
                     }
-                    // Unlocks the spacing for the pill style (after a warning), or puts its
-                    // own spacing back once it has been customised.
+                  
                     QQC2.ToolButton {
                         visible: Labels.drawsDots(page.cfg_labelStyle)
                         icon.name: page.spacingLocked ? "lock" : "edit-undo"
@@ -299,8 +285,6 @@ KCM.SimpleKCM {
                     }
                 }
 
-                // Dot colour and desktop spacing, kept up here with the preview so that their
-                // effect is visible while they are changed.
                 RowLayout {
                     Layout.alignment: Qt.AlignLeft
                     Layout.minimumHeight: Kirigami.Units.gridUnit * 1.6
@@ -312,8 +296,7 @@ KCM.SimpleKCM {
                         text: i18n("Dot colour:")
                         enabled: preview.useDot
                     }
-                    // The text colour blends in with the labels; the accent colour picks the
-                    // current desktop out in the colour scheme's highlight.
+                   
                     QQC2.RadioButton {
                         enabled: preview.useDot
                         QQC2.ButtonGroup.group: colorGroup
@@ -330,9 +313,7 @@ KCM.SimpleKCM {
                     }
                 }
 
-                // Speed as a percentage of Plasma's default animation speed. Up here with the
-                // preview so it is the first thing seen and stays in view while scrolling.
-                // Not locked with the pill style's animation: its speed is the user's to set.
+            
                 RowLayout {
                     Layout.alignment: Qt.AlignLeft
                     Layout.minimumHeight: Kirigami.Units.gridUnit * 1.6
@@ -451,9 +432,7 @@ KCM.SimpleKCM {
         }
     }
 
-    // Two columns, so that the label styles and the dot options are visible together
-    // without scrolling from one to the other. Plain columns with their own headings,
-    // rather than form layouts, so the two headings line up exactly.
+  
     RowLayout {
         spacing: Kirigami.Units.gridUnit * 3
 
@@ -468,7 +447,7 @@ KCM.SimpleKCM {
 
             QQC2.ButtonGroup { id: styleGroup }
 
-            // One radio button per style, with a dimmed preview of its labels beside it.
+           
             Repeater {
                 model: Labels.STYLES
 
@@ -482,7 +461,7 @@ KCM.SimpleKCM {
                         checked: page.cfg_labelStyle === modelData.id
                         onToggled: if (checked) page.cfg_labelStyle = modelData.id
                     }
-                    // The pill style is drawn, since no glyph looks like its pill.
+                   
                     QQC2.Label {
                         visible: !Labels.drawsDots(modelData.id)
                         text: modelData.preview
@@ -530,8 +509,7 @@ KCM.SimpleKCM {
                 text: i18n("Dot animation:")
                 Layout.topMargin: Kirigami.Units.largeSpacing
             }
-            // What the selected animation does, right under the heading. It takes only
-            // the height its own text needs, so short descriptions leave no gap.
+           
             QQC2.Label {
                 Layout.fillWidth: true
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 20
@@ -543,8 +521,7 @@ KCM.SimpleKCM {
                 wrapMode: Text.Wrap
                 opacity: 0.6
             }
-            // Unlocks the options below for the pill style (after a warning), or puts
-            // its own animation back once they have been customised.
+           
             QQC2.Button {
                 visible: Labels.drawsDots(page.cfg_labelStyle)
                 Layout.bottomMargin: Kirigami.Units.smallSpacing
@@ -558,8 +535,7 @@ KCM.SimpleKCM {
 
             QQC2.ButtonGroup { id: animationGroup }
 
-            // The dot animations as a two-column grid of radio buttons. Hovering one shows
-            // its description; the preview above plays whichever is selected.
+           
             GridLayout {
                 enabled: preview.useDot && !page.animationLocked
                 columns: 2
