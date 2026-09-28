@@ -3,9 +3,6 @@
 
 import QtQuick
 
-// "volley": over, batted straight back to the old cell, and over again to stay. Picks
-// up speed on the way over, comes back at that speed, and sets off again with it to
-// settle.
 PathDotAnimation {
     duration: dot.unit * 2.4
 

@@ -5,9 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "elastic": the dot stays round and is tethered to the old cell by a thin band that
-// spans the gap between the trackers, stays taut, then snaps in; the dot wobbles from
-// the impact.
 DotAnimation {
     id: anim
     leadDuration: dot.unit * 1.5
@@ -33,7 +30,7 @@ DotAnimation {
         visible: anim.dot.target !== null
         antialiasing: true
     }
-    // Once the band has snapped back into the dot, the dot wobbles from the impact.
+
     SequentialAnimation {
         id: wobble
         PauseAnimation { duration: anim.trailDuration * 0.85 }

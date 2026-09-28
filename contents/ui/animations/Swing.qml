@@ -3,8 +3,6 @@
 
 import QtQuick
 
-// "swing": dips below the row and rises again while sliding, so that with the sine
-// easing of the slide the dot swings over on a pendulum's arc.
 DotAnimation {
     id: anim
     leadEasing: Easing.InOutSine

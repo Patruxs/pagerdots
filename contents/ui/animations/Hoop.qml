@@ -5,9 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "hoop": the dot opens out into a hollow hoop, larger than itself, that rolls across
-// to the new cell and closes back into a dot. `hoopT` is its progress from the old
-// cell and `fill` how solid its inside is: 1 for a dot, 0 for a bare hoop.
 DotAnimation {
     id: anim
     kind: "swap"
@@ -17,7 +14,6 @@ DotAnimation {
     readonly property real hoopExtent: dot.size * 1.9
 
     function start(old, target) {
-        // Cutting in mid-flight: the hoop rolls on from where it is.
         const mid = open.running || roll.running;
         setFrom(old, mid ? hoop.e : 1);
         hoopT = 0;
@@ -56,7 +52,6 @@ DotAnimation {
         id: roll
         ParallelAnimation {
             NumberAnimation { target: anim; property: "hoopT"; to: 1; duration: anim.dot.unit * 1.1 }
-            // Opens back out if cut in on while closing.
             NumberAnimation { target: hoop; property: "extent"; to: anim.hoopExtent; duration: anim.dot.unit * 0.2 }
             NumberAnimation { target: hoop; property: "fill"; to: 0; duration: anim.dot.unit * 0.2 }
         }

@@ -5,9 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "cartwheel": the dot flattens into a short bar that turns end over end as it
-// travels, a whole turn for every cell it crosses, and rounds off into a dot again.
-// `wheelT` is its progress from the old cell and `spin` its turn so far.
 DotAnimation {
     id: anim
     kind: "swap"
@@ -18,15 +15,12 @@ DotAnimation {
     property real spinTo: 0
 
     function start(old, target) {
-        // Cutting in mid-flight: the bar rolls on from where it is.
         const mid = flatten.running || roll.running;
         setFrom(old, mid ? wheel.e : 1);
         wheelT = 0;
         const c = dot.centreOf(target);
         const from = dot.vertical ? fromY : fromX;
         const span = dot.vertical ? target.height : target.width;
-        // A whole turn per cell crossed, turning the way a wheel rolling that way
-        // would, and (after a cut-in) rounded to a half turn so it lands lying flat.
         const turns = Math.max(1, Math.round(Math.abs(c - from) / Math.max(1, span)));
         spinTo = Math.round((spin + Math.sign(c - from) * 360 * turns) / 180) * 180;
         if (roll.running) roll.restart();
@@ -45,7 +39,6 @@ DotAnimation {
         height: wheel.thick
         radius: wheel.thick / 2
         color: anim.dot.color
-        // The bar lies along the row between turns.
         rotation: anim.spin + (anim.dot.vertical ? 90 : 0)
         visible: false
         antialiasing: true
@@ -72,7 +65,6 @@ DotAnimation {
         }
         PropertyAction { target: anim.dot.pill; property: "opacity"; value: 1 }
         PropertyAction { target: wheel; property: "visible"; value: false }
-        // Whole turns look the same as none, so start the next from zero.
         PropertyAction { target: anim; property: "spin"; value: 0 }
     }
 }

@@ -5,9 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "pour": the dot drains from the old cell into the new one. The ghost shrinks on the
-// old cell as the dot grows on the new one, joined by a thin stream that is thickest
-// while the two are the same size, and a bead runs down the stream to show the flow.
 DotAnimation {
     id: anim
     kind: "swap"
@@ -31,7 +28,6 @@ DotAnimation {
         width: anim.dot.vertical ? thickness : span
         height: anim.dot.vertical ? span : thickness
         radius: thickness / 2
-        // Fainter in the middle, so the thread seems to thin between the two drops.
         gradient: Gradient {
             orientation: anim.dot.vertical ? Gradient.Vertical : Gradient.Horizontal
             GradientStop { position: 0; color: Qt.alpha(anim.dot.color, 0.85) }
@@ -45,7 +41,6 @@ DotAnimation {
         id: bead
         objectName: "bead"
         readonly property real extent: anim.dot.size * 0.6
-        // Eased in and out, so the bead leaves the shrinking dot gently and slows into the growing one.
         readonly property real e: anim.dot.easeInOutQuad(anim.pourT)
         x: anim.fromX + (anim.dot.cx - anim.fromX) * e - extent / 2
         y: anim.fromY + (anim.dot.cy - anim.fromY) * e - extent / 2

@@ -5,9 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "billiards": the dot slides across at a steady pace and stops dead on the new cell,
-// knocking a second dot out ahead of it, which flies on a cell and fades. `shift` is
-// the dot's offset from the new cell.
 DotAnimation {
     id: anim
     kind: "shift"
@@ -22,7 +19,6 @@ DotAnimation {
         const c = dot.centreOf(target);
         const span = dot.vertical ? target.height : target.width;
         shift = dot.centreOf(old) + shift - c;
-        // The struck dot flies on a whole cell the way the dot was going.
         kickTo = (shift < 0 ? 1 : -1) * span;
         strikeTime = dot.unit * Math.min(1.2, 0.4 + 0.4 * Math.abs(shift) / Math.max(1, span));
         billiards.restart();

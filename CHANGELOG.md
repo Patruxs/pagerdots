@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- A "Pac-Man" dot animation: the dot turns into Pac-Man and chomps across the row,
+  eating a pellet on every desktop on the way to the new one, where it rounds off into
+  a dot again.
 - "Other desktops opacity" on the Appearance page, under the preview: how faint the
   desktops other than the current one are drawn. Full opacity by default, as is
   "Empty desktop opacity" below it.

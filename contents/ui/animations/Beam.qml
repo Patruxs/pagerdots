@@ -5,8 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "beam": the dot on the old cell stretches across the row into a tall thin bar that
-// fades away, while a bar appears on the new cell and collapses into the dot.
 DotAnimation {
     id: anim
     kind: "swap"
@@ -16,8 +14,6 @@ DotAnimation {
 
     function start(old, target) {
         setFrom(old);
-        // Cutting in while a beam is still collapsing on the old cell: beam back out
-        // from that, rather than from a dot that was never there.
         const mid = beam.running;
         beamOut.reach = mid ? beamIn.reach : dot.size;
         beamOut.thick = mid ? beamIn.thick : dot.size;
@@ -27,8 +23,8 @@ DotAnimation {
 
     component Bar: Rectangle {
         id: bar
-        property real reach: anim.dot.size   // extent across the row
-        property real thick: anim.dot.size   // thickness along it
+        property real reach: anim.dot.size
+        property real thick: anim.dot.size
         width: anim.dot.vertical ? bar.reach : bar.thick
         height: anim.dot.vertical ? bar.thick : bar.reach
         radius: Math.min(bar.width, bar.height) / 2
@@ -50,7 +46,6 @@ DotAnimation {
     }
     ParallelAnimation {
         id: beam
-        // The outgoing beam starts from whatever start() set it to.
         SequentialAnimation {
             PropertyAction { target: beamOut; property: "visible"; value: true }
             ParallelAnimation {

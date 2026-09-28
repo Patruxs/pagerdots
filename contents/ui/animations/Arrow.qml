@@ -5,8 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "arrow": the dot sharpens into an arrowhead pointing at the new cell, shoots over,
-// and rounds off into a dot again. `arrowT` is its progress from the old cell.
 DotAnimation {
     id: anim
     kind: "swap"
@@ -15,7 +13,6 @@ DotAnimation {
     property real arrowT: 0
 
     function start(old, target) {
-        // Cutting in mid-flight: the arrowhead turns and shoots on from where it is.
         const mid = sharpen.running || fly.running;
         setFrom(old, mid ? arrow.e : 1);
         if (!mid) dot.placeGhost(old);
@@ -29,9 +26,7 @@ DotAnimation {
         objectName: "arrow"
         readonly property real arm: anim.dot.size * 1.2
         readonly property real thick: Math.max(1.5, anim.dot.size * 0.3)
-        // Off like a shot, then coasting in.
         readonly property real e: 1 - Math.pow(1 - anim.arrowT, 3)
-        // The tip, which the arms trail behind.
         x: anim.fromX + (anim.dot.cx - anim.fromX) * arrow.e
         y: anim.fromY + (anim.dot.cy - anim.fromY) * arrow.e
         rotation: anim.dot.vertical ? (anim.dot.cy < anim.fromY ? -90 : 90) : (anim.dot.cx < anim.fromX ? 180 : 0)

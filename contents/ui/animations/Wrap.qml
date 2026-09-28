@@ -3,11 +3,6 @@
 
 import QtQuick
 
-// "wrap": the dot leaves the row past the end away from the new cell, and comes back
-// in from the other end to reach it the long way round, fading out as it leaves and
-// in as it re-enters. `shift` is the dot's offset from the new cell; `exitAt` is the
-// position past the end it heads for, and `exit` and `entry` are that and the
-// re-entry point as offsets from the new cell.
 DotAnimation {
     id: anim
     kind: "shift"
@@ -24,20 +19,18 @@ DotAnimation {
     property real exitAt: 0
     property real exit: 0
     property real entry: 0
-    property int phase: 0   // 1 while leaving, 2 while coming back in
+    property int phase: 0
 
     function start(old, target) {
         const c = dot.centreOf(target);
         const extent = dot.vertical ? height : width;
         shift = dot.centreOf(old) + shift - c;
         if ((wrap.running && phase === 2) || enter.running) {
-            // Already back on the row: just carry on to the new cell.
             wrap.stop();
             enter.restart();
             return;
         }
-        // Leave by the end away from the new cell (still the same end if the dot is
-        // already on its way out) and come back in by the other.
+
         if (!wrap.running) exitAt = c > dot.centreOf(old) ? -dot.size : extent + dot.size;
         exit = exitAt - c;
         entry = (exitAt < 0 ? extent + dot.size : -dot.size) - c;

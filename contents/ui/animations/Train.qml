@@ -5,9 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "train": the dot breaks into a file of three beads that run across in line, each
-// setting off a little after the last, and merge into a new dot on the new cell.
-// `trainT` runs from 0 to 1 over the whole run and each bead takes its own slice of it.
 DotAnimation {
     id: anim
     kind: "swap"
@@ -17,8 +14,6 @@ DotAnimation {
     readonly property real slice: 0.76
 
     function start(old, target) {
-        // Cutting in mid-flight: the beads set off again from where the first one is,
-        // and there is no dot left on the old cell to shrink away.
         const mid = train.running;
         setFrom(old, mid ? dot.easeInOut(Math.min(1, trainT / slice)) : 1);
         if (mid) dot.ghost.visible = false;
@@ -40,7 +35,6 @@ DotAnimation {
             height: bead.extent
             radius: bead.extent / 2
             color: anim.dot.color
-            // Shows as it leaves the shrinking old dot and goes as it merges into the new one.
             opacity: Math.min(1, bead.p * 8, (1 - bead.p) * 8)
             visible: train.running
             antialiasing: true

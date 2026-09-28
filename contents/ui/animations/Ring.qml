@@ -5,16 +5,12 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "ring": the dot on the old cell opens out into a ring that spreads and fades, while
-// a ring closes in on the new cell and fills to become the dot.
 DotAnimation {
     id: anim
     kind: "swap"
 
     function start(old, target) {
         setFrom(old);
-        // Cutting in while a ring is still closing on the old cell: open back out from
-        // wherever it got to, rather than from a dot that was never there.
         const closing = ring.running;
         irisOut.extent = closing ? irisIn.extent : dot.size;
         irisOut.fill = closing ? irisIn.fill : 1;
@@ -22,7 +18,6 @@ DotAnimation {
         ring.restart();
     }
 
-    // `fill` is how solid the disc inside the ring is: 1 for a dot, 0 for a bare ring.
     component Iris: Rectangle {
         property real extent: anim.dot.size
         property real fill: 1
@@ -49,7 +44,6 @@ DotAnimation {
     }
     ParallelAnimation {
         id: ring
-        // The opening ring starts from whatever start() set it to.
         SequentialAnimation {
             PropertyAction { target: irisOut; property: "visible"; value: true }
             ParallelAnimation {

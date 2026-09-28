@@ -3,7 +3,6 @@
 
 import QtQuick
 
-// "pop": the ghost shrinks away on the old cell while the dot springs up on the new one.
 DotAnimation {
     id: anim
     kind: "swap"

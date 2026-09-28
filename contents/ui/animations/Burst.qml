@@ -5,8 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "burst": the dot on the old cell bursts into pieces that fly out all round it and
-// fade, while pieces fly in from all round the new cell and gather into the dot.
 DotAnimation {
     id: anim
     kind: "swap"
@@ -16,8 +14,6 @@ DotAnimation {
 
     function start(old, target) {
         setFrom(old);
-        // Cutting in while the pieces are still gathering on the old cell: they fly
-        // back out from where they are, and whatever dot had formed shrinks away.
         const mid = burst.running;
         burstOut.dist = mid ? burstIn.dist : 0;
         burstOut.opacity = mid ? burstIn.opacity : 1;
@@ -27,7 +23,7 @@ DotAnimation {
 
     component Pieces: Item {
         id: pieces
-        property real dist: 0       // how far out from the centre the pieces are
+        property real dist: 0
         readonly property real extent: anim.dot.size * 0.42
         visible: false
         Repeater {
@@ -60,7 +56,6 @@ DotAnimation {
     }
     ParallelAnimation {
         id: burst
-        // The outgoing pieces start from whatever start() set them to.
         SequentialAnimation {
             PropertyAction { target: burstOut; property: "visible"; value: true }
             ParallelAnimation {

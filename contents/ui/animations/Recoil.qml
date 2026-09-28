@@ -3,8 +3,6 @@
 
 import QtQuick
 
-// "recoil": the dot pops up on the new cell at once, and the old one is kicked back
-// along the row, away from it, fading as it goes.
 DotAnimation {
     id: anim
     kind: "swap"

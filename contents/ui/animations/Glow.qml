@@ -5,7 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "glow": a soft halo blooms around the dot as it sets off and fades once it lands.
 DotAnimation {
     id: anim
 

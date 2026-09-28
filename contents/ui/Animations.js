@@ -2,23 +2,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 .pragma library
 
-// Base duration of the dot animations in ms: Plasma's own (`base`, usually
-// Kirigami.Units.longDuration) scaled by the speed setting, a percentage, so 50
-// plays at half speed and 200 at double.
 function unitFor(base, speedPercent) {
     return Math.round(base * 100 / Math.max(25, speedPercent));
 }
 
-// The animation the "pill" label style comes with, the one of GNOME's page indicator:
-// the old pill shrinks back into a dot as the new one grows out of one, which is what
-// "fade" does when the dot rests as a pill. The style keeps it, whatever animation is
-// configured, unless the user has chosen to customise it (pillCustomAnimation).
 const PILL_ANIMATION = "fade";
 
-// Dot animations offered in the settings page, in display order.
-// `id` is what gets stored in the config and read by Dot.qml.
-// Each one has a silhouette of its own at panel size; variants that only differ in
-// how they are drawn or eased look identical on a dot a few pixels across.
 const MODES = [
     { id: "stretch", name: "Stretch", description: "Stretches into a pill towards the new desktop, then snaps back" },
     { id: "glide",   name: "Glide",   description: "Slides smoothly to the new desktop" },
@@ -54,12 +43,10 @@ const MODES = [
     { id: "volley",  name: "Volley",  description: "Flies over, is batted straight back to the old desktop, and flies over again to stay" },
     { id: "flip",    name: "Flip",    description: "Slides across while flipping over like a coin, thinning to a sliver edge on and back" },
     { id: "burst",   name: "Burst",   description: "Bursts into pieces that fly out all round and fade on the old desktop, while pieces fly in from all round the new one and gather into a dot" },
+    { id: "pacman",  name: "Pac-Man", description: "Turns into Pac-Man and chomps across the row, eating a pellet on every desktop on the way to the new one, where it rounds off into a dot again" },
     { id: "none",    name: "None",    description: "Jumps instantly" },
 ];
 
-// The id of a known animation, or the default one for an id that is not offered any
-// more (a setting saved by an older version). An empty id is left alone: the settings
-// page has one until Plasma hands it the config.
 function normalize(id) {
     if (id === "" || MODES.some(m => m.id === id)) return id;
     return "stretch";

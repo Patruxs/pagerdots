@@ -3,7 +3,6 @@
 
 import QtQuick
 
-// "hop": rises and falls in an arc while sliding, then squashes flat on landing.
 DotAnimation {
     id: anim
     leadEasing: Easing.InOutSine

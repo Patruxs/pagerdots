@@ -3,7 +3,6 @@
 
 import QtQuick
 
-// "lift": the dot is picked up, grows as it is carried over, and is set down again.
 DotAnimation {
     id: anim
     leadDuration: dot.unit * 2.25

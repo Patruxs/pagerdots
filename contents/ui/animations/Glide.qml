@@ -3,5 +3,4 @@
 
 import QtQuick
 
-// "glide": the plain slide, both trackers moving together.
 DotAnimation {}

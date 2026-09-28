@@ -3,8 +3,6 @@
 
 import QtQuick
 
-// "boomerang": the dot first draws back a whole cell away from the new one, then
-// flies across and lands. `shift` is the dot's offset from the new cell.
 DotAnimation {
     id: anim
     kind: "shift"
@@ -17,7 +15,6 @@ DotAnimation {
         const c = dot.centreOf(target);
         const span = dot.vertical ? target.height : target.width;
         shift = dot.centreOf(old) + shift - c;
-        // A whole cell beyond the old one, away from the new one.
         backTo = dot.centreOf(old) - c + (c > dot.centreOf(old) ? -span : span);
         boomerang.restart();
     }

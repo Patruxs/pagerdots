@@ -5,9 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "twinkle": the dot on the old cell collapses into a four-point star, two thin bars
-// crossed, that spins as it flares and shrinks away, while a star flares up on the
-// new cell, spins, and rounds off into the dot.
 DotAnimation {
     id: anim
     kind: "swap"
@@ -17,8 +14,6 @@ DotAnimation {
 
     function start(old, target) {
         setFrom(old);
-        // Cutting in while a star is still flaring on the old cell: it carries on from
-        // there as the outgoing star, and whatever dot had formed under it shrinks away.
         const mid = twinkle.running;
         starOut.reach = mid ? starIn.reach : 0;
         starOut.turn = mid ? starIn.turn : 0;
@@ -28,8 +23,8 @@ DotAnimation {
 
     component Star: Item {
         id: star
-        property real reach: 0      // length of each arm from the centre
-        property real turn: 0       // in degrees
+        property real reach: 0
+        property real turn: 0
         property real turnTo: 0
         readonly property real thick: Math.max(1.2, anim.dot.size * 0.22)
         rotation: star.turn
@@ -64,7 +59,6 @@ DotAnimation {
     }
     ParallelAnimation {
         id: twinkle
-        // The outgoing star starts from whatever start() set it to.
         SequentialAnimation {
             PropertyAction { target: starOut; property: "visible"; value: true }
             ScriptAction { script: starOut.turnTo = starOut.turn + 90 }

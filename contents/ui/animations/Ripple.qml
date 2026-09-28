@@ -5,7 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "ripple": a ring spreads out from the new cell as the dot lands on it.
 DotAnimation {
     id: anim
 

@@ -3,10 +3,6 @@
 
 import QtQuick
 
-// "loop": loops the loop on the way over. Along the row to the near side of a circle
-// between the cells, once round it at a steady pace (forward over the top, back
-// underneath) and on along the row: the circle gets most of the time, however far
-// the move is.
 PathDotAnimation {
     duration: dot.unit * 2.6
 

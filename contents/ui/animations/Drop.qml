@@ -3,8 +3,6 @@
 
 import QtQuick
 
-// "drop": the ghost falls away off the old cell while a new dot drops onto the new
-// one, landing with a small bounce.
 DotAnimation {
     id: anim
     kind: "swap"

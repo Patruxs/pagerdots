@@ -3,7 +3,6 @@
 
 import QtQuick
 
-// "spring": slides over and wobbles into place like a spring.
 DotAnimation {
     leadDuration: dot.unit * 2.75
     leadEasing: Easing.OutElastic

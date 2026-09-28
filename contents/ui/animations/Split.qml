@@ -5,9 +5,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// "split": the dot divides into two half-size dots that swing out to either side of
-// the row, travel across, and merge again on the new cell. `splitT` is the progress
-// along the row and `spread` how far apart the halves are.
 DotAnimation {
     id: anim
     kind: "swap"
@@ -16,8 +13,6 @@ DotAnimation {
     property real spread: 0
 
     function start(old, target) {
-        // Cutting in mid-flight: the halves set off again from where they are, and
-        // there is no dot left on the old cell to shrink away.
         const mid = split.running;
         setFrom(old, mid ? dot.easeInOut(splitT) : 1);
         if (mid) dot.ghost.visible = false;

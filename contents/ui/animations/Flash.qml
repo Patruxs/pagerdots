@@ -3,7 +3,6 @@
 
 import QtQuick
 
-// "flash": no motion at all; the dot shows up on the new cell and blinks twice.
 DotAnimation {
     id: anim
     kind: "swap"

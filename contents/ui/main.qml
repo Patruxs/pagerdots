@@ -14,10 +14,6 @@ import "Labels.js" as Labels
 import "Animations.js" as Animations
 import "Desktops.js" as Desktops
 
-// Pager Dots: a dot for the current virtual desktop, dimmed labels for the others.
-// Click a desktop to switch, mouse wheel to step. Label style and the animation
-// the dot makes between desktops are configurable, as is what the mouse does and
-// what the context menu offers for managing the desktops.
 PlasmoidItem {
     id: root
 
@@ -28,25 +24,18 @@ PlasmoidItem {
     readonly property int spacing: Plasmoid.configuration.spacing
     readonly property real dimOpacity: (Plasmoid.configuration.dimOpacity || 100) / 100
     readonly property real emptyOpacity: (Plasmoid.configuration.emptyOpacity || 100) / 100
-    // Whether desktops with no windows are drawn fainter than the ones in use.
     readonly property bool markOccupied: emptyOpacity < dimOpacity
-    // Whether the other desktops are drawn as dots, with the current one a pill (the
-    // "pill" style), rather than labelled.
     readonly property bool dotStyle: Labels.drawsDots(labelStyle)
-    // The pill style keeps its own animation unless customised.
     readonly property string dotAnimation:
         dotStyle && !Plasmoid.configuration.pillCustomAnimation ? Animations.PILL_ANIMATION
                                                                 : Animations.normalize(Plasmoid.configuration.dotAnimation)
-    // The dot is drawn in the text colour, or the accent colour if so configured.
     readonly property color dotColor: Plasmoid.configuration.dotColor === "accent"
                                       ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
     readonly property bool animated: dotAnimation !== "none"
     readonly property int animationUnit:
         Animations.unitFor(Kirigami.Units.longDuration, Plasmoid.configuration.animationSpeed)
-    // Whether the current desktop is marked by the gliding dot (as opposed to its bold label).
     readonly property bool useDot: Labels.usesDot(labelStyle, dotForCurrent)
 
-    // Behaviour (see the Behavior settings page).
     readonly property bool wheelSwitches: Plasmoid.configuration.wheelSwitches
     readonly property bool wheelWrap: Plasmoid.configuration.wheelWrap
     readonly property bool wheelInvert: Plasmoid.configuration.wheelInvert
@@ -61,8 +50,6 @@ PlasmoidItem {
 
     TaskManager.VirtualDesktopInfo { id: vdi }
 
-    // The windows on each desktop, for the tooltip's window list, the automatic
-    // desktops and marking the desktops in use; loaded only while one of those is on.
     Loader {
         id: windows
         active: root.tooltipWindows || root.autoDesktops || root.markOccupied
@@ -70,9 +57,6 @@ PlasmoidItem {
         readonly property var titles: item?.titles ?? ({})
     }
 
-    // Everything the GNOME-style rule looks at, so that a change to any of it (a window
-    // opening or closing, a desktop coming or going, a switch) runs it again, a moment
-    // later so that a burst of changes is handled once.
     readonly property var desktopState: [windows.titles, vdi.desktopIds, currentIndex, autoDesktops]
     onDesktopStateChanged: if (autoDesktops) autoTidy.restart()
     Timer {
@@ -81,9 +65,6 @@ PlasmoidItem {
         onTriggered: root.tidyDesktops()
     }
 
-    // Whether a desktop has windows, as far as the labels are concerned: every desktop
-    // does unless the ones in use are marked, and until the window list has filled in,
-    // so that nothing flickers faint while the widget starts.
     function isOccupied(index) {
         if (!markOccupied || !windows.item?.populated) return true;
         return (windows.titles[vdi.desktopIds[index]] ?? []).length > 0;
@@ -93,9 +74,6 @@ PlasmoidItem {
         return Labels.labelFor(labelStyle, index + 1, currentIndex + 1);
     }
 
-    // Keeps the desktops the way GNOME does (see Desktops.js): there is always exactly
-    // one empty desktop at the end. Nothing is done until the window list has had time
-    // to fill in (see DesktopWindows.qml), when every desktop would look empty.
     function tidyDesktops() {
         if (!autoDesktops || !windows.item?.settled) return;
         const todo = Desktops.plan(vdi.desktopIds, windows.titles, currentIndex);
@@ -103,7 +81,6 @@ PlasmoidItem {
         todo.remove.forEach(removeDesktop);
     }
 
-    // The tooltip's list of the windows on a desktop, a handful at most.
     function windowsOn(id) {
         const titles = windows.titles[id] ?? [];
         if (titles.length === 0) return i18n("No windows");
@@ -115,14 +92,12 @@ PlasmoidItem {
     }
 
     function switchTo(index) {
-        // Plain JS numbers are silently dropped from the message inside plasmashell,
-        // so the argument must be wrapped in the typed int32 helper.
         DBus.SessionBus.asyncCall({
             service: "org.kde.KWin", path: "/KWin", iface: "org.kde.KWin",
             member: "setCurrentDesktop", arguments: [new DBus.int32(index + 1)]
         });
     }
-    // Moves `delta` desktops along, round the ends if so configured.
+
     function step(delta) {
         const n = vdi.numberOfDesktops;
         if (n < 1) return;
@@ -131,9 +106,6 @@ PlasmoidItem {
         else if (next >= 0 && next < n) switchTo(next);
     }
 
-    // Desktop management, through KWin's virtual desktop manager. A new desktop goes
-    // at the end, and is named after the configured base name and its number, or by
-    // KWin ("Desktop 3") if there is none.
     function desktopCall(member, args) {
         DBus.SessionBus.asyncCall({
             service: "org.kde.KWin", path: "/VirtualDesktopManager",
@@ -152,8 +124,6 @@ PlasmoidItem {
         desktopCall("setDesktopName", [id, name]);
     }
 
-    // What a click on the current desktop does: one of KWin's shortcuts, by name, or
-    // nothing.
     function clickCurrent() {
         const names = { showDesktop: "Show Desktop", overview: "Overview", grid: "Grid View" };
         const name = names[currentDesktopClick];
@@ -192,8 +162,6 @@ PlasmoidItem {
         }
     ]
 
-    // A small popup by the widget with the current desktop's name to edit. Enter or
-    // the button renames it; Escape, or clicking elsewhere, leaves it alone.
     PlasmaCore.Dialog {
         id: renameDialog
         visualParent: root
@@ -242,23 +210,17 @@ PlasmoidItem {
     fullRepresentation: MouseArea {
         id: view
         acceptedButtons: Qt.NoButton
-        // Wheel notches come in steps of 120; touchpads and free-spinning wheels send
-        // many smaller events instead, so the deltas are added up and one desktop is
-        // stepped per full notch, rather than several per swipe.
         property int wheelDelta: 0
         onWheel: wheel => {
             if (!root.wheelSwitches) { wheel.accepted = false; return; }
             const delta = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.angleDelta.x;
-            // A change of direction starts afresh, so the first notch back is not swallowed.
             if (delta * wheelDelta < 0) wheelDelta = 0;
             wheelDelta += delta;
-            // Scrolling up goes back a desktop, unless inverted.
             const dir = root.wheelInvert ? 1 : -1;
             while (wheelDelta >= 120) { wheelDelta -= 120; root.step(dir); }
             while (wheelDelta <= -120) { wheelDelta += 120; root.step(-dir); }
         }
-        // The row, plus the room the pill takes up in the pill style, and the padding
-        // at either end.
+
         implicitWidth: grid.implicitWidth + (root.vertical ? 0 : elongation + padding * 2)
         implicitHeight: grid.implicitHeight + (root.vertical ? elongation + padding * 2 : 0)
         Layout.minimumWidth: root.vertical ? 0 : implicitWidth
@@ -266,8 +228,6 @@ PlasmoidItem {
         Layout.preferredWidth: Layout.minimumWidth
         Layout.preferredHeight: Layout.minimumHeight
 
-        // Bumped whenever the repeater adds or removes a cell, so bindings that
-        // look cells up through itemAt() (which is not a notifying property) re-run.
         property int cellsRevision: 0
         readonly property Item currentCell: {
             void cellsRevision;
@@ -276,27 +236,14 @@ PlasmoidItem {
 
         FontMetrics { id: fm; font: Kirigami.Theme.defaultFont }
 
-        // The dot is a little under half the text height, so it sits well among the
-        // labels; the dots of the pill style, which stand on their own, are bigger.
         readonly property real dotSize:
             Math.max(4, Math.round(fm.height * (root.dotStyle ? Labels.PILL_DOT : 0.45)))
-        // How much longer than it is thick the dot is at rest: the pill of the pill
-        // style, or nothing. The row is that much longer than its cells, and what each
-        // cell shows slides along to make room for the pill wherever it is (see `slide`
-        // below), the way a page indicator does.
         readonly property real elongation: root.dotStyle ? Math.round(dotSize * (Labels.PILL_LENGTH - 1)) : 0
-        // Room at either end of the row, so that the background shown while the mouse
-        // is over the widget clears the labels: a snug fit, as GNOME's is.
         readonly property real padding: Math.round(dotSize * 0.8)
 
-        // The gap between cells: the pill style's own unless customised, else the setting.
         readonly property int gap: root.dotStyle && !Plasmoid.configuration.pillCustomSpacing
                                    ? Math.round(dotSize * Labels.PILL_GAP) : root.spacing
 
-        // All cells share one width: the widest label of the current style (e.g. "VIII")
-        // plus breathing room, so the row stays evenly spaced whatever the labels are.
-        // Measured through the method rather than a TextMetrics property, which would
-        // make this binding depend on a value it changes itself and so loop.
         readonly property real cellWidth: {
             let widest = 0;
             for (let i = 0; i < vdi.numberOfDesktops; i++) {
@@ -304,29 +251,18 @@ PlasmoidItem {
             }
             return Math.max(Kirigami.Units.gridUnit * 1.4, Math.ceil(widest) + Kirigami.Units.largeSpacing);
         }
-        // The size of a cell along the row: that width, or the standard height when the
-        // row runs down the panel. The dots of the pill style sit closer together.
+
         readonly property real cellLength: root.dotStyle ? Math.round(dotSize * Labels.DOT_CELL)
                                          : root.vertical ? Kirigami.Units.gridUnit * 1.4 : cellWidth
 
-        // The row, its background and the dot, kept together in the middle of whatever
-        // the panel allots the widget, which may be more than it asked for.
         Item {
             id: content
             anchors.centerIn: parent
             width: root.vertical ? view.width : view.implicitWidth
             height: root.vertical ? view.implicitHeight : view.height
 
-            // Whether the mouse is over the widget. On this plain item rather than on
-            // the MouseArea above: a pointer handler makes its item accept every mouse
-            // button, and a MouseArea then swallows the right clicks that Plasma needs
-            // for the widget's context menu.
             HoverHandler { id: hover }
 
-            // A click on the space around the desktops does what one on the current
-            // desktop does, if so configured. Only the left button, so that right clicks
-            // still reach Plasma for the context menu. Under the cells, which take
-            // their own clicks first.
             MouseArea {
                 anchors.fill: parent
                 enabled: root.clickAnywhere
@@ -334,9 +270,6 @@ PlasmoidItem {
                 onClicked: root.clickCurrent()
             }
 
-            // The background while the mouse is over the widget, a pill as in GNOME: as
-            // tall (or, down a panel, as wide) as the cells with a little extra, and as
-            // long as the row with its padding.
             Rectangle {
                 readonly property real thickness:
                     Math.min(root.vertical ? view.width : view.height,
@@ -368,32 +301,20 @@ PlasmoidItem {
                     onItemAdded: view.cellsRevision++
                     onItemRemoved: view.cellsRevision++
 
-                    // The cell itself only takes up space; the dot is laid over it. What it
-                    // shows is in `body`, which slides along the row in the pill style.
                     delegate: Item {
                         id: cell
                         required property int index
                         readonly property bool isCurrent: index === root.currentIndex
 
-                        // Across the row the cells take whatever the panel gives, and no
-                        // more: a minimum the panel cannot meet would make the row overflow
-                        // it, and everything centred on the cells sit below the panel's centre.
                         Layout.fillHeight: !root.vertical
                         Layout.fillWidth: root.vertical
                         Layout.minimumWidth: root.vertical ? 0 : view.cellLength
                         Layout.minimumHeight: root.vertical ? view.cellLength : 0
 
-                        // How far along the row the cell's contents sit past the cell: the
-                        // room the pill takes up. Cells before the current desktop stay put,
-                        // the ones after it move over by the pill's extra length, and the
-                        // current one by half of it (the pill, offset the same way, then
-                        // starts where its dot would have been).
                         readonly property real slide: index < root.currentIndex ? 0
                                                     : index === root.currentIndex ? view.elongation / 2
                                                     : view.elongation
 
-                        // Plasma tooltip with the desktop name and, if so configured, the
-                        // windows on it; `location` keeps it outside the panel.
                         PlasmaCore.ToolTipArea {
                             id: body
                             active: root.tooltips
@@ -404,7 +325,6 @@ PlasmoidItem {
                             y: root.vertical ? cell.slide : 0
                             width: cell.width
                             height: cell.height
-                            // Moves over in step with the dot arriving.
                             Behavior on x { enabled: root.animated; NumberAnimation { duration: dot.travel; easing.type: Easing.OutCubic } }
                             Behavior on y { enabled: root.animated; NumberAnimation { duration: dot.travel; easing.type: Easing.OutCubic } }
 
@@ -425,7 +345,6 @@ PlasmoidItem {
                                 id: mouse
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                // The current desktop's own click does the configured action.
                                 onClicked: cell.isCurrent ? root.clickCurrent() : root.switchTo(cell.index)
                             }
                         }
@@ -433,11 +352,6 @@ PlasmoidItem {
                 }
             }
 
-            // The current-desktop dot. One item for the whole widget, laid over the
-            // current cell, so a desktop change animates instead of jumping. It shares the
-            // grid's coordinates, so it is shifted along the row by the grid's padding, and
-            // in the pill style by half the pill's extra length as well, like the current
-            // cell's contents, so the pill starts where its dot would have been.
             Dot {
                 id: dot
                 anchors.fill: parent
@@ -452,8 +366,6 @@ PlasmoidItem {
                 color: root.dotColor
                 unit: root.animationUnit
                 vertical: root.vertical
-                // "hop" jumps upwards in a horizontal panel, and away from the screen
-                // edge (towards the desktop) in a vertical one.
                 hopSign: !root.vertical ? -1
                        : Plasmoid.location === PlasmaCore.Types.LeftEdge ? 1 : -1
                 visible: root.useDot
