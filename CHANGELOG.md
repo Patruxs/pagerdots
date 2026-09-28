@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-09-28
+
 ### Added
 - Desktops switched independently for each screen (Plasma 6.7 or newer, on Wayland,
   with "Switch desktops independently for each screen" turned on in System Settings →
@@ -183,7 +185,8 @@ Initial release.
 - Tooltip showing the desktop name
 - Horizontal and vertical panel layouts
 
-[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/Patruxs/pagerdots/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/Patruxs/pagerdots/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Patruxs/pagerdots/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/Patruxs/pagerdots/compare/v1.2.0...v1.2.1
