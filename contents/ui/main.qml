@@ -67,8 +67,11 @@ PlasmoidItem {
     Loader {
         id: windows
         active: root.tooltipWindows || root.autoDesktops || root.markOccupied
-        sourceComponent: DesktopWindows {}
+        sourceComponent: DesktopWindows {
+            screenGeometry: Plasmoid.containment.screenGeometry
+        }
         readonly property var titles: item?.titles ?? ({})
+        readonly property var screenTitles: item?.screenTitles ?? ({})
     }
 
     readonly property var desktopState: [windows.titles, vdi.desktopIds, currentIndex, autoDesktops]
@@ -81,7 +84,7 @@ PlasmoidItem {
 
     function isOccupied(index) {
         if (!markOccupied || !windows.item?.populated) return true;
-        return (windows.titles[vdi.desktopIds[index]] ?? []).length > 0;
+        return (windows.screenTitles[vdi.desktopIds[index]] ?? []).length > 0;
     }
 
     function labelFor(index) {
@@ -96,7 +99,7 @@ PlasmoidItem {
     }
 
     function windowsOn(id) {
-        const titles = windows.titles[id] ?? [];
+        const titles = windows.screenTitles[id] ?? [];
         if (titles.length === 0) return i18n("No windows");
         const shown = titles.slice(0, 6);
         if (titles.length > shown.length) {

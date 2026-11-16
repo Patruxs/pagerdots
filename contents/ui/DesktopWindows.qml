@@ -8,7 +8,9 @@ Item {
     id: windows
     visible: false
 
-    property var titles: ({})
+    property var titles: ({})        // all screens (used by auto-tidy)
+    property var screenTitles: ({})  // only this panel's screen (occupancy + tooltips)
+    property rect screenGeometry
     property bool settled: false
     readonly property bool populated: settled || Object.keys(titles).length > 0
 
@@ -27,6 +29,20 @@ Item {
         onModelReset: refresh.restart()
         onDataChanged: refresh.restart()
     }
+    TaskManager.TasksModel {
+        id: screenTasks
+        screenGeometry: windows.screenGeometry
+        filterByVirtualDesktop: false
+        filterByScreen: true
+        filterByActivity: false
+        filterMinimized: false
+        groupMode: TaskManager.TasksModel.GroupDisabled
+
+        onRowsInserted: refresh.restart()
+        onRowsRemoved: refresh.restart()
+        onModelReset: refresh.restart()
+        onDataChanged: refresh.restart()
+    }
     Timer {
         id: refresh
         interval: 150
@@ -34,18 +50,23 @@ Item {
         onTriggered: windows.update()
     }
 
-    function update() {
+    function collect(model) {
         const map = {};
-        for (let row = 0; row < tasks.count; row++) {
-            const index = tasks.index(row, 0);
-            if (!tasks.data(index, TaskManager.AbstractTasksModel.IsWindow)
-                || tasks.data(index, TaskManager.AbstractTasksModel.IsOnAllVirtualDesktops)) continue;
-            const title = tasks.data(index, Qt.DisplayRole);
-            for (const id of tasks.data(index, TaskManager.AbstractTasksModel.VirtualDesktops) ?? []) {
+        for (let row = 0; row < model.count; row++) {
+            const index = model.index(row, 0);
+            if (!model.data(index, TaskManager.AbstractTasksModel.IsWindow)
+                || model.data(index, TaskManager.AbstractTasksModel.IsOnAllVirtualDesktops)) continue;
+            const title = model.data(index, Qt.DisplayRole);
+            for (const id of model.data(index, TaskManager.AbstractTasksModel.VirtualDesktops) ?? []) {
                 if (!map[id]) map[id] = [];
                 map[id].push(title);
             }
         }
-        titles = map;
+        return map;
+    }
+
+    function update() {
+        titles = collect(tasks);
+        screenTitles = collect(screenTasks);
     }
 }
