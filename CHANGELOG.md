@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- With several screens, the faint "empty desktop" look and the list of windows in the
+  tooltip now only count the windows on the widget's own screen, so a desktop that is
+  in use on one screen no longer looks busy on the others (#4). Removing empty desktops
+  automatically still counts the windows on every screen.
+
 ## [1.4.1] - 2026-09-28
 
 ### Added
