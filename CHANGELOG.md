@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-11-19
+
 ### Fixed
 - With several screens, the faint "empty desktop" look and the list of windows in the
   tooltip now only count the windows on the widget's own screen, so a desktop that is
@@ -191,7 +193,8 @@ Initial release.
 - Tooltip showing the desktop name
 - Horizontal and vertical panel layouts
 
-[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/Patruxs/pagerdots/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/Patruxs/pagerdots/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/Patruxs/pagerdots/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/Patruxs/pagerdots/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/Patruxs/pagerdots/compare/v1.2.1...v1.3.0
