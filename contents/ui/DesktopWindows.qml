@@ -8,8 +8,8 @@ Item {
     id: windows
     visible: false
 
-    property var titles: ({})        // all screens (used by auto-tidy)
-    property var screenTitles: ({})  // only this panel's screen (occupancy + tooltips)
+    property var titles: ({})
+    property var screenTitles: ({})
     property rect screenGeometry
     property bool settled: false
     readonly property bool populated: settled || Object.keys(titles).length > 0
